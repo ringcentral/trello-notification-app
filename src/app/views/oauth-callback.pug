@@ -1,0 +1,23 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(http-equiv='x-ua-compatible' content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    title Auth Callback
+    link(href='//developer.ringcentral.com/assets/images/favicon.ico?v=20181214-0738', type='image/vnd.microsoft.icon', rel='shortcut icon')
+  body
+    #container Loading
+    script(type="text/javascript" src="https://unpkg.com/es6-promise@latest/dist/es6-promise.auto.js")
+    script(type="text/javascript" src="https://unpkg.com/whatwg-fetch@latest/dist/fetch.umd.js")
+    script.
+       var uri = window.location.pathname + window.location.hash;
+       uri = uri.replace('#', '?');
+       fetch(uri, { method: 'POST' })
+         .then(function() {
+           window.close();
+         })
+         .catch(function(e) {
+           localStorage.setItem('oauth-error', e.message);
+           window.close();
+         });
