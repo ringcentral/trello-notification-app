@@ -11,13 +11,19 @@ html
     script(type="text/javascript" src="https://unpkg.com/es6-promise@latest/dist/es6-promise.auto.js")
     script(type="text/javascript" src="https://unpkg.com/whatwg-fetch@latest/dist/fetch.umd.js")
     script.
-       var uri = window.location.pathname + window.location.hash;
-       uri = uri.replace('#', '?');
-       fetch(uri, { method: 'POST' })
-         .then(function() {
-           window.close();
-         })
-         .catch(function(e) {
-           localStorage.setItem('oauth-error', e.message);
-           window.close();
-         });
+      if (window.opener) {
+        window.opener.postMessage({
+          authCallback: window.location.href,
+        }, '*');
+        window.close();
+      } else {
+        var uri = window.location.href.replace('#', '?');
+        fetch(uri, { method: 'POST' })
+          .then(function() {
+            window.close();
+          })
+          .catch(function(e) {
+            localStorage.setItem('oauth-error', e.message);
+            window.close();
+          });
+      }
