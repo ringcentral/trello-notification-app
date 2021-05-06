@@ -1,5 +1,5 @@
 const path = require('path');
-const axios = require('axios')
+const axios = require('axios');
 const cookieSession = require('cookie-session');
 
 const { Trello } = require('./lib/Trello');
@@ -57,6 +57,8 @@ exports.appExtend = (app) => {
         authorizationUri: `${process.env.APP_SERVER}/trello/authorize?id=${trelloWebhookId}`,
         authorizationStatusUri: `${process.env.APP_SERVER}/trello-webhooks/${trelloWebhookId}`,
         authorizationCallbackUri: `${process.env.APP_SERVER}/trello/oauth-callback/${trelloWebhookId}`,
+        authorizationRevokeUri: `${process.env.APP_SERVER}/trello/revoke/${trelloWebhookId}`,
+        trelloWebhookInfoUri: `${process.env.APP_SERVER}/trello-webhooks/${trelloWebhookId}/basic-info`,
       },
     });
   });
@@ -112,7 +114,7 @@ exports.appExtend = (app) => {
     res.send('ok');
   });
 
-  app.post('/trello/revoke/:id', async (req, res) => {
+  app.get('/trello/revoke/:id', async (req, res) => {
     const trelloWebhookId = req.params.id;
     const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
     if (trelloWebhook) {
@@ -120,5 +122,33 @@ exports.appExtend = (app) => {
       await trelloWebhook.save();
     }
     res.send('ok');
+  });
+
+  app.get('/trello-webhooks/:id/basic-info', async (req, res) => {
+    const trelloWebhookId = req.params.id;
+    let trelloWebhook;
+    try {
+      trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+    } catch (e) {
+      console.error(e);
+      // ignore
+    }
+    const token = trelloWebhook && trelloWebhook.token;
+    if (!token) {
+      res.status(401);
+      return;
+    }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback/${trelloWebhookId}`,
+      token,
+    });
+    const boards = await trello.getBoards();
+    const userInfo = await trello.getUserInfo();
+    res.json({
+      boards,
+      userInfo,
+    });
+    res.status(200);
   });
 }
