@@ -23,10 +23,17 @@ const TitleLine = styled.div`
   font-weight: bold;
 `;
 
-export function Configuration({ setAuthorized, fetchTrelloInfo, onLogout}) {
+export function ConfigurationPanel({
+  setAuthorized,
+  fetchTrelloInfo,
+  onLogout,
+  integrationHelper,
+  createWebhook,
+}) {
   const [loading, setLoading] = useState(true);
   const [boards, setBoards] = useState([]);
   const [userInfo, setUserInfo] = useState({});
+  const [boardId, setBoardId] = useState(null);
   useEffect(() => {
     async function getBoardsData() {
       setLoading(true);
@@ -39,13 +46,31 @@ export function Configuration({ setAuthorized, fetchTrelloInfo, onLogout}) {
         if (data.userInfo) {
           setUserInfo(data.userInfo);
         }
+        if (data.config) {
+          setBoardId(data.config.boardId || (data.boards[0] && data.boards[0].id));
+        }
       } catch (e) {
         console.error(e);
       }
       setLoading(false);
     }
     getBoardsData();
-  }, []); 
+    setTimeout(() => {
+      integrationHelper.send({ canSubmit: true });
+    }, 3000);
+  }, []);
+  useEffect(() => {
+    integrationHelper.on('submit', async (e) => {
+      console.log(boardId);
+      await createWebhook({ boardId });
+      return {
+        status: true
+      }
+    });
+    return () => {
+      integrationHelper.dispose();
+    };
+  }, [boardId])
 
   return (
     <Container>
@@ -79,7 +104,9 @@ export function Configuration({ setAuthorized, fetchTrelloInfo, onLogout}) {
             </Line>
           </RcGrid>
           <RcGrid item xs={10}>
-            <BoardSelection />
+            <BoardSelection boards={boards} value={boardId} onChange={(id) => {
+              setBoardId(id);
+            }} />
           </RcGrid>
         </RcGrid>
         <TitleLine>

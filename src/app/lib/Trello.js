@@ -1,5 +1,18 @@
 const axios = require('axios');
 
+function obj2uri(obj) {
+  if (!obj) {
+    return '';
+  }
+  const urlParams = [];
+  Object.keys(obj).forEach((key) => {
+    if (typeof obj[key] !== 'undefined') {
+      urlParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`);
+    }
+  });
+  return urlParams.join('&');
+}
+
 class Trello {
   constructor({
     appKey,
@@ -17,7 +30,16 @@ class Trello {
   }
 
   authorizationUrl() {
-    return `${this._authorizeUrl}?expiration=never&name=${this._name}&scope=read&response_type=token&key=${this._appKey}&return_url=${this._redirectUrl}&callback_method=fragment`
+    const query = obj2uri({
+      expiration: 'never',
+      name: this._name,
+      scope: 'scope',
+      response_type: 'token',
+      key: this._appKey,
+      return_url: this._redirectUrl,
+      callback_method: 'fragment',
+    })
+    return `${this._authorizeUrl}?${query}`;
   }
 
   setToken(token) {
@@ -25,7 +47,12 @@ class Trello {
   }
 
   async getBoards() {
-    const uri = `${this._appServer}/1/members/me/boards?fields=name,url&key=${this._appKey}&token=${this._token}`;
+    const query = obj2uri({
+      fields: 'name,url',
+      key: this._appKey,
+      token: this._token,
+    })
+    const uri = `${this._appServer}/1/members/me/boards?${query}`;
     try {
       const response = await axios.get(uri);
       return response.data;
@@ -43,6 +70,66 @@ class Trello {
     } catch (e) {
       console.error(e);
       return {};
+    }
+  }
+
+  async createWebhook({
+    description,
+    callbackURL,
+    idModel,
+    active,
+  }) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      callbackURL,
+      idModel,
+      description,
+      active,
+    })
+    const uri = `${this._appServer}/1/webhooks?${query}`;
+    try {
+      const response = await axios.post(uri);
+      return response.data;
+    } catch (e) {
+      console.error(e);
+      return {};
+    }
+  }
+
+  async updateWebhook({
+    id,
+    description,
+    callbackURL,
+    idModel,
+    active,
+  }) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      callbackURL,
+      idModel,
+      description,
+      active,
+    })
+    const uri = `${this._appServer}/1/webhooks/${id}?${query}`;
+    try {
+      const response = await axios.put(uri);
+      return response.data;
+    } catch (e) {
+      console.error(e);
+      return {};
+    }
+  }
+
+  async deleteWebhook({
+    id,
+  }) {
+    const uri = `${this._appServer}/1/webhooks/${id}`;
+    try {
+      await axios.delete(uri);
+    } catch (e) {
+      console.error(e);
     }
   }
 }

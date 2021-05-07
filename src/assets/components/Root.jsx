@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { RcThemeProvider } from '@ringcentral/juno';
 
-import { Authorization } from './AuthorizationPanel';
-import { Configuration } from './ConfigurationPanel';
+import { AuthorizationPanel } from './AuthorizationPanel';
+import { ConfigurationPanel } from './ConfigurationPanel';
 
 export function App({ integrationHelper }) {
   const [authorized, setAuthorized] =
@@ -12,7 +12,7 @@ export function App({ integrationHelper }) {
     <RcThemeProvider>
       {
         authorized ? (
-          <Configuration
+          <ConfigurationPanel
             setAuthorized={setAuthorized}
             onLogout={() => {
               return fetch(window.trelloNotifications.authorizationRevokeUri);
@@ -20,9 +20,22 @@ export function App({ integrationHelper }) {
             fetchTrelloInfo={() => {
               return fetch(window.trelloNotifications.trelloWebhookInfoUri);
             }}
+            integrationHelper={integrationHelper}
+            createWebhook={({ boardId }) => {
+              return fetch(window.trelloNotifications.webhookCreationUri, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  boardId,
+                  rcWebhook: window.trelloNotifications.rcWebhookUri,
+                }),
+              });
+            }}
           />
         ) : (
-          <Authorization
+          <AuthorizationPanel
             setAuthorized={setAuthorized}
             integrationHelper={integrationHelper}
           />

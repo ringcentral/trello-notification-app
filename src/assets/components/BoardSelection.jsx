@@ -1,23 +1,24 @@
 import React from 'react';
 import { RcSelect, RcListItem } from '@ringcentral/juno';
 
-export function BoardSelection() {
+export function BoardSelection({ boards, value, onChange }) {
+  
+  const items = boards.map((board) => {
+    return (
+      <RcListItem value={board.id} key={board.id}>
+        {board.name}
+      </RcListItem>
+    )
+  });
   return (
     <RcSelect
-      value={1}
-      onChange={(e) => {
-        console.log('change', e);
-      }}
-      onOpen={(e) => {
-        console.log('open', e);
-      }}
-      onClose={(e) => {
-        console.log(e);
+      value={value}
+      onChange={(event) => {
+        const { value } = event.target;
+        onChange(value);
       }}
     >
-      <RcListItem value={1}>
-        Juno Roadmap
-      </RcListItem>
+      {items}
     </RcSelect>
   );
 }

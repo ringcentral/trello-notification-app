@@ -19,7 +19,7 @@ exports.appExtend = (app) => {
     maxAge: 24 * 60 * 60 * 1000 // 1 day
   }));
 
-  app.get('/webhook/new', async (req, res) => {
+  app.get('/webhooks/new', async (req, res) => {
     const csrfToken = Math.random().toString(36);
     req.session.csrfToken = csrfToken;
     const rcWebhookUri = req.query.webhook;
@@ -54,16 +54,17 @@ exports.appExtend = (app) => {
       data: {
         trelloAuthorized,
         trelloWebhookId,
+        rcWebhookUri,
         authorizationUri: `${process.env.APP_SERVER}/trello/authorize?id=${trelloWebhookId}`,
-        authorizationStatusUri: `${process.env.APP_SERVER}/trello-webhooks/${trelloWebhookId}`,
         authorizationCallbackUri: `${process.env.APP_SERVER}/trello/oauth-callback/${trelloWebhookId}`,
         authorizationRevokeUri: `${process.env.APP_SERVER}/trello/revoke/${trelloWebhookId}`,
-        trelloWebhookInfoUri: `${process.env.APP_SERVER}/trello-webhooks/${trelloWebhookId}/basic-info`,
+        trelloWebhookInfoUri: `${process.env.APP_SERVER}/trello-webhooks/${trelloWebhookId}`,
+        webhookCreationUri: `${process.env.APP_SERVER}/webhooks`,
       },
     });
   });
 
-  app.get('/trello-webhooks/:id', async (req, res) => {
+  app.get('/trello-webhooks/:id/authorized', async (req, res) => {
     const trelloWebhookId = req.params.id;
     let trelloWebhook;
     try {
@@ -124,7 +125,7 @@ exports.appExtend = (app) => {
     res.send('ok');
   });
 
-  app.get('/trello-webhooks/:id/basic-info', async (req, res) => {
+  app.get('/trello-webhooks/:id', async (req, res) => {
     const trelloWebhookId = req.params.id;
     let trelloWebhook;
     try {
@@ -148,7 +149,107 @@ exports.appExtend = (app) => {
     res.json({
       boards,
       userInfo,
+      config: trelloWebhook.config || {},
     });
     res.status(200);
   });
+
+  app.post('/webhooks', async (req, res) => {
+    const rcWebhookUri = req.body.rcWebhook;
+    if (!rcWebhookUri) {
+      res.send('Not found');
+      res.status(404);
+      return;
+    }
+    const boardId = req.body.boardId;
+    if (!boardId) {
+      res.send('Error params');
+      res.status(403);
+      return;
+    }
+    let rcWebhookRecord;
+    let trelloWebhook;
+    try {
+      rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
+      trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
+      if (!trelloWebhook || !trelloWebhook.token) {
+        res.send('Forbidden');
+        res.status(401);
+        return;
+      }
+      trelloWebhook.config = {
+        boardId,
+      };
+      if (!trelloWebhook.rc_webhook_id) {
+        trelloWebhook.rc_webhook_id = rcWebhookUri;
+      }
+      await trelloWebhook.save();
+      const trello = new Trello({
+        appKey: process.env.TRELLO_APP_KEY,
+        token: trelloWebhook.token,
+      });
+      if (trelloWebhook.trello_webhook_id) {
+        const webhook = await trello.updateWebhook({
+          id: trelloWebhook.trello_webhook_id,
+          description: 'RingCentral Notifications',
+          callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
+          idModel: boardId,
+          active: true,
+        });
+        console.log('update success');
+        console.log(webhook);
+      } else {
+        const webhook = await trello.createWebhook({
+          id: trelloWebhook.trello_webhook_id,
+          description: 'RingCentral Notifications',
+          callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
+          idModel: boardId,
+          active: true,
+        });
+        trelloWebhook.trello_webhook_id = webhook.id;
+        await trelloWebhook.save();
+        console.log('create success');
+        console.log(webhook);
+      }
+      res.json({
+        result: 'OK',
+      });
+      res.status(200);
+    } catch (e) {
+      console.error(e);
+      res.send('Internal server error');
+      res.status(500);
+      return;
+    }
+  });
+
+  app.post('/trello-notify/:id', async (req, res) => {
+    const trelloWebhookId = req.params.id;
+    console.log(JSON.stringify(req.body, null, 2));
+    try {
+      const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+      const response = await axios.post(trelloWebhook.rc_webhook_id, {
+        title: `${req.body.action.type}`,
+      }, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log(response.data);
+    } catch (e) {
+      console.error(e)
+    }
+    res.json({
+      result: 'OK',
+    });
+    res.status(200);
+  });
+
+  app.head('/trello-notify/:id', async (req, res) => {
+    res.json({
+      result: 'OK',
+    });
+    res.status(200);
+  })
 }

@@ -10,9 +10,7 @@ const Container = styled.div`
   padding-top: 30px;
 `;
 
-let authorizationStatusCheckTimeout = null;
-
-export function Authorization({
+export function AuthorizationPanel({
   setAuthorized,
   integrationHelper,
 }) {
@@ -30,19 +28,11 @@ export function Authorization({
         </RcTypography>
         <br />
         <RcButton onClick={() => {
-          if (authorizationStatusCheckTimeout) {
-            clearTimeout(authorizationStatusCheckTimeout);
-            authorizationStatusCheckTimeout = null;
-          }
           setLoading(true);
           integrationHelper.openWindow(window.trelloNotifications.authorizationUri);
           function onAuthCallback (e) {
             if (e.data && e.data.authCallback) {
               window.removeEventListener('message', onAuthCallback);
-              if (authorizationStatusCheckTimeout) {
-                clearTimeout(authorizationStatusCheckTimeout);
-                authorizationStatusCheckTimeout = null;
-              }
               if (e.data.authCallback.indexOf('error') > -1) {
                 setLoading(false);
                 return;
@@ -60,26 +50,6 @@ export function Authorization({
             }
           }
           window.addEventListener('message', onAuthCallback);
-          const setStatusCheckTimeout = () => {
-            authorizationStatusCheckTimeout = setTimeout(async () => {
-              authorizationStatusCheckTimeout = null;
-              let authorized = false;
-              try {
-                const response = await fetch(window.trelloNotifications.authorizationStatusUri);
-                const result = await response.json();
-                authorized = result.authorized;
-              } catch (e) {
-                console.error(e);
-              }
-              if (authorized) {
-                setLoading(false);
-                setAuthorized(true);
-                return;
-              }
-              setStatusCheckTimeout();
-            }, 5000);
-          }
-          setStatusCheckTimeout();
         }}>
           Connect to Trello
         </RcButton>
