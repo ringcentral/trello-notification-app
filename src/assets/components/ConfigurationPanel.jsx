@@ -1,10 +1,15 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { RcButton, RcLoading, RcSelect, RcListItem, RcGrid, RcCheckbox } from '@ringcentral/juno';
+import {
+  RcButton,
+  RcLoading,
+  RcGrid,
+} from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
 
 import { filtersGroupByCategory } from '../../app/lib/filterOptions';
 
 import { BoardSelection } from './BoardSelection';
+import { FilterCheckList } from './FilterCheckList';
 
 const Container = styled.div`
   display: flex;
@@ -16,14 +21,6 @@ const Line = styled.div`
   line-height: 20px;
   color: #666;
   margin: 10px 0;
-`;
-
-const TitleLine = styled.div`
-  font-size: 15px;
-  line-height: 20px;
-  color: #666;
-  margin: 10px 0;
-  font-weight: bold;
 `;
 
 export function ConfigurationPanel({
@@ -121,37 +118,11 @@ export function ConfigurationPanel({
             }} />
           </RcGrid>
         </RcGrid>
-        {
-          filtersGroupByCategory.map((category) => (
-            <Fragment key={category.id}>
-              <TitleLine>
-                {category.name}
-              </TitleLine>
-              <RcGrid container>
-                {
-                  category.items.map((item) => (
-                    <RcGrid item xs={6} key={item.id}>
-                      <RcCheckbox
-                        formControlLabelProps={{
-                          labelPlacement: 'end',
-                        }}
-                        label={item.name}
-                        checked={selectedFilters.indexOf(item.id) > -1}
-                        onChange={(event) => {
-                          if (event.target.checked) {
-                            setSelectedFilters(selectedFilters.filter(f => f !== item.id).concat([item.id]));
-                          } else {
-                            setSelectedFilters(selectedFilters.filter(f => f !== item.id));
-                          }
-                        }}
-                      />
-                    </RcGrid>
-                  ))
-                }
-              </RcGrid>
-            </Fragment>
-          ))
-        }
+        <FilterCheckList
+          filtersGroupByCategory={filtersGroupByCategory}
+          selectedFilters={selectedFilters}
+          setSelectedFilters={setSelectedFilters}
+        />
       </RcLoading>
     </Container>
   );
