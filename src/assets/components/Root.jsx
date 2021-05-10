@@ -21,7 +21,7 @@ export function App({ integrationHelper }) {
               return fetch(window.trelloNotifications.trelloWebhookInfoUri);
             }}
             integrationHelper={integrationHelper}
-            createWebhook={({ boardId }) => {
+            createWebhook={({ boardId, filters }) => {
               return fetch(window.trelloNotifications.webhookCreationUri, {
                 method: 'POST',
                 headers: {
@@ -29,6 +29,7 @@ export function App({ integrationHelper }) {
                 },
                 body: JSON.stringify({
                   boardId,
+                  filters,
                   rcWebhook: window.trelloNotifications.rcWebhookUri,
                 }),
               });

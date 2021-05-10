@@ -154,6 +154,7 @@ exports.appExtend = (app) => {
     res.status(200);
   });
 
+  // Create or Update Trello webhook
   app.post('/webhooks', async (req, res) => {
     const rcWebhookUri = req.body.rcWebhook;
     if (!rcWebhookUri) {
@@ -162,7 +163,8 @@ exports.appExtend = (app) => {
       return;
     }
     const boardId = req.body.boardId;
-    if (!boardId) {
+    const filters = req.body.filters;
+    if (!boardId || !filters) {
       res.send('Error params');
       res.status(403);
       return;
@@ -179,6 +181,7 @@ exports.appExtend = (app) => {
       }
       trelloWebhook.config = {
         boardId,
+        filters: String(filters),
       };
       if (!trelloWebhook.rc_webhook_id) {
         trelloWebhook.rc_webhook_id = rcWebhookUri;

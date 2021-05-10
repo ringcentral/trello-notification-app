@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { RcButton, RcLoading, RcSelect, RcListItem, RcGrid, RcCheckbox } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
+
+import { filtersGroupByCategory } from '../../app/lib/filterOptions';
+
 import { BoardSelection } from './BoardSelection';
 
 const Container = styled.div`
@@ -34,6 +37,7 @@ export function ConfigurationPanel({
   const [boards, setBoards] = useState([]);
   const [userInfo, setUserInfo] = useState({});
   const [boardId, setBoardId] = useState(null);
+  const [selectedFilters, setSelectedFilters] = useState([]);
   useEffect(() => {
     async function getBoardsData() {
       setLoading(true);
@@ -48,6 +52,9 @@ export function ConfigurationPanel({
         }
         if (data.config) {
           setBoardId(data.config.boardId || (data.boards[0] && data.boards[0].id));
+          if (data.config.filters && data.config.filters.length > 0) {
+            setSelectedFilters(data.config.filters.split(','));
+          }
         }
       } catch (e) {
         console.error(e);
@@ -55,14 +62,10 @@ export function ConfigurationPanel({
       setLoading(false);
     }
     getBoardsData();
-    setTimeout(() => {
-      integrationHelper.send({ canSubmit: true });
-    }, 3000);
   }, []);
   useEffect(() => {
     integrationHelper.on('submit', async (e) => {
-      console.log(boardId);
-      await createWebhook({ boardId });
+      await createWebhook({ boardId, filters: selectedFilters.join(',') });
       return {
         status: true
       }
@@ -70,7 +73,16 @@ export function ConfigurationPanel({
     return () => {
       integrationHelper.dispose();
     };
-  }, [boardId])
+  }, [boardId, selectedFilters]);
+
+  // Listen selectedFilters to enable submit button
+  useEffect(() => {
+    if (selectedFilters.length > 0) {
+      integrationHelper.send({ canSubmit: true });
+    } else {
+      integrationHelper.send({ canSubmit: false });
+    }
+  }, [selectedFilters])
 
   return (
     <Container>
@@ -109,165 +121,37 @@ export function ConfigurationPanel({
             }} />
           </RcGrid>
         </RcGrid>
-        <TitleLine>
-          Boards & Lists
-        </TitleLine>
-        <RcGrid container>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="List Created"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="List Archived/Unarchived"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="List Renamed"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Board Renamed"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="List Moved to Another Board"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Member Added to Board"
-            />
-          </RcGrid>
-        </RcGrid>
-        <TitleLine>
-          Cards
-        </TitleLine>
-        <RcGrid container>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Card Created"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Description Changed"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Card Moved"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Due Date Changed"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Card Renamed"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Member Added to Card"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Comment Added to Card"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Card Archived/Unarchived"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Attachment Added to Card"
-            />
-          </RcGrid>
-        </RcGrid>
-        <TitleLine>
-          Checklists
-        </TitleLine>
-        <RcGrid container>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Checklist Added to Card"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Checklist Item Marked Complete/Incomplete"
-            />
-          </RcGrid>
-          <RcGrid item xs={6}>
-            <RcCheckbox
-              formControlLabelProps={{
-                labelPlacement: 'end',
-              }}
-              label="Checklist Item Created"
-            />
-          </RcGrid>
-        </RcGrid>
+        {
+          filtersGroupByCategory.map((category) => (
+            <Fragment key={category.id}>
+              <TitleLine>
+                {category.name}
+              </TitleLine>
+              <RcGrid container>
+                {
+                  category.items.map((item) => (
+                    <RcGrid item xs={6} key={item.id}>
+                      <RcCheckbox
+                        formControlLabelProps={{
+                          labelPlacement: 'end',
+                        }}
+                        label={item.name}
+                        checked={selectedFilters.indexOf(item.id) > -1}
+                        onChange={(event) => {
+                          if (event.target.checked) {
+                            setSelectedFilters(selectedFilters.filter(f => f !== item.id).concat([item.id]));
+                          } else {
+                            setSelectedFilters(selectedFilters.filter(f => f !== item.id));
+                          }
+                        }}
+                      />
+                    </RcGrid>
+                  ))
+                }
+              </RcGrid>
+            </Fragment>
+          ))
+        }
       </RcLoading>
     </Container>
   );
