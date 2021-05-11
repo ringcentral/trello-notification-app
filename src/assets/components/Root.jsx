@@ -17,6 +17,8 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   padding: 0 20px;
+  justify-content: center;
+  align-items: center;
 `;
 
 function StepContent({
@@ -73,8 +75,12 @@ function StepContent({
 
 export function App({ integrationHelper }) {
   const [loading, setLoading] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
-  const [completed, setCompleted] = useState({});
+  const [activeStep, setActiveStep] = useState(
+    window.trelloNotifications.trelloAuthorized ? 1 : 0
+  );
+  const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
+  const [boardSelectionCompleted, setBoardSelectionCompleted] = useState(false);
+  const [filterSettingCompleted, setFilterSettingCompleted] = useState(false);
   const [authorized, setAuthorized] =
     useState(window.trelloNotifications.trelloAuthorized);
   const [boards, setBoards] = useState([]);
@@ -82,26 +88,16 @@ export function App({ integrationHelper }) {
   const [boardId, setBoardId] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState([]);
 
-  const markAsComplete = (step) => {
-    const newComplete = { ...completed };
-    newComplete[step] = true;
-    setCompleted(newComplete);
-  }
-
-  const markAsUnComplete = (step) => {
-    const newComplete = { ...completed };
-    delete(newComplete[step]);
-    setCompleted(newComplete);
-  }
-
   // Listen authorized state to load trello webhook data:
   useEffect(() => {
     if (!authorized) {
-      markAsUnComplete(0);
+      setActiveStep(0);
+      setAuthorizationCompleted(false);
+      setBoardSelectionCompleted(false);
+      setFilterSettingCompleted(false);
       return;
     }
-    console.log('authorized');
-    markAsComplete(0);
+    setAuthorizationCompleted(true);
     async function getTrelloWebhookData() {
       setLoading(true);
       try {
@@ -130,39 +126,49 @@ export function App({ integrationHelper }) {
   // Listen selectedFilters to enable submit button
   useEffect(() => {
     if (selectedFilters.length > 0) {
-      markAsComplete(2);
+      setFilterSettingCompleted(true);
       integrationHelper.send({ canSubmit: true });
     } else {
-      markAsUnComplete(2);
+      setFilterSettingCompleted(false);
       integrationHelper.send({ canSubmit: false });
     }
   }, [selectedFilters]);
 
   // Listen selectedFilters to enable submit button
   useEffect(() => {
-    if (boardId) {
-      markAsComplete(1);
+    if (!!boardId) {
+      setBoardSelectionCompleted(true);
     } else {
-      markAsUnComplete(1);
+      setBoardSelectionCompleted(false);
     }
   }, [boardId]);
 
   useEffect(() => {
     // Listen RingCentral app submit event to submit data to server
     integrationHelper.on('submit', async (e) => {
-      await fetch(window.trelloNotifications.webhookCreationUri, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          boardId,
-          filters: selectedFilters.join(','),
-          rcWebhook: window.trelloNotifications.rcWebhookUri,
-        }),
-      });
-      return {
-        status: true
+      setLoading(true);
+      try {
+        await fetch(window.trelloNotifications.webhookCreationUri, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            boardId,
+            filters: selectedFilters.join(','),
+            rcWebhook: window.trelloNotifications.rcWebhookUri,
+          }),
+        });
+        setLoading(false);
+        return {
+          status: true
+        }
+      } catch (e) {
+        setLoading(false);
+        console.error(e);
+        return {
+          status: false
+        }
       }
     });
     return () => {
@@ -174,9 +180,9 @@ export function App({ integrationHelper }) {
     <RcThemeProvider>
       <RcLoading loading={loading}>
         <RcStepper activeStep={activeStep}>
-          <RcStep completed={completed[0]}>
+          <RcStep completed={authorizationCompleted}>
             {
-              completed[0] ? (
+              authorizationCompleted ? (
                 <RcStepButton onClick={() => setActiveStep(0)}>
                   Authorization
                 </RcStepButton>
@@ -187,9 +193,9 @@ export function App({ integrationHelper }) {
               )
             }
           </RcStep>
-          <RcStep completed={completed[1]}>
+          <RcStep completed={boardSelectionCompleted}>
             {
-              completed[1] ? (
+              boardSelectionCompleted ? (
                 <RcStepButton onClick={() => setActiveStep(1)}>
                   Select Board
                 </RcStepButton>
@@ -200,9 +206,9 @@ export function App({ integrationHelper }) {
               )
             }
           </RcStep>
-          <RcStep completed={completed[2]}>
+          <RcStep completed={filterSettingCompleted}>
           {
-              completed[2] ? (
+              filterSettingCompleted ? (
                 <RcStepButton onClick={() => setActiveStep(2)}>
                   Set filters
                 </RcStepButton>

@@ -1,5 +1,5 @@
 import React, {Fragment } from 'react';
-import { RcButton, RcText } from '@ringcentral/juno';
+import { RcButton, RcText, RcTypography } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
 
 const ButtonGroup = styled.div`
@@ -28,7 +28,7 @@ function LoginPanel({
     <Fragment>
       <RcTypography
         color="textPrimary"
-        variant="subheading2"
+        variant="subheading1"
         paragraph
         display="block"
       >
@@ -58,6 +58,9 @@ function LoginPanel({
           }
         }
         window.addEventListener('message', onAuthCallback);
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
       }}>
         Connect to Trello
       </RcButton>
