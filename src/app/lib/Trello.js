@@ -33,12 +33,12 @@ class Trello {
     const query = obj2uri({
       expiration: 'never',
       name: this._name,
-      scope: 'scope',
+      scope: 'read',
       response_type: 'token',
       key: this._appKey,
       return_url: this._redirectUrl,
       callback_method: 'fragment',
-    })
+    });
     return `${this._authorizeUrl}?${query}`;
   }
 
