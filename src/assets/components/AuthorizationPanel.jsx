@@ -23,6 +23,7 @@ function LoginPanel({
   setLoading,
   setAuthorized,
   integrationHelper,
+  setError,
 }) {
   return (
     <Fragment>
@@ -42,6 +43,7 @@ function LoginPanel({
           if (e.data && e.data.authCallback) {
             window.removeEventListener('message', onAuthCallback);
             if (e.data.authCallback.indexOf('error') > -1) {
+              setError('Authorization error')
               setLoading(false);
               return;
             }
@@ -49,11 +51,15 @@ function LoginPanel({
             const uri = `${authorizationCallbackUri}?${tokenQuery}`
             fetch(uri, {
               method: 'POST',
-            }).then(() => {
+            }).then((res) => {
+              if (res.status !== 200) {
+                return Promise.reject('Authorization error');
+              }
               setLoading(false);
               setAuthorized(true);
             }).catch(() => {
               setLoading(false);
+              setError('Authorization error please retry later.')
             });
           }
         }
@@ -74,6 +80,7 @@ function UserCenter({
   onLogout,
   setAuthorized,
   gotoNextStep,
+  setError,
 }) {
   return (
     <Fragment>
@@ -90,9 +97,15 @@ function UserCenter({
           variant="outlined"
           onClick={async () => {
             setLoading(true);
-            await onLogout();
-            setLoading(false);
-            setAuthorized(false);
+            try {
+              await onLogout();
+              setLoading(false);
+              setAuthorized(false);
+            } catch (e) {
+              console.error(e);
+              setLoading(false);
+              setError('Logout error please retry later.');
+            }
           }}
         >
           Logout
@@ -115,6 +128,7 @@ export function AuthorizationPanel({
   userInfo,
   onLogout,
   gotoNextStep,
+  setError,
 }) {
   if (authorized) {
     return (
@@ -124,6 +138,7 @@ export function AuthorizationPanel({
         setLoading={setLoading}
         setAuthorized={setAuthorized}
         gotoNextStep={gotoNextStep}
+        setError={setError}
       />
     );
   }
@@ -135,6 +150,7 @@ export function AuthorizationPanel({
       setLoading={setLoading}
       authorizationUri={window.trelloNotifications.authorizationUri}
       authorizationCallbackUri={window.trelloNotifications.authorizationCallbackUri}
+      setError={setError}
     />
   );
 }

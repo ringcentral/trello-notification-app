@@ -6,6 +6,7 @@ import {
   RcStepLabel,
   RcLoading,
   RcStepButton,
+  RcAlert,
 } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
 
@@ -34,6 +35,7 @@ function StepContent({
   selectedFilters,
   setSelectedFilters,
   integrationHelper,
+  setError,
 }) {
   if (activeStep === 1) {
     return (
@@ -65,10 +67,14 @@ function StepContent({
       userInfo={userInfo}
       setAuthorized={setAuthorized}
       integrationHelper={integrationHelper}
-      onLogout={() => {
-        return fetch(window.trelloNotifications.authorizationRevokeUri);
+      onLogout={async () => {
+        const resp = await fetch(window.trelloNotifications.authorizationRevokeUri);
+        if (resp.status !== 200) {
+          throw new Error('Logout error');
+        }
       }}
       gotoNextStep={() => setActiveStep(1)}
+      setError={setError}
     />
   );
 }
@@ -78,16 +84,18 @@ export function App({ integrationHelper }) {
   const [activeStep, setActiveStep] = useState(
     window.trelloNotifications.trelloAuthorized ? 1 : 0
   );
+  const [error, setError] = useState('');
   const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
   const [boardSelectionCompleted, setBoardSelectionCompleted] = useState(false);
   const [filterSettingCompleted, setFilterSettingCompleted] = useState(false);
+
   const [authorized, setAuthorized] =
     useState(window.trelloNotifications.trelloAuthorized);
   const [boards, setBoards] = useState([]);
   const [userInfo, setUserInfo] = useState({});
   const [boardId, setBoardId] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState([]);
-
+  
   // Listen authorized state to load trello webhook data:
   useEffect(() => {
     if (!authorized) {
@@ -102,6 +110,9 @@ export function App({ integrationHelper }) {
       setLoading(true);
       try {
         const response = await fetch(window.trelloNotifications.trelloWebhookInfoUri);
+        if (response.status !== 200) {
+          throw new Error('Fetch data error please retry later')
+        }
         const data = await response.json();
         if (data.boards) {
           setBoards(data.boards);
@@ -117,6 +128,7 @@ export function App({ integrationHelper }) {
         }
       } catch (e) {
         console.error(e);
+        setError('Fetch data error please retry later');
       }
       setLoading(false);
     }
@@ -148,7 +160,7 @@ export function App({ integrationHelper }) {
     integrationHelper.on('submit', async (e) => {
       setLoading(true);
       try {
-        await fetch(window.trelloNotifications.webhookCreationUri, {
+        const response = await fetch(window.trelloNotifications.webhookCreationUri, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -160,12 +172,16 @@ export function App({ integrationHelper }) {
           }),
         });
         setLoading(false);
+        if (response.status !== 200) {
+          throw new Error('Submit data error please retry later')
+        }
         return {
-          status: true
+          status: true,
         }
       } catch (e) {
         setLoading(false);
         console.error(e);
+        setError('Submit data error please retry later');
         return {
           status: false
         }
@@ -179,6 +195,13 @@ export function App({ integrationHelper }) {
   return (
     <RcThemeProvider>
       <RcLoading loading={loading}>
+        {
+          (error && error.length > 0) ? (
+            <RcAlert severity="warning" onClose={() => setError('')}>
+              {error}
+            </RcAlert>
+          ) : null
+        }
         <RcStepper activeStep={activeStep}>
           <RcStep completed={authorizationCompleted}>
             {
@@ -233,6 +256,7 @@ export function App({ integrationHelper }) {
             setAuthorized={setAuthorized}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
+            setError={setError}
             integrationHelper={integrationHelper}
           />
         </Container>
