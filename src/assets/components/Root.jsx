@@ -103,6 +103,10 @@ export function App({ integrationHelper }) {
       setAuthorizationCompleted(false);
       setBoardSelectionCompleted(false);
       setFilterSettingCompleted(false);
+      setBoards([]);
+      setUserInfo({});
+      setBoardId(null);
+      setSelectedFilters([]);
       return;
     }
     setAuthorizationCompleted(true);
@@ -148,7 +152,7 @@ export function App({ integrationHelper }) {
 
   // Listen selectedFilters to enable submit button
   useEffect(() => {
-    if (!!boardId) {
+    if (boardId && boardId.length > 0) {
       setBoardSelectionCompleted(true);
     } else {
       setBoardSelectionCompleted(false);
