@@ -4,10 +4,25 @@ import {
   RcCheckbox,
   RcAccordion,
   RcAccordionSummary,
-  RcAccordionDetails
+  RcAccordionDetails,
+  RcBadge,
 } from '@ringcentral/juno';
 
 import { filtersGroupByCategory } from '../../app/lib/filterOptions';
+
+function getSelectedCountInCategory(category, selectedFilters) {
+  let count = 0;
+  const allItemsMap = {};
+  category.items.forEach((item) => {
+    allItemsMap[item.id] = true;
+  });
+  selectedFilters.forEach((selected) => {
+    if (allItemsMap[selected]) {
+      count += 1;
+    }
+  });
+  return count;
+}
 
 export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
   return (
@@ -16,7 +31,12 @@ export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
         filtersGroupByCategory.map((category) => (
           <RcAccordion variant="elevation" key={category.id} defaultExpanded>
             <RcAccordionSummary expandIcon>
-              {category.name}
+              {category.name} &nbsp;
+              <RcBadge
+                color="grey.600"
+                badgeContent={getSelectedCountInCategory(category, selectedFilters)}
+                overlap="none"
+              />
             </RcAccordionSummary>
             <RcAccordionDetails>
               <RcGrid container>
