@@ -122,7 +122,5 @@ const filters = filtersGroupByCategory.reduce((value, current) => {
   return value.concat(current.items);
 }, []);
 
-console.log(filters);
-
 exports.filtersGroupByCategory = filtersGroupByCategory;
 exports.filters = filters;

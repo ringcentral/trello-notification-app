@@ -7,7 +7,9 @@ import {
   RcAccordionDetails
 } from '@ringcentral/juno';
 
-export function FilterCheckList({ filtersGroupByCategory, selectedFilters, setSelectedFilters }) {
+import { filtersGroupByCategory } from '../../app/lib/filterOptions';
+
+export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
   return (
     <Fragment>
       {
