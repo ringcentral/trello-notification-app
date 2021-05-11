@@ -118,9 +118,12 @@ const filtersGroupByCategory = [
   }
 ];
 
-const filters = filtersGroupByCategory.reduce((value, current) => {
-  return value.concat(current.items);
-}, []);
+const allFilters = filtersGroupByCategory.reduce((map, current) => {
+  current.items.forEach((item) => {
+    map[item.id] = item;
+  });
+  return map;
+}, {});
 
 exports.filtersGroupByCategory = filtersGroupByCategory;
-exports.filters = filters;
+exports.allFilters = allFilters;

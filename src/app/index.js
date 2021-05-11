@@ -5,6 +5,7 @@ const cookieSession = require('cookie-session');
 const { Trello } = require('./lib/Trello');
 const { RCWebhook } = require('./models/rc-webhook');
 const { TrelloWebhook } = require('./models/trello-webhook');
+const { getFilterId } = require('./lib/filter');
 
 // extends or override express app as you need
 exports.appExtend = (app) => {
@@ -116,6 +117,7 @@ exports.appExtend = (app) => {
   });
 
   app.get('/trello/revoke/:id', async (req, res) => {
+    // TODO clean webhook and token
     const trelloWebhookId = req.params.id;
     const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
     if (trelloWebhook) {
@@ -231,15 +233,21 @@ exports.appExtend = (app) => {
     console.log(JSON.stringify(req.body, null, 2));
     try {
       const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
-      const response = await axios.post(trelloWebhook.rc_webhook_id, {
-        title: `${req.body.action.type}`,
-      }, {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log(response.data);
+      const filterId = getFilterId(req.body, trelloWebhook.config.filters);
+      if (filterId) {
+        console.log(filterId);
+        const response = await axios.post(trelloWebhook.rc_webhook_id, {
+          title: `${req.body.action.type}`,
+        }, {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log(response.data);
+      } else {
+        console.log('Filtered message');
+      }
     } catch (e) {
       console.error(e)
     }
@@ -254,5 +262,5 @@ exports.appExtend = (app) => {
       result: 'OK',
     });
     res.status(200);
-  })
+  });
 }
