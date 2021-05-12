@@ -6,7 +6,7 @@ const { Trello } = require('./lib/Trello');
 const { RCWebhook } = require('./models/rc-webhook');
 const { TrelloWebhook } = require('./models/trello-webhook');
 const { getFilterId } = require('./lib/filter');
-
+const { formatGlipWebhookCardMessage } = require('./lib/formatMessage');
 // extends or override express app as you need
 exports.appExtend = (app) => {
   app.set('views', path.resolve(__dirname, './views'));
@@ -235,18 +235,14 @@ exports.appExtend = (app) => {
       const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
       const filterId = getFilterId(req.body, trelloWebhook.config.filters);
       if (filterId) {
-        console.log(filterId);
-        const response = await axios.post(trelloWebhook.rc_webhook_id, {
-          title: `${req.body.action.type}`,
-        }, {
+        const glipMessage = formatGlipWebhookCardMessage(req.body);
+        const response = await axios.post(trelloWebhook.rc_webhook_id, glipMessage, {
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json'
           }
         });
         console.log(response.data);
-      } else {
-        console.log('Filtered message');
       }
     } catch (e) {
       console.error(e)
