@@ -93,7 +93,7 @@ class Trello {
       return response.data;
     } catch (e) {
       console.error(e);
-      return {};
+      throw e;
     }
   }
 
@@ -118,14 +118,32 @@ class Trello {
       return response.data;
     } catch (e) {
       console.error(e);
-      return {};
+      throw e;
     }
   }
 
   async deleteWebhook({
     id,
   }) {
-    const uri = `${this._appServer}/1/webhooks/${id}`;
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+    });
+    const uri = `${this._appServer}/1/webhooks/${id}?${query}`;
+    try {
+      await axios.delete(uri);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Revoke token, webhooks that created from this token will be deleted automatically
+  async revokeToken() {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+    });
+    const uri = `${this._appServer}/1/tokens/${this._token}?${query}`;
     try {
       await axios.delete(uri);
     } catch (e) {

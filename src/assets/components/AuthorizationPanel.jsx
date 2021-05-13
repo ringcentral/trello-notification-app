@@ -18,12 +18,7 @@ const LoginInfo = styled.div`
 `;
 
 function LoginPanel({
-  authorizationUri,
-  authorizationCallbackUri,
-  setLoading,
-  setAuthorized,
-  integrationHelper,
-  setError,
+  onLogin,
 }) {
   return (
     <Fragment>
@@ -36,38 +31,7 @@ function LoginPanel({
         To begin, please connect your Trello account.
       </RcTypography>
       <br />
-      <RcButton onClick={() => {
-        setLoading(true);
-        integrationHelper.openWindow(authorizationUri);
-        function onAuthCallback (e) {
-          if (e.data && e.data.authCallback) {
-            window.removeEventListener('message', onAuthCallback);
-            if (e.data.authCallback.indexOf('error') > -1) {
-              setError('Authorization error')
-              setLoading(false);
-              return;
-            }
-            const tokenQuery = e.data.authCallback.split('#')[1];
-            const uri = `${authorizationCallbackUri}?${tokenQuery}`
-            fetch(uri, {
-              method: 'POST',
-            }).then((res) => {
-              if (res.status !== 200) {
-                return Promise.reject('Authorization error');
-              }
-              setLoading(false);
-              setAuthorized(true);
-            }).catch(() => {
-              setLoading(false);
-              setError('Authorization error please retry later.')
-            });
-          }
-        }
-        window.addEventListener('message', onAuthCallback);
-        setTimeout(() => {
-          setLoading(false);
-        }, 2000);
-      }}>
+      <RcButton onClick={onLogin}>
         Connect to Trello
       </RcButton>
     </Fragment>
@@ -76,11 +40,8 @@ function LoginPanel({
 
 function UserCenter({
   userInfo,
-  setLoading,
   onLogout,
-  setAuthorized,
   gotoNextStep,
-  setError,
 }) {
   return (
     <Fragment>
@@ -95,18 +56,7 @@ function UserCenter({
       <ButtonGroup>
         <RcButton
           variant="outlined"
-          onClick={async () => {
-            setLoading(true);
-            try {
-              await onLogout();
-              setLoading(false);
-              setAuthorized(false);
-            } catch (e) {
-              console.error(e);
-              setLoading(false);
-              setError('Logout error please retry later.');
-            }
-          }}
+          onClick={onLogout}
         >
           Logout
         </RcButton>
@@ -122,35 +72,24 @@ function UserCenter({
 
 export function AuthorizationPanel({
   authorized,
-  setAuthorized,
-  integrationHelper,
-  setLoading,
+  onLogin,
   userInfo,
   onLogout,
   gotoNextStep,
-  setError,
 }) {
   if (authorized) {
     return (
       <UserCenter
         userInfo={userInfo}
         onLogout={onLogout}
-        setLoading={setLoading}
-        setAuthorized={setAuthorized}
         gotoNextStep={gotoNextStep}
-        setError={setError}
       />
     );
   }
 
   return (
     <LoginPanel
-      integrationHelper={integrationHelper}
-      setAuthorized={setAuthorized}
-      setLoading={setLoading}
-      authorizationUri={window.trelloNotifications.authorizationUri}
-      authorizationCallbackUri={window.trelloNotifications.authorizationCallbackUri}
-      setError={setError}
+      onLogin={onLogin}
     />
   );
 }

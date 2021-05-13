@@ -13,6 +13,9 @@ exports.TrelloWebhook = sequelize.define('trello-webhooks', {
   trello_webhook_id: {
     type: Sequelize.STRING // identify for trello webhook id  https://developer.atlassian.com/cloud/trello/rest/api-group-webhooks/#api-webhooks-post
   },
+  trello_user_id: {
+    type: Sequelize.STRING // identify for trello webhook id  https://developer.atlassian.com/cloud/trello/rest/api-group-webhooks/#api-webhooks-post
+  },
   token: {
     type: Sequelize.STRING
   },

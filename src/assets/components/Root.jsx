@@ -25,17 +25,15 @@ const Container = styled.div`
 function StepContent({
   activeStep,
   setActiveStep,
-  setLoading,
   userInfo,
   boards,
   boardId,
   setBoardId,
   authorized,
-  setAuthorized,
   selectedFilters,
   setSelectedFilters,
-  integrationHelper,
-  setError,
+  onLogin,
+  onLogout,
 }) {
   if (activeStep === 1) {
     return (
@@ -62,35 +60,26 @@ function StepContent({
   }
   return (
     <AuthorizationPanel
-      setLoading={setLoading}
       authorized={authorized}
       userInfo={userInfo}
-      setAuthorized={setAuthorized}
-      integrationHelper={integrationHelper}
-      onLogout={async () => {
-        const resp = await fetch(window.trelloNotifications.authorizationRevokeUri);
-        if (resp.status !== 200) {
-          throw new Error('Logout error');
-        }
-      }}
       gotoNextStep={() => setActiveStep(1)}
-      setError={setError}
+      onLogin={onLogin}
+      onLogout={onLogout}
     />
   );
 }
 
-export function App({ integrationHelper }) {
+export function App({ integrationHelper, client }) {
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(
-    window.trelloNotifications.trelloAuthorized ? 1 : 0
+    client.trelloAuthorized ? 1 : 0
   );
   const [error, setError] = useState('');
   const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
   const [boardSelectionCompleted, setBoardSelectionCompleted] = useState(false);
   const [filterSettingCompleted, setFilterSettingCompleted] = useState(false);
 
-  const [authorized, setAuthorized] =
-    useState(window.trelloNotifications.trelloAuthorized);
+  const [authorized, setAuthorized] = useState(client.trelloAuthorized);
   const [boards, setBoards] = useState([]);
   const [userInfo, setUserInfo] = useState({});
   const [boardId, setBoardId] = useState(null);
@@ -113,11 +102,7 @@ export function App({ integrationHelper }) {
     async function getTrelloWebhookData() {
       setLoading(true);
       try {
-        const response = await fetch(window.trelloNotifications.trelloWebhookInfoUri);
-        if (response.status !== 200) {
-          throw new Error('Fetch data error please retry later')
-        }
-        const data = await response.json();
+        const data = await client.getInfo();
         if (data.boards) {
           setBoards(data.boards);
         }
@@ -164,21 +149,11 @@ export function App({ integrationHelper }) {
     integrationHelper.on('submit', async (e) => {
       setLoading(true);
       try {
-        const response = await fetch(window.trelloNotifications.webhookCreationUri, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            boardId,
-            filters: selectedFilters.join(','),
-            rcWebhook: window.trelloNotifications.rcWebhookUri,
-          }),
+        await client.createWebhook({
+          boardId,
+          filters: selectedFilters.join(','),
         });
         setLoading(false);
-        if (response.status !== 200) {
-          throw new Error('Submit data error please retry later')
-        }
         return {
           status: true,
         }
@@ -262,6 +237,44 @@ export function App({ integrationHelper }) {
             setSelectedFilters={setSelectedFilters}
             setError={setError}
             integrationHelper={integrationHelper}
+            onLogin={() => {
+              setLoading(true);
+              integrationHelper.openWindow(client.authorizationUri);
+              async function onAuthCallback (e) {
+                if (e.data && e.data.authCallback) {
+                  window.removeEventListener('message', onAuthCallback);
+                  if (e.data.authCallback.indexOf('error') > -1) {
+                    setError('Authorization error')
+                    setLoading(false);
+                    return;
+                  }
+                  try {
+                    await client.saveToken(e.data.authCallback);
+                    setAuthorized(true);
+                  } catch (e) {
+                    console.error(e);
+                    setError('Authorization error please retry later.')
+                  }
+                  setLoading(false);
+                }
+              }
+              window.addEventListener('message', onAuthCallback);
+              setTimeout(() => {
+                setLoading(false);
+              }, 2000);
+            }}
+            onLogout={async () => {
+              setLoading(true);
+              try {
+                await client.unauthorize();
+                setLoading(false);
+                setAuthorized(false);
+              } catch (e) {
+                console.error(e);
+                setLoading(false);
+                setError('Logout error please retry later.');
+              }
+            }}
           />
         </Container>
       </RcLoading>

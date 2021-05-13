@@ -15,5 +15,5 @@ exports.RCWebhook = sequelize.define('rc-webhooks', {
   enabled: {
     type: Sequelize.BOOLEAN,
     defaultValue: true
-  }
+  },
 });
