@@ -6,6 +6,7 @@ const { formatGlipWebhookCardMessage } = require('../lib/formatMessage');
 
 async function notify(req, res) {
   const trelloWebhookId = req.params.id;
+  // console.log(JSON.stringify(req.body, null, 2));
   try {
     const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
