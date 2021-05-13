@@ -2,7 +2,8 @@
 /**
  * lambda file
  */
-import serverlessHTTP from 'serverless-http'
-import app1 from './server'
+const serverlessHTTP = require('serverless-http');
+const { server } = require('./server');
 
-export const app = serverlessHTTP(app1)
+exports.app = serverlessHTTP(server);
+
