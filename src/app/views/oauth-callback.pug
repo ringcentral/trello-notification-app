@@ -14,16 +14,8 @@ html
       if (window.opener) {
         window.opener.postMessage({
           authCallback: window.location.href,
-        }, '*');
+        }, window.location.origin);
         window.close();
       } else {
-        var uri = window.location.href.replace('#', '?');
-        fetch(uri, { method: 'POST' })
-          .then(function() {
-            window.close();
-          })
-          .catch(function(e) {
-            localStorage.setItem('oauth-error', e.message);
-            window.close();
-          });
+        localStorage.setItem('authCallbackUri', window.location.href);
       }
