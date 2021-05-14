@@ -1,5 +1,5 @@
-import React, {Fragment } from 'react';
-import { RcButton, RcText, RcTypography } from '@ringcentral/juno';
+import React, { Fragment, useState } from 'react';
+import { RcButton, RcText, RcTypography, RcDialog, RcDialogContent, RcDialogActions } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
 
 const ButtonGroup = styled.div`
@@ -43,6 +43,7 @@ function UserCenter({
   onLogout,
   gotoNextStep,
 }) {
+  const [confirmModalOpened, setConfirmModalOpened] = useState(false);
   return (
     <Fragment>
       <LoginInfo>
@@ -56,7 +57,7 @@ function UserCenter({
       <ButtonGroup>
         <RcButton
           variant="outlined"
-          onClick={onLogout}
+          onClick={() => setConfirmModalOpened(true)}
         >
           Logout
         </RcButton>
@@ -66,6 +67,23 @@ function UserCenter({
           Next Step
         </RcButton>
       </ButtonGroup>
+      <RcDialog
+        open={confirmModalOpened}
+        onClose={() => setConfirmModalOpened(false)}
+      >
+        <RcDialogContent>
+          <RcTypography>Are you sure to unauthorize? Notification will be stopped after unauthorized.</RcTypography>
+        </RcDialogContent>
+        <RcDialogActions>
+          <RcButton variant="outlined" onClick={() => setConfirmModalOpened(false)}>
+            Cancel
+          </RcButton>
+          <RcButton onClick={() => {
+            setConfirmModalOpened(false);
+            onLogout();
+          }}>Confirm</RcButton>
+        </RcDialogActions>
+      </RcDialog>
     </Fragment>
   );
 }
