@@ -105,3 +105,12 @@ dist
 /temp/
 
 *.sqlite
+
+serverless-deploy/env.yml
+serverless-deploy/serverless.yml
+serverless-deploy/*.json
+serverless-deploy/*.js
+serverless-deploy/app
+serverless-deploy/node_modules
+serverless-deploy/.serverless
+public
