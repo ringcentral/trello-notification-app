@@ -117,7 +117,12 @@ export function App({ integrationHelper, client }) {
         }
       } catch (e) {
         console.error(e);
-        setError('Fetch data error please retry later');
+        if (e.message === 'Unauthorized') {
+          setError('Authorization required.');
+          setAuthorized(false);
+        } else {
+          setError('Fetch data error please retry later');
+        }
       }
       setLoading(false);
     }
@@ -160,7 +165,12 @@ export function App({ integrationHelper, client }) {
       } catch (e) {
         setLoading(false);
         console.error(e);
-        setError('Submit data error please retry later');
+        if (e.message === 'Unauthorized') {
+          setError('Authorization required.');
+          setAuthorized(false);
+        } else {
+          setError('Submit data error please retry later');
+        }
         return {
           status: false
         }

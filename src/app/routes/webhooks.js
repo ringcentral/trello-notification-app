@@ -70,14 +70,29 @@ async function webhookInfo (req, res) {
     appKey: process.env.TRELLO_APP_KEY,
     token,
   });
-  const boards = await trello.getBoards();
-  const userInfo = await trello.getUserInfo();
-  res.json({
-    boards,
-    userInfo,
-    config: trelloWebhook.config || {},
-  });
-  res.status(200);
+  try {
+    const boards = await trello.getBoards();
+    const userInfo = await trello.getUserInfo();
+    res.json({
+      boards,
+      userInfo,
+      config: trelloWebhook.config || {},
+    });
+    res.status(200);
+  } catch (e) {
+    if (e.response && e.response.status === 401) {
+      if (trelloWebhook) {
+        trelloWebhook.token = '';
+        trelloWebhook.trello_webhook_id = '';
+        await trelloWebhook.save();
+      }
+      res.send('Unauthorized.');
+      res.status(401);
+      return;
+    }
+    res.send('Internal server error.');
+    res.status(500);
+  }
 }
 
 async function createWebhook(req, res) {
@@ -149,6 +164,16 @@ async function createWebhook(req, res) {
     });
     res.status(200);
   } catch (e) {
+    if (e.response && e.response.status === 401) {
+      if (trelloWebhook) {
+        trelloWebhook.token = '';
+        trelloWebhook.trello_webhook_id = '';
+        await trelloWebhook.save();
+      }
+      res.send('Unauthorized');
+      res.status(401);
+      return;
+    }
     console.error(e);
     res.send('Internal server error');
     res.status(500);

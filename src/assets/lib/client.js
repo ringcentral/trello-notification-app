@@ -54,6 +54,9 @@ export class Client {
         rcWebhook: this._config.rcWebhookUri,
       }),
     });
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
     if (response.status !== 200) {
       throw new Error('Submit data error please retry later')
     }
@@ -61,6 +64,9 @@ export class Client {
 
   async getInfo() {
     const response = await fetch(`${this._config.webhookInfoUri}?rcWebhook=${this._config.rcWebhookUri}`);
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
     if (response.status !== 200) {
       throw new Error('Fetch data error please retry later')
     }

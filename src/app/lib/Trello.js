@@ -53,24 +53,14 @@ class Trello {
       token: this._token,
     })
     const uri = `${this._appServer}/1/members/me/boards?${query}`;
-    try {
-      const response = await axios.get(uri);
-      return response.data;
-    } catch (e) {
-      console.error(e);
-      return [];
-    }
+    const response = await axios.get(uri);
+    return response.data;
   }
 
   async getUserInfo() {
     const uri = `${this._appServer}/1/members/me?key=${this._appKey}&token=${this._token}`;
-    try {
-      const response = await axios.get(uri);
-      return response.data;
-    } catch (e) {
-      console.error(e);
-      return {};
-    }
+    const response = await axios.get(uri);
+    return response.data;
   }
 
   async createWebhook({
@@ -88,13 +78,8 @@ class Trello {
       active,
     })
     const uri = `${this._appServer}/1/webhooks?${query}`;
-    try {
-      const response = await axios.post(uri);
-      return response.data;
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
+    const response = await axios.post(uri);
+    return response.data;
   }
 
   async updateWebhook({
@@ -113,13 +98,8 @@ class Trello {
       active,
     })
     const uri = `${this._appServer}/1/webhooks/${id}?${query}`;
-    try {
-      const response = await axios.put(uri);
-      return response.data;
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
+    const response = await axios.put(uri);
+    return response.data;
   }
 
   async deleteWebhook({
