@@ -1,5 +1,4 @@
-service:
-  name: ringcentral-trello-notification-app
+service: ringcentral-trello-notification-app
 provider:
   stage: ${opt:stage, 'prod'}
   name: aws
@@ -8,7 +7,6 @@ provider:
   memorySize: 256
   environment: ${file(./env.yml)}
   profile: default
-  excludeDevDependencies: true
   # iamRoleStatements:
   #   - Effect: Allow
   #     Action:
@@ -30,6 +28,7 @@ provider:
     Team: your-team
     Name: ringcentral-trello-notification-app
 package:
+  excludeDevDependencies: true
   include:
     - '.json'
     - '.js'
