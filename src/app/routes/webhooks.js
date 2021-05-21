@@ -90,6 +90,7 @@ async function webhookInfo (req, res) {
       res.status(401);
       return;
     }
+    console.error(e);
     res.send('Internal server error.');
     res.status(500);
   }
