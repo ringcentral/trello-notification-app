@@ -1,6 +1,8 @@
 import qs from 'qs';
 import url from 'url';
 
+const TOKEN_STORAGE_KEY = 'jwt-token-storage-key';
+
 export class Client {
   constructor(config) {
     this._config = config;
@@ -19,11 +21,14 @@ export class Client {
       },
       body: JSON.stringify({
         token: data.token,
-        rcWebhook: this._config.rcWebhookUri,
       }),
     });
     if (response.status !== 200) {
       throw new Error('Authorization error')
+    }
+    const tokenData = await response.json();
+    if (tokenData.token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, tokenData.token);
     }
   }
 
@@ -34,12 +39,13 @@ export class Client {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        rcWebhook: this._config.rcWebhookUri,
+        token: this.token,
       }),
     });
     if (resp.status !== 200) {
       throw new Error('unauthorize error');
     }
+    this.cleanToken();
   }
 
   async createWebhook({ boardId, filters }) {
@@ -49,12 +55,14 @@ export class Client {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        token: this.token,
         boardId,
         filters,
         rcWebhook: this._config.rcWebhookUri,
       }),
     });
     if (response.status === 401) {
+      this.cleanToken();
       throw new Error('Unauthorized');
     }
     if (response.status !== 200) {
@@ -63,8 +71,9 @@ export class Client {
   }
 
   async getInfo() {
-    const response = await fetch(`${this._config.webhookInfoUri}?rcWebhook=${this._config.rcWebhookUri}&random=${Date.now()}`);
+    const response = await fetch(`${this._config.webhookInfoUri}?token=${this.token}&rcWebhook=${this._config.rcWebhookUri}&random=${Date.now()}`);
     if (response.status === 401) {
+      this.cleanToken();
       throw new Error('Unauthorized');
     }
     if (response.status !== 200) {
@@ -75,10 +84,19 @@ export class Client {
   }
 
   get trelloAuthorized() {
-    return !!this._config.trelloAuthorized;
+    return !!this.token;
   }
 
   get authorizationUri() {
     return this._config.authorizationUri;
   }
+
+  cleanToken() {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
+  get token() {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  }
+
 }

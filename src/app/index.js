@@ -1,5 +1,4 @@
 const path = require('path');
-const cookieSession = require('cookie-session');
 
 const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
@@ -9,14 +8,6 @@ const trelloNotifyRoute = require('./routes/trello-notify');
 exports.appExtend = (app) => {
   app.set('views', path.resolve(__dirname, './views'));
   app.set('view engine', 'pug');
-  // cookie session config
-  app.use(cookieSession({
-    name: 'session',
-    keys: [process.env.APP_SERVER_SECRET_KEY],
-    httpOnly: true,
-    signed: true,
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
-  }));
 
   // RingCentral notification app main page
   app.get('/webhooks/new', webhooksRoute.newWebhook);

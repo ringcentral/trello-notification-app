@@ -72,7 +72,7 @@ function UserCenter({
         onClose={() => setConfirmModalOpened(false)}
       >
         <RcDialogContent>
-          <RcTypography>Are you sure to unauthorize? Notification will be stopped after unauthorized.</RcTypography>
+          <RcTypography>Are you sure to unauthorize? All notifications will be stopped after unauthorized.</RcTypography>
         </RcDialogContent>
         <RcDialogActions>
           <RcButton variant="outlined" onClick={() => setConfirmModalOpened(false)}>

@@ -47,10 +47,11 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "cookie-session": "^1.4.0",
     "dotenv": "6.2.0",
     "dynamo-sequelize": "^0.8.1",
     "glip-integration-js": "^0.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "qs": "^6.5.1",
     "pug": "^3.0.0",
     "sequelize": "^5.22.3",
     "serverless-http": "^2.6.0",

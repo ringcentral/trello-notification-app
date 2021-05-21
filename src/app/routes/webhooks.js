@@ -1,42 +1,20 @@
 const { Trello } = require('../lib/Trello');
+const { decodeToken } = require('../lib/jwt');
+
 const { RCWebhook } = require('../models/rc-webhook');
 const { TrelloWebhook } = require('../models/trello-webhook');
+const { TrelloUser } = require('../models/trello-user');
 
 async function newWebhook(req, res) {
-  const csrfToken = Math.random().toString(36);
-  req.session.csrfToken = csrfToken;
   const rcWebhookUri = req.query.webhook;
-  if (!rcWebhookUri) {
-    res.end(404);
+  if (!rcWebhookUri || rcWebhookUri.indexOf('https://') !==0) {
+    res.send('Webhook uri is required.');
+    res.status(404);
     return;
   }
-  let rcWebhookRecord = {};
-  let trelloAuthorized = false;
-  try {
-    rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
-    if (rcWebhookRecord) {
-      const trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
-      if (trelloWebhook && trelloWebhook.token && trelloWebhook.token.length > 0) {
-        trelloAuthorized = true;
-      }
-    } else {
-      rcWebhookRecord = await RCWebhook.create({
-        id: rcWebhookUri,
-      });
-    }
-  } catch (e) {
-    console.error(e);
-    res.send('Internal server error');
-    res.end(500);
-    return;
-  }
-  const trelloWebhookId = rcWebhookRecord.trello_webhook_id;
   res.render('new', {
-    csrfToken,
     assetsPath: process.env.ASSETS_PATH,
     data: {
-      trelloAuthorized,
-      trelloWebhookId,
       rcWebhookUri,
       authorizationUri: `${process.env.APP_SERVER}/trello/authorize`,
       authorizationTokenUri: `${process.env.APP_SERVER}/trello/token`,
@@ -47,130 +25,154 @@ async function newWebhook(req, res) {
   });
 }
 
-async function webhookInfo (req, res) {
+async function webhookInfo(req, res) {
+  const jwtToken = req.query.token;
   const rcWebhookUri = req.query.rcWebhook;
-  let trelloWebhook;
-  try {
-    const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
-    if (!rcWebhookRecord) {
-      res.status(403);
-      return;
-    }
-    trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
-  } catch (e) {
-    console.error(e);
-    // ignore
+  if (!jwtToken || !rcWebhookUri) {
+    res.send('Error params');
+    res.status(403);
+    return;
   }
-  const token = trelloWebhook && trelloWebhook.token;
-  if (!token) {
+  const decodedToken = decodeToken(jwtToken);
+  if (!decodedToken) {
+    res.send('Token invalid.');
     res.status(401);
     return;
   }
-  const trello = new Trello({
-    appKey: process.env.TRELLO_APP_KEY,
-    token,
-  });
+  const userId = decodedToken.id;
+  let trelloUser;
   try {
+    trelloUser = await TrelloUser.findByPk(userId);
+    if (!trelloUser || !trelloUser.token) {
+      res.send('Unauthorized');
+      res.status(401);
+      return;
+    }
+    let config = {};
+    const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
+    if (rcWebhookRecord) {
+      const trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
+      if (trelloWebhook) {
+        config = trelloWebhook.config || {};
+      }
+    }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+      token: trelloUser.token,
+    });
     const boards = await trello.getBoards();
     const userInfo = await trello.getUserInfo();
     res.json({
       boards,
-      userInfo,
-      config: trelloWebhook.config || {},
+      userInfo: {
+        fullName: userInfo && userInfo.fullName,
+      },
+      config,
     });
     res.status(200);
   } catch (e) {
     if (e.response && e.response.status === 401) {
-      if (trelloWebhook) {
-        trelloWebhook.token = '';
-        trelloWebhook.trello_webhook_id = '';
-        await trelloWebhook.save();
+      if (trelloUser) {
+        trelloUser.token = '';
+        await trelloUser.save();
       }
       res.send('Unauthorized.');
       res.status(401);
       return;
     }
-    console.error(e);
-    res.send('Internal server error.');
-    res.status(500);
   }
 }
 
 async function createWebhook(req, res) {
+  const jwtToken = req.body.token;
   const rcWebhookUri = req.body.rcWebhook;
-  if (!rcWebhookUri) {
-    res.send('Not found');
-    res.status(404);
-    return;
-  }
   const boardId = req.body.boardId;
   const filters = req.body.filters;
-  if (!boardId || !filters) {
-    res.send('Error params');
+
+  if (!jwtToken || !rcWebhookUri || !boardId || !filters) {
+    res.send('Params invalid.');
     res.status(403);
     return;
   }
+
+  const decodedToken = decodeToken(jwtToken);
+  if (!decodedToken) {
+    res.send('Token invalid');
+    res.status(401);
+    return;
+  }
+  const userId = decodedToken.id;
+  let trelloUser;
+  try {
+    trelloUser = await TrelloUser.findByPk(userId);
+    if (!trelloUser || !trelloUser.token) {
+      res.send('Session expired');
+      res.status(401);
+      return
+    }
+  } catch (e) {
+    res.send('Internal error');
+    res.status(500);
+    return;
+  }
+
   let rcWebhookRecord;
   let trelloWebhook;
   try {
     rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
-    trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
-    if (!trelloWebhook || !trelloWebhook.token) {
-      res.send('Forbidden');
-      res.status(401);
-      return;
+    if (rcWebhookRecord) {
+      trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
+    } else {
+      rcWebhookRecord = await RCWebhook.create({
+        id: rcWebhookUri,
+      });
+    }
+    if (!trelloWebhook) {
+      trelloWebhook = await await TrelloWebhook.create({
+        id: rcWebhookRecord.trello_webhook_id,
+        rc_webhook_id: rcWebhookUri,
+        trello_user_id: userId,
+        config: {
+          boardId,
+          filters: String(filters),
+        },
+      });
+    } else {
+      trelloWebhook.rc_webhook_id = rcWebhookUri;
+      trelloWebhook.trello_user_id = userId;
+      trelloWebhook.config = {
+        boardId,
+        filters: String(filters),
+      };
+      await trelloWebhook.save();
     }
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
-      token: trelloWebhook.token,
+      token: trelloUser.token,
     });
-    const oldBoardId = trelloWebhook.config && trelloWebhook.config.boardId;
-    if (oldBoardId !== boardId && trelloWebhook.trello_webhook_id) {
+    if (trelloWebhook.trello_webhook_id) {
       await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
       trelloWebhook.trello_webhook_id = '';
     }
-    trelloWebhook.config = {
-      boardId,
-      filters: String(filters),
-    };
-    if (!trelloWebhook.rc_webhook_id) {
-      trelloWebhook.rc_webhook_id = rcWebhookUri;
-    }
     await trelloWebhook.save();
-    if (trelloWebhook.trello_webhook_id) {
-      const webhook = await trello.updateWebhook({
-        id: trelloWebhook.trello_webhook_id,
-        description: 'RingCentral Notifications',
-        callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
-        idModel: boardId,
-        active: true,
-      });
-      console.log('update success');
-      console.log(webhook);
-    } else {
-      const webhook = await trello.createWebhook({
-        id: trelloWebhook.trello_webhook_id,
-        description: 'RingCentral Notifications',
-        callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
-        idModel: boardId,
-        active: true,
-      });
-      trelloWebhook.trello_webhook_id = webhook.id;
-      await trelloWebhook.save();
-      console.log('create success');
-      console.log(webhook);
-    }
+    const webhook = await trello.createWebhook({
+      id: trelloWebhook.trello_webhook_id,
+      description: 'RingCentral Notifications',
+      callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
+      idModel: boardId,
+      active: true,
+    });
+    trelloWebhook.trello_webhook_id = webhook.id;
+    await trelloWebhook.save();
     res.json({
       result: 'OK',
     });
     res.status(200);
   } catch (e) {
     if (e.response && e.response.status === 401) {
-      if (trelloWebhook) {
-        trelloWebhook.token = '';
-        trelloWebhook.trello_webhook_id = '';
-        await trelloWebhook.save();
-      }
+      trelloUser.token = '';
+      await trelloUser.save();
       res.send('Unauthorized');
       res.status(401);
       return;
