@@ -63,7 +63,7 @@ export class Client {
   }
 
   async getInfo() {
-    const response = await fetch(`${this._config.webhookInfoUri}?rcWebhook=${this._config.rcWebhookUri}`);
+    const response = await fetch(`${this._config.webhookInfoUri}?rcWebhook=${this._config.rcWebhookUri}&random=${Date.now()}`);
     if (response.status === 401) {
       throw new Error('Unauthorized');
     }
