@@ -18,7 +18,7 @@ function getTitleFromAction(action) {
   }
   // board:
   if (action.type === 'addMemberToBoard') {
-    return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) to [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
+    return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) to [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
   }
   if (action.type === 'moveListFromBoard') {
     return `List ${action.data.list.name} moved from [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
