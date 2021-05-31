@@ -9,6 +9,9 @@ async function notify(req, res) {
   // console.log(JSON.stringify(req.body, null, 2));
   try {
     const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+    if (!trelloWebhook) {
+      throw new Error('trello webhook id not found!');
+    }
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
     if (filterId) {
       const glipMessage = formatGlipWebhookCardMessage(req.body);
