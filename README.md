@@ -43,6 +43,7 @@ $ cp .env.sample .env
 Edit `.env` file as `.env.sample` to set environment variables.
 The `APP_SERVER` is publish uri that we get from ngrok.
 For `DATABASE_CONNECTION_URI`, we can just keep `sqlite://./db.sqlite`. We will use sqlite as local database.
+`TRELLO_APP_KEY` and `TRELLO_APP_SECRET` are from `https://trello.com/app-key`.
 
 ### 6. Setup Database
 
