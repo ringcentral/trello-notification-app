@@ -30,38 +30,38 @@ function getTitleFromAction(action) {
   }
   // card:
   if (action.type === 'createCard') {
-    return `New card created: [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+    return `New card created: [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
   }
   if (action.type === 'commentCard') {
-    return `Added a comment to [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}). \n**Comment:** ${action.data.text}.`;
+    return `Added a comment to [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}). \n**Comment:** ${action.data.text}.`;
   }
   if (action.type === 'addMemberToCard') {
-    return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+    return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
   }
   if (action.type === 'addAttachmentToCard') {
-    return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).\n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
+    return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).\n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
   }
   if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_archived_card') {
-      return `Archived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+      return `Archived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
     }
     if (action.display.translationKey === 'action_changed_description_of_card') {
-      return `Update description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}). \n**Description:** ${action.data.card.desc}.`;
+      return `Update description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}). \n**Description:** ${action.data.card.desc}.`;
     }
     if (action.display.translationKey === 'action_added_a_due_date') {
-      return `Add due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}). \n**Due date:** ${action.data.card.due}.`;
+      return `Add due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}). \n**Due date:** ${action.data.card.due}.`;
     }
     if (action.display.translationKey === 'action_changed_a_due_date') {
-      return `Change due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}). \n**Due date:** ${action.data.card.due}.`;
+      return `Change due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) in list ${action.data.list.name} on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}). \n**Due date:** ${action.data.card.due}.`;
     }
     if (action.display.translationKey === 'action_move_card_from_list_to_list') {
-      return `Moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+      return `Moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/b/${action.data.board.shortLink}).`;
     }
     if (action.display.translationKey === 'action_renamed_card') {
-      return `Rename **${action.data.old.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+      return `Rename **${action.data.old.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
     }
     if (action.display.translationKey === 'action_sent_card_to_board') {
-      return `Unarchived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/c/${action.data.board.shortLink}).`;
+      return `Unarchived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
     }
   }
   // checklist:
