@@ -129,7 +129,7 @@ async function createWebhook(req, res) {
       });
     }
     if (!trelloWebhook) {
-      trelloWebhook = await await TrelloWebhook.create({
+      trelloWebhook = await TrelloWebhook.create({
         id: rcWebhookRecord.trello_webhook_id,
         rc_webhook_id: rcWebhookUri,
         trello_user_id: userId,
