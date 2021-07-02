@@ -7,7 +7,9 @@ import {
   RcLoading,
   RcStepButton,
   RcAlert,
+  RcIconButton,
 } from '@ringcentral/juno';
+import { Feedback } from '@ringcentral/juno/icon';
 import { styled } from '@ringcentral/juno/foundation';
 
 import { AuthorizationPanel } from './AuthorizationPanel';
@@ -20,6 +22,12 @@ const Container = styled.div`
   padding: 0 20px;
   justify-content: center;
   align-items: center;
+`;
+
+const FloatingLink = styled.a`
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
 `;
 
 function StepContent({
@@ -287,6 +295,14 @@ export function App({ integrationHelper, client }) {
             }}
           />
         </Container>
+        <FloatingLink href="https://github.com/ringcentral/trello-notification-app/issues/new" target="_blank" rel="noopener noreferrer">
+          <RcIconButton
+            symbol={Feedback}
+            variant="contained"
+            color="action.primary"
+            title="Feedback (Any suggestions, or issues about the Trello notification app?"
+          />
+        </FloatingLink>
       </RcLoading>
     </RcThemeProvider>
   );
