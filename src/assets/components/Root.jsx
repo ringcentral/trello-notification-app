@@ -300,7 +300,7 @@ export function App({ integrationHelper, client }) {
             symbol={Feedback}
             variant="contained"
             color="action.primary"
-            title="Feedback (Any suggestions, or issues about the Trello notification app?"
+            title="Feedback (Any suggestions, or issues about the Trello notification app?)"
           />
         </FloatingLink>
       </RcLoading>

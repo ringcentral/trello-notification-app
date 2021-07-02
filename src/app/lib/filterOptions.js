@@ -72,11 +72,6 @@ const filtersGroupByCategory = [
         actionList: ['action_renamed_card'],
       },
       {
-        name: 'Member Added to Card',
-        id: 'addMemberToCard',
-        actionType: 'addMemberToCard',
-      },
-      {
         name: 'Comment Added to Card',
         id: 'commentCard',
         actionType: 'commentCard',
@@ -91,6 +86,26 @@ const filtersGroupByCategory = [
         name: 'Attachment Added to Card',
         id: 'addAttachmentToCard',
         actionType: 'addAttachmentToCard',
+      },
+      {
+        name: 'Label Added to Card',
+        id: 'addLabelToCard',
+        actionType: 'addLabelToCard',
+      },
+      {
+        name: 'Label Removed from Card',
+        id: 'removeLabelFromCard',
+        actionType: 'removeLabelFromCard',
+      },
+      {
+        name: 'Member Added to Card',
+        id: 'addMemberToCard',
+        actionType: 'addMemberToCard',
+      },
+      {
+        name: 'Member Removed from Card',
+        id: 'removeMemberFromCard',
+        actionType: 'removeMemberFromCard',
       },
     ],
   },

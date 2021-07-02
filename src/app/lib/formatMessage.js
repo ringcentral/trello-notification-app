@@ -38,8 +38,17 @@ function getTitleFromAction(action) {
   if (action.type === 'addMemberToCard') {
     return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
   }
+  if (action.type === 'removeMemberFromCard') {
+    return `Removed [${action.member.fullName}](https://trello.com/${action.member.username}) from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).`;
+  }
   if (action.type === 'addAttachmentToCard') {
     return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).\n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
+  }
+  if (action.type === 'addLabelToCard') {
+    return `Added label **${action.data.label.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).\n`;
+  }
+  if (action.type === 'removeLabelFromCard') {
+    return `Removed label **${action.data.label.name}** from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) on [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}).\n`;
   }
   if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_archived_card') {
@@ -83,14 +92,19 @@ function getTitleFromAction(action) {
 }
 
 function getCardFromAction(action, title) {
-  return {
+  const card = {
     text: title,
     type: 'Card',
     color: '#4e89e5',
     author_name: action.memberCreator.fullName,
     author_link: `https://trello.com/${action.memberCreator.username}`,
-    author_icon: `${action.memberCreator.avatarUrl}/50.png`,
   };
+  if (action.memberCreator.avatarUrl && action.memberCreator.avatarUrl.indexOf('http') === 0) {
+    card['author_icon'] = `${action.memberCreator.avatarUrl}/50.png`;
+  } else {
+    card['author_icon'] = ICON_URL;
+  }
+  return card;
 }
 
 function formatGlipWebhookCardMessage(trelloMessage) {
