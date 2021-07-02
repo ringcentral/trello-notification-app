@@ -92,14 +92,19 @@ function getTitleFromAction(action) {
 }
 
 function getCardFromAction(action, title) {
-  return {
+  const card = {
     text: title,
     type: 'Card',
     color: '#4e89e5',
     author_name: action.memberCreator.fullName,
     author_link: `https://trello.com/${action.memberCreator.username}`,
-    author_icon: `${action.memberCreator.avatarUrl}/50.png`,
   };
+  if (action.memberCreator.avatarUrl && action.memberCreator.avatarUrl.indexOf('http') === 0) {
+    card['author_icon'] = `${action.memberCreator.avatarUrl}/50.png`;
+  } else {
+    card['author_icon'] = ICON_URL;
+  }
+  return card;
 }
 
 function formatGlipWebhookCardMessage(trelloMessage) {
