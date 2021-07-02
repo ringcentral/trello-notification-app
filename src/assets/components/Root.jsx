@@ -26,7 +26,7 @@ const Container = styled.div`
 
 const FloatingLink = styled.a`
   position: fixed;
-  right: 20px;
+  right: 10px;
   bottom: 20px;
 `;
 
