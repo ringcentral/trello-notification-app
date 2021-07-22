@@ -16,6 +16,19 @@ import { AuthorizationPanel } from './AuthorizationPanel';
 import { BoardSelectionPanel } from './BoardSelectionPanel';
 import { FilterCheckList } from './FilterCheckList';
 
+const theme = {
+  palette: {
+    action: {
+      primary: '#2559E4',
+    },
+    primary: {
+      main: '#2559E4',
+    },
+    informative: { b01: '#F5F6FB', f01: '#E3EAFC', f02: '#2559E4' },
+    interactive: { b01: '#F5F6FB', b02: '#2559E4', f01: '#2559E4' },
+  }
+};
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -190,7 +203,7 @@ export function App({ integrationHelper, client }) {
   }, [boardId, selectedFilters]);
 
   return (
-    <RcThemeProvider>
+    <RcThemeProvider theme={theme}>
       <RcLoading loading={loading}>
         {
           (error && error.length > 0) ? (
