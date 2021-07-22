@@ -29,7 +29,7 @@
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-react": "^7.8.3",
     "@material-ui/core": "^4.11.4",
-    "@ringcentral/juno": "^1.8.0",
+    "@ringcentral/juno": "^1.9.0",
     "babel-loader": "^8.1.0",
     "ngrok": "^3.3.0",
     "react": "^16.14.0",

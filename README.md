@@ -63,7 +63,7 @@ $ npm start
 
 ### 8. Test with notification app developer tool
 
-Visit your publish uri `https://ringcentral.github.io/ringcentral-notification-app-developer-tool/`, and set `App Url` with ``https://xxxxxx.ngrok.io/webhook/new`. Then set `Webhook Url` from RingCentral Incoming Webhook integration.
+Visit your publish uri `https://ringcentral.github.io/ringcentral-notification-app-developer-tool/`, and set `App Url` with ``https://xxxxxx.ngrok.io/webhooks/new`. Then set `Webhook Url` from RingCentral Incoming Webhook integration.
 
 ## Deploy with serverless
 
