@@ -16,6 +16,7 @@ const SectionNameContainer = styled.div`
   width: 100%;
   flex-direction: row;
   line-height: 40px;
+  font-family: Lato,Helvetica,Arial,sans-serif;
 `;
 
 const SectionName = styled.div`
