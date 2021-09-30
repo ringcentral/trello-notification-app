@@ -1,0 +1,11 @@
+const { TrelloWebhook } = require('../src/app/models/trello-webhook');
+const { TrelloUser } = require('../src/app/models/trello-user');
+const { RCWebhook } = require('../src/app/models/rc-webhook');
+
+jest.setTimeout(30000);
+
+beforeAll(async () => {
+  await TrelloWebhook.sync();
+  await TrelloUser.sync();
+  await RCWebhook.sync();
+});

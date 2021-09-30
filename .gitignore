@@ -70,7 +70,6 @@ typings/
 
 # dotenv environment variables file
 .env
-.env.test
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -114,3 +113,4 @@ serverless-deploy/app
 serverless-deploy/node_modules
 serverless-deploy/.serverless
 public
+.DS_Store

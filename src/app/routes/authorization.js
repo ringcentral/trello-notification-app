@@ -18,8 +18,8 @@ function oauthCallback (req, res) {
 async function saveToken(req, res) {
   const token = req.body.token;
   if (!token) {
-    res.send('Params error');
     res.status(403);
+    res.send('Params error');
     return;
   }
   try {
@@ -30,8 +30,8 @@ async function saveToken(req, res) {
     });
     const userInfo = await trello.getUserInfo();
     if (!userInfo || !userInfo.id) {
-      res.send('Token invalid.');
       res.status(403);
+      res.send('Token invalid.');
       return;
     }
     let trelloUser = await TrelloUser.findByPk(userInfo.id);
@@ -47,29 +47,29 @@ async function saveToken(req, res) {
       });
     }
     const jwtToken = generateToken({ id: userInfo.id });
+    res.status(200);
     res.json({
       authorize: true,
       token: jwtToken,
     });
-    res.status(200);
   } catch (e) {
     console.error(e);
-    res.send('Internal error.');
     res.status(500);
+    res.send('Internal error.');
   }
 }
 
 async function revokeToken(req, res) {
   const jwtToken = req.body.token;
   if (!jwtToken) {
-    res.send('Error params');
     res.status(403);
+    res.send('Error params');
     return;
   }
   const decodedToken = decodeToken(jwtToken);
   if (!decodedToken) {
-    res.send('Token invalid.');
     res.status(401);
+    res.send('Token invalid.');
     return;
   }
   const userId = decodedToken.id;
@@ -85,15 +85,15 @@ async function revokeToken(req, res) {
       trelloUser.token = '';
       await trelloUser.save();
     }
+    res.status(200);
     res.json({
       result: 'ok',
       authorized: false,
     });
-    res.status(200);
   } catch (e) {
     console.error(e);
-    res.send('internal error');
     res.status(500);
+    res.send('internal error');
   }
 }
 
