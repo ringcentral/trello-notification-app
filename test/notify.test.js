@@ -478,6 +478,6 @@ describe('Notify', () => {
       .send(deleteCheckItemData);
     expect(res.status).toEqual(200);
     expect(requestBody).toEqual(null);
-    scope.done();
+    nock.restore();
   });
 });
