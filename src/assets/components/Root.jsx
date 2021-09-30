@@ -240,7 +240,7 @@ export function App({ integrationHelper, client }) {
             }
           </RcStep>
           <RcStep completed={filterSettingCompleted}>
-          {
+            {
               filterSettingCompleted ? (
                 <RcStepButton onClick={() => setActiveStep(2)}>
                   Set filters

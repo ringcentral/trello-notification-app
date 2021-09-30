@@ -1,0 +1,165 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "Image",
+                                            "url": "${avatarUrl}",
+                                            "height": "32px",
+                                            "style": "Person"
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center",
+                                    "width": "auto"
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": "[${username}](${userLink})",
+                                            "wrap": true
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center",
+                                    "width": "stretch"
+                                }
+                            ]
+                        }
+                    ],
+                    "width": "stretch"
+                },
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": "Checklist",
+                                            "wrap": true,
+                                            "isSubtle": true,
+                                            "horizontalAlignment": "Right"
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center",
+                                    "width": "stretch"
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "Image",
+                                            "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/checklist.png",
+                                            "height": "32px"
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center",
+                                    "width": "auto"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": "${subject}",
+                    "wrap": true
+                }
+            ],
+            "spacing": "Medium"
+        },
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "Board",
+                                    "wrap": true,
+                                    "size": "Small",
+                                    "weight": "Bolder"
+                                }
+                            ],
+                            "verticalContentAlignment": "Center",
+                            "width": "stretch"
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "Card",
+                                    "wrap": true,
+                                    "size": "Small",
+                                    "weight": "Bolder"
+                                }
+                            ],
+                            "verticalContentAlignment": "Center",
+                            "width": "stretch"
+                        }
+                    ]
+                },
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "[${boardName}](${boardLink})",
+                                    "wrap": true
+                                }
+                            ],
+                            "verticalContentAlignment": "Center",
+                            "width": "stretch"
+                        },
+                        {
+                            "type": "Column",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "[${cardName}](${cardLink})",
+                                    "wrap": true
+                                }
+                            ],
+                            "verticalContentAlignment": "Center",
+                            "width": "stretch"
+                        }
+                    ]
+                }
+            ],
+            "separator": true,
+            "spacing": "Medium"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.3"
+}

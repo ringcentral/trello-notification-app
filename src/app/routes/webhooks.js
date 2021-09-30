@@ -7,9 +7,12 @@ const { TrelloUser } = require('../models/trello-user');
 
 async function newWebhook(req, res) {
   const rcWebhookUri = req.query.webhook;
-  if (!rcWebhookUri || rcWebhookUri.indexOf('https://') !==0) {
-    res.send('Webhook uri is required.');
+  if (!rcWebhookUri || (
+    rcWebhookUri.indexOf('https://') !== 0 &&
+    rcWebhookUri.indexOf('http://') !== 0
+  )) {
     res.status(404);
+    res.send('Webhook uri is required.');
     return;
   }
   res.render('new', {
@@ -29,14 +32,14 @@ async function webhookInfo(req, res) {
   const jwtToken = req.query.token;
   const rcWebhookUri = req.query.rcWebhook;
   if (!jwtToken || !rcWebhookUri) {
-    res.send('Error params');
     res.status(403);
+    res.send('Error params');
     return;
   }
   const decodedToken = decodeToken(jwtToken);
   if (!decodedToken) {
-    res.send('Token invalid.');
     res.status(401);
+    res.send('Token invalid.');
     return;
   }
   const userId = decodedToken.id;
@@ -44,8 +47,8 @@ async function webhookInfo(req, res) {
   try {
     trelloUser = await TrelloUser.findByPk(userId);
     if (!trelloUser || !trelloUser.token) {
-      res.send('Unauthorized');
       res.status(401);
+      res.send('Unauthorized');
       return;
     }
     let config = {};
@@ -63,6 +66,7 @@ async function webhookInfo(req, res) {
     });
     const boards = await trello.getBoards();
     const userInfo = await trello.getUserInfo();
+    res.status(200);
     res.json({
       boards,
       userInfo: {
@@ -70,15 +74,14 @@ async function webhookInfo(req, res) {
       },
       config,
     });
-    res.status(200);
   } catch (e) {
     if (e.response && e.response.status === 401) {
       if (trelloUser) {
         trelloUser.token = '';
         await trelloUser.save();
       }
-      res.send('Unauthorized.');
       res.status(401);
+      res.send('Unauthorized.');
       return;
     }
   }
@@ -91,15 +94,15 @@ async function createWebhook(req, res) {
   const filters = req.body.filters;
 
   if (!jwtToken || !rcWebhookUri || !boardId || !filters) {
-    res.send('Params invalid.');
     res.status(403);
+    res.send('Params invalid.');
     return;
   }
 
   const decodedToken = decodeToken(jwtToken);
   if (!decodedToken) {
-    res.send('Token invalid');
     res.status(401);
+    res.send('Token invalid');
     return;
   }
   const userId = decodedToken.id;
@@ -107,13 +110,13 @@ async function createWebhook(req, res) {
   try {
     trelloUser = await TrelloUser.findByPk(userId);
     if (!trelloUser || !trelloUser.token) {
-      res.send('Session expired');
       res.status(401);
+      res.send('Session expired');
       return
     }
   } catch (e) {
-    res.send('Internal error');
     res.status(500);
+    res.send('Internal error');
     return;
   }
 
@@ -129,7 +132,7 @@ async function createWebhook(req, res) {
       });
     }
     if (!trelloWebhook) {
-      trelloWebhook = await await TrelloWebhook.create({
+      trelloWebhook = await TrelloWebhook.create({
         id: rcWebhookRecord.trello_webhook_id,
         rc_webhook_id: rcWebhookUri,
         trello_user_id: userId,
@@ -165,21 +168,21 @@ async function createWebhook(req, res) {
     });
     trelloWebhook.trello_webhook_id = webhook.id;
     await trelloWebhook.save();
+    res.status(200);
     res.json({
       result: 'OK',
     });
-    res.status(200);
   } catch (e) {
     if (e.response && e.response.status === 401) {
       trelloUser.token = '';
       await trelloUser.save();
-      res.send('Unauthorized');
       res.status(401);
+      res.send('Unauthorized');
       return;
     }
     console.error(e);
-    res.send('Internal server error');
     res.status(500);
+    res.send('Internal server error');
     return;
   }
 }
