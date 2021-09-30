@@ -1,0 +1,66 @@
+@startuml
+
+title Glip Trello Notification App
+
+autonumber
+
+control "DynamoDb" as DB
+control "Server" as SERVER
+control "Glip" as G
+control "Config App" as APP
+control "Trello API" as T
+
+group setup
+
+    group new rc webhook
+    G -> SERVER: select a conversation and upload rc webhook uri
+    activate SERVER
+    SERVER --> APP: save rc webhook uri to app
+    deactivate SERVER
+    end
+
+    group authorization
+    APP -> T: Trello user sign in and authorize app
+    activate T
+    T --> APP: grant token
+    deactivate T
+    APP -> SERVER: send token and request jwt (TrelloUser id)
+    activate SERVER
+    SERVER --> APP: return jwt (TrelloUser id)
+    SERVER -->o DB: save TrelloUser
+    deactivate SERVER
+    end
+
+    group configure
+    APP -> APP: select board, filter
+    APP -> T: submit config to create Trello webhook
+    activate T
+    T --> APP: return Trello webhook id
+    deactivate T
+    APP -> SERVER: send Trello webhook id
+    activate SERVER
+    SERVER -->o DB: save RcWebhook and TrelloWebhook
+    deactivate SERVER
+    end
+end
+
+group revoke
+    APP -> SERVER: revoke
+    activate SERVER
+    SERVER -->o DB: clear TrelloUser token
+    SERVER --> T: delete TrelloUser token and webhooks
+    deactivate SERVER
+end
+
+group notification
+    T -> SERVER: Trello webhook id and board notification
+    activate SERVER
+    SERVER -> DB: query Trello webhook id
+    activate DB
+    DB --> SERVER: return TrelloWebhook entity
+    deactivate DB
+    SERVER -> G: filter and send notification to rc webhook uri
+    deactivate SERVER
+end
+
+@enduml
