@@ -12,6 +12,7 @@
     "server": "node ./src/run-server.js",
     "start": "npm run server",
     "test": "jest",
+    "test-coverage": "jest --coverage",
     "initDB": "node ./scripts/init-db",
     "webpack-server": "webpack-dev-server --config webpack-dev-server.config.js --inline",
     "webpack-build": "NODE_ENV=production webpack --config webpack-production.config.js",

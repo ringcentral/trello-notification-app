@@ -1,13 +1,15 @@
-# Trello Notification App
+# Trello Notification Add-in
 
-Trello Notification App for RingCentral app.
+[![Build Status](https://github.com/ringcentral/trello-notification-app/workflows/CI%20Pipeline/badge.svg?branch=main)](https://github.com/ringcentral/trello--notification-app/actions)
 
-## Run in Local
+[Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) for [RingCentral app](app.ringcentral.com).
+
+## Development
 
 ### 1. Clone this project
 
 ```
-$ git clone this_project_uri
+$ git clone https://github.com/ringcentral/trello-notification-app.git
 ```
 
 ### 2. Install dependencies
@@ -65,6 +67,14 @@ $ npm start
 
 Visit your publish uri `https://ringcentral.github.io/ringcentral-notification-app-developer-tool/`, and set `App Url` with ``https://xxxxxx.ngrok.io/webhooks/new`. Then set `Webhook Url` from RingCentral Incoming Webhook integration.
 
+### 9. Create a free RingCentral add-in app
+
+Please follow [here](https://developers.ringcentral.com/guide/team-messaging/add-ins/creation) to create a RingCentral notification add-in app.
+
+In `App Features`, enable `Interactive Messages`, then input URI `https://xxxxxx.ngrok.io/interactive-messages`. Please replace with your ngrok domain.
+
+In `Integrated installation in RingCentral app` section, enable `This app can be installed via the web`, then input URI `https://xxxxxx.ngrok.io/webhooks/new`. 
+
 ## Deploy with serverless
 
 ### 1. Compile JS files
@@ -106,3 +116,5 @@ Copy the uri, and update environment variable `APP_SERVER` with it in `serverles
 ```
 $ npm run serverless-deploy
 ```
+
+Then update app settings in [RingCentral developer portal](https://developers.ringcentral.com/), with your new `APP_SERVER`.
