@@ -2,6 +2,7 @@ require('dotenv').config();
 const { RCWebhook } = require('../src/app/models/rc-webhook');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { TrelloUser } = require('../src/app/models/trello-user');
+const { RcUser } = require('../src/app/models/rc-user');
 
 async function initDB() {
   await RCWebhook.sync();
