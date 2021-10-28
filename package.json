@@ -8,7 +8,7 @@
     "Notification"
   ],
   "scripts": {
-    "ngrok": "ngrok http -region ap 6066",
+    "ngrok": "ngrok http -region us 6066",
     "server": "node ./src/run-server.js",
     "start": "npm run server",
     "test": "jest",
