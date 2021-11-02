@@ -200,6 +200,32 @@
             "spacing": "Medium"
         }
     ],
+    "actions": [
+        {
+        "type": "Action.ShowCard",
+        "title": "Join",
+        "card": {
+            "type": "AdaptiveCard",
+                "body": [
+                {
+                    "type": "TextBlock",
+                    "text": "Join into this card?"
+                }
+                ],
+                "actions": [
+                    {
+                        "type": "Action.Submit",
+                        "title": "Join",
+                        "data": {
+                            "action": "joinCard",
+                            "webhookId": "${webhookId}",
+                            "cardId": "${cardId}"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
     "version": "1.3"
 }

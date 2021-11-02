@@ -9,6 +9,8 @@ const cardTemplate = require('../adaptiveCards/card.json');
 const cardTemplateString = JSON.stringify(cardTemplate, null, 2);
 const checklistTemplate = require('../adaptiveCards/checklist.json');
 const checklistTemplateString = JSON.stringify(checklistTemplate, null, 2);
+const authTemplate = require('../adaptiveCards/auth.json');
+const authTemplateString = JSON.stringify(authTemplate, null, 2);
 
 const ICON_URL = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png';
 
@@ -225,7 +227,7 @@ function escapeNewLine(str) {
   return str.replace(/\n/g, "\\n");
 }
 
-function getCardFromTrelloMessage(trelloMessage) {
+function getCardFromTrelloMessage(trelloMessage, webhookId) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
@@ -265,6 +267,8 @@ function getCardFromTrelloMessage(trelloMessage) {
       listName: trelloMessage.action.data.list ? trelloMessage.action.data.list.name : trelloMessage.action.data.card.name,
       comment: escapeNewLine(trelloMessage.action.data.text),
       description: escapeNewLine(trelloMessage.action.data.card.desc),
+      webhookId,
+      cardId: trelloMessage.action.data.card.id,
     });
     if (action.type === 'commentCard') {
       const commentArea = findItemInAdaptiveCard(card, 'commentArea');
@@ -295,8 +299,8 @@ function getCardFromTrelloMessage(trelloMessage) {
   return card;
 }
 
-function formatAdaptiveCardMessage(trelloMessage) {
-  const card = getCardFromTrelloMessage(trelloMessage);
+function formatAdaptiveCardMessage(trelloMessage, webhookId) {
+  const card = getCardFromTrelloMessage(trelloMessage, webhookId);
   const message = {
     icon: ICON_URL,
   };
@@ -309,4 +313,25 @@ function formatAdaptiveCardMessage(trelloMessage) {
   return message;
 }
 
+function createAuthTokenRequestCard({ webhookId, authorizeUrl }) {
+  const card = getAdaptiveCardFromTemplate(authTemplateString, {
+    webhookId,
+    authorizeUrl,
+  });
+  return {
+    attachments: [card],
+    icon: ICON_URL,
+  };
+}
+
+function createMessageCard({ message }) {
+  return {
+    icon: ICON_URL,
+    title: message,
+    activity: 'Trello',
+  }
+}
+
 exports.formatAdaptiveCardMessage = formatAdaptiveCardMessage;
+exports.createAuthTokenRequestCard = createAuthTokenRequestCard;
+exports.createMessageCard = createMessageCard;

@@ -29,6 +29,10 @@ class Trello {
     this._appServer = apiServer;
   }
 
+  setToken(token) {
+    this._token = token;
+  }
+
   authorizationUrl() {
     const query = obj2uri({
       expiration: 'never',
