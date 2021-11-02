@@ -8,6 +8,7 @@ async function initDB() {
   await RCWebhook.sync();
   await TrelloWebhook.sync();
   await TrelloUser.sync();
+  await RcUser.sync();
 }
 
 initDB();
