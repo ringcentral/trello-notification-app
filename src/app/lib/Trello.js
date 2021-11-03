@@ -156,6 +156,17 @@ class Trello {
     const response = await axios.get(uri);
     return response.data;
   }
+
+  async addCardComment(cardId, comment) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      text: comment,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}/actions/comments?${query}`;
+    const response = await axios.post(uri);
+    return response.data;
+  }
 }
 
 exports.Trello = Trello;

@@ -131,6 +131,8 @@ async function interactiveMessage(req, res) {
       } else {
         await trello.joinCard(body.data.cardId, trelloUser.id);
       }
+    } else if (action === 'commentCard') {
+      await trello.addCardComment(body.data.cardId, body.data.comment);
     }
   } catch (e) {
     if (e.response) {
