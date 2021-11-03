@@ -123,7 +123,6 @@ async function interactiveMessage(req, res) {
   try {
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
-      console.log(members);
       if (members.find(member => member.id === trelloUser.id)) {
         await sendMessageCard(
           trelloWebhook.rc_webhook_id,
@@ -150,7 +149,6 @@ async function interactiveMessage(req, res) {
       console.error(e);
     }
   }
-  console.log(body);
   res.status(200);
   res.send('ok');
 };
