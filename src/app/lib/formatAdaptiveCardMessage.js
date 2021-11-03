@@ -167,10 +167,10 @@ function getFallbackText(action) {
     return `${action.memberCreator.fullName} added attachment into ${action.data.card.name}`;
   }
   if (action.type === 'addLabelToCard') {
-    return `${action.memberCreator.fullName} added label "${action.data.label.name}" into ${action.data.card.name}`;
+    return `${action.memberCreator.fullName} added label ${action.data.label.name} into ${action.data.card.name}`;
   }
   if (action.type === 'removeLabelFromCard') {
-    return `${action.memberCreator.fullName} removed label "${action.data.label.name}" from ${action.data.card.name}`;
+    return `${action.memberCreator.fullName} removed label ${action.data.label.name} from ${action.data.card.name}`;
   }
   if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_archived_card') {
