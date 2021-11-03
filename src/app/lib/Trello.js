@@ -37,7 +37,7 @@ class Trello {
     const query = obj2uri({
       expiration: 'never',
       name: this._name,
-      scope: 'read',
+      scope: 'read,write',
       response_type: 'token',
       key: this._appKey,
       return_url: this._redirectUrl,
@@ -133,6 +133,28 @@ class Trello {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  async joinCard(cardId, userId) {
+    const query = obj2uri({
+      value: userId,
+      token: this._token,
+      key: this._appKey,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}/idMembers?${query}`;
+    const response = await axios.post(uri);
+    return response.data;
+  }
+
+  async getCardMembers(cardId) {
+    const query = obj2uri({
+      fields: 'all',
+      key: this._appKey,
+      token: this._token,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}/members?${query}`;
+    const response = await axios.get(uri);
+    return response.data;
   }
 }
 

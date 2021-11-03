@@ -9,6 +9,32 @@ const {
   createMessageCard,
 } = require('../lib/formatAdaptiveCardMessage');
 
+async function sendMessageCard(webhookUri, message) {
+  await axios.post(webhookUri, createMessageCard({
+    message,
+  }), {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+async function sendAuthorizeRequestCard(webhookUri) {
+  await axios.post(webhookUri,
+    createAuthTokenRequestCard({
+      webhookId,
+      authorizeUrl: `${process.env.APP_SERVER}/trello/authorize`,
+    }),
+    {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+}
+
 async function interactiveMessage(req, res) {
   const SHARED_SECRET = process.env.INTERACTIVE_MESSAGES_SHARED_SECRET;
   if (SHARED_SECRET) {
@@ -21,7 +47,7 @@ async function interactiveMessage(req, res) {
     }
   }
   const body = req.body;
-  console.log(JSON.stringify(body, null, 2));
+  // console.log(JSON.stringify(body, null, 2));
   if (!body.data || !body.user) {
     res.status(400);
     res.send('Params error');
@@ -79,35 +105,50 @@ async function interactiveMessage(req, res) {
         trello_user_id: trelloUser.id
       });
     }
-    const result = await axios.post(trelloWebhook.rc_webhook_id, createMessageCard({
-      message: `Hi ${body.user.firstName} ${body.user.lastName}, you have authorized Trello successfully. Please click previous action button again to execute that action.`
-    }), {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-    console.log(result);
+    await sendMessageCard(
+      trelloWebhook.rc_webhook_id,
+      `Hi ${body.user.firstName} ${body.user.lastName}, you have authorized Trello successfully. Please click previous action button again to execute that action.`,
+    );
     res.status(200);
     res.send('ok');
     return;
   }
   if (!trelloUser || !trelloUser.token) {
-    await axios.post(trelloWebhook.rc_webhook_id,
-      createAuthTokenRequestCard({
-        webhookId,
-        authorizeUrl: `${process.env.APP_SERVER}/trello/authorize`,
-      }),
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id);
     res.status(200);
     res.send('ok');
     return;
+  }
+  trello.setToken(trelloUser.token);
+  try {
+    if (action === 'joinCard') {
+      const members = await trello.getCardMembers(body.data.cardId);
+      console.log(members);
+      if (members.find(member => member.id === trelloUser.id)) {
+        await sendMessageCard(
+          trelloWebhook.rc_webhook_id,
+          `Hi ${body.user.firstName}, you had joined the card.`,
+        );
+      } else {
+        await trello.joinCard(body.data.cardId, trelloUser.id);
+      }
+    }
+  } catch (e) {
+    if (e.response) {
+      console.error(e.response);
+      if (e.response.status === 401) {
+        trelloUser.token = '';
+        await trelloUser.save();
+        await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id);
+      } else if (e.response.status === 403) {
+        await sendMessageCard(
+          trelloWebhook.rc_webhook_id,
+          `Hi ${body.user.firstName}, your Trello account doesn't have permission to perform this action.`,
+        );
+      }
+    } else {
+      console.error(e);
+    }
   }
   console.log(body);
   res.status(200);

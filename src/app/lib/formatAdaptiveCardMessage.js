@@ -280,7 +280,9 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
     }
     if (!trelloMessage.action.data.list) {
       const listLabel = findItemInAdaptiveCard(card, 'listLabel');
-      listLabel.text = 'Card';
+      if (listLabel) {
+        listLabel.text = 'Card';
+      }
     }
   } else if (CHECKLIST_TYPES.indexOf(action.type) > -1) {
     const subject = escapeNewLine(getChecklistMessageSubject(action));
