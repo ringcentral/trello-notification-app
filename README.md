@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/ringcentral/trello-notification-app/workflows/CI%20Pipeline/badge.svg?branch=main)](https://github.com/ringcentral/trello--notification-app/actions)
 
-[Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) for [RingCentral app](app.ringcentral.com).
+[Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) for [RingCentral app](https://www.ringcentral.com/apps/rc-app).
 
 ## Development
 
