@@ -23,6 +23,11 @@ function getAdaptiveCardFromTemplate(cardTemplate, params) {
   return JSON.parse(card);
 }
 
+function formatDateTime(date) {
+  const dateTime = new Date(date);
+  return `${dateTime.toISOString().split('.')[0]}Z`;
+}
+
 const BOARD_TYPES = ['addMemberToBoard', 'moveListFromBoard', 'updateBoard'];
 function getBoardMessageSubject(action) {
   if (action.type === 'addMemberToBoard') {
@@ -87,10 +92,10 @@ function getCardMessageSubject(action) {
       return `Updated description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) `;
     }
     if (action.display.translationKey === 'action_added_a_due_date') {
-      return `Added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:** ${action.data.card.due}`;
+      return `Added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:**  {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
     }
     if (action.display.translationKey === 'action_changed_a_due_date') {
-      return `Changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:** ${action.data.card.due}`;
+      return `Changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:** {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
     }
     if (action.display.translationKey === 'action_move_card_from_list_to_list') {
       return `Moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/b/${action.data.board.shortLink})`;

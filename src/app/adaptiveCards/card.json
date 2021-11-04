@@ -236,6 +236,8 @@
             "id": "comment",
             "placeholder": "Add a comment",
             "maxLength": 500,
+            "label": "Comment",
+            "errorMessage": "Please add a comment",
             "isRequired": true,
             "isMultiline": true
           }
@@ -246,6 +248,34 @@
             "title": "Comment",
             "data": {
               "action": "commentCard",
+              "webhookId": "${webhookId}",
+              "cardId": "${cardId}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Action.ShowCard",
+      "title": "Due Date",
+      "card": {
+        "type": "AdaptiveCard",
+        "body": [
+          {
+            "type": "Input.Date",
+            "id": "dueDate",
+            "isRequired": true,
+            "label": "Due Date",
+            "errorMessage": "Please enter a date",
+            "placeholder": "Enter a date"
+          }
+        ],
+        "actions": [
+          {
+            "type": "Action.Submit",
+            "title": "Set Due Date",
+            "data": {
+              "action": "setCardDueDate",
               "webhookId": "${webhookId}",
               "cardId": "${cardId}"
             }

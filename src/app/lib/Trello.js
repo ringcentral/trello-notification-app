@@ -167,6 +167,21 @@ class Trello {
     const response = await axios.post(uri);
     return response.data;
   }
+
+  async updateCard(cardId, data) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      ...data,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}?${query}`;
+    const response = await axios.put(uri, data);
+    return response.data;
+  }
+
+  async setCardDueDate(cardId, dueDate) {
+    return this.updateCard(cardId, { due: dueDate });
+  }
 }
 
 exports.Trello = Trello;
