@@ -86,7 +86,7 @@ async function interactiveMessage(req, res) {
     if (trelloUser) {
       trelloUser.token = body.data.token;
       trelloUser.username = trelloUserInfo.username;
-      trelloUser.username = trelloUserInfo.username;
+      trelloUser.fullName = trelloUserInfo.fullName;
       await trelloUser.save();
     } else {
       trelloUser = await TrelloUser.create({
@@ -138,7 +138,6 @@ async function interactiveMessage(req, res) {
     }
   } catch (e) {
     if (e.response) {
-      console.error(e.response);
       if (e.response.status === 401) {
         trelloUser.token = '';
         await trelloUser.save();

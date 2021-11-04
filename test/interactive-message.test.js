@@ -216,4 +216,33 @@ describe('Interactive Messages', () => {
     scope.done();
     trelloScope.done();
   });
+
+  it('should send auth card when request trello 401', async() => {
+    const scope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { result: 'OK' });
+    const cardId = 'test-trello-card-id';
+    const trelloScope = nock('https://api.trello.com')
+      .get(uri => uri.includes(`/1/cards/${cardId}/members?`))
+      .reply(401);
+    let requestBody = null;
+    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'joinCard',
+        cardId,
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+    expect(JSON.stringify(requestBody.attachments[0])).toContain('Submit token');
+    scope.done();
+    trelloScope.done();
+  });
 });
