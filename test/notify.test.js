@@ -465,7 +465,7 @@ describe('Notify', () => {
     scope.done();
   });
 
-  it.only('should get 200 with deleteCheckItemData message', async () => {
+  it('should get 200 with deleteCheckItemData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });

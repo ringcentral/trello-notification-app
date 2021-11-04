@@ -44,7 +44,7 @@ async function notifyV2(req, res) {
     }
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
     if (filterId) {
-      const glipMessage = formatAdaptiveCardMessage(req.body);
+      const glipMessage = formatAdaptiveCardMessage(req.body, trelloWebhookId);
       await axios.post(trelloWebhook.rc_webhook_id, glipMessage, {
         headers: {
           Accept: 'application/json',

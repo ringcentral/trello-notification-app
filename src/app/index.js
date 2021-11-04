@@ -3,6 +3,7 @@ const path = require('path');
 const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
 const trelloNotifyRoute = require('./routes/trello-notify');
+const interactiveMessageRoute = require('./routes/interactive-messages');
 
 // extends or override express app as you need
 exports.appExtend = (app) => {
@@ -24,4 +25,6 @@ exports.appExtend = (app) => {
   // trello incoming webhook
   app.post('/trello-notify/:id', trelloNotifyRoute.notify);
   app.head('/trello-notify/:id', trelloNotifyRoute.head);
+
+  app.post('/interactive-messages', interactiveMessageRoute.interactiveMessage);
 }

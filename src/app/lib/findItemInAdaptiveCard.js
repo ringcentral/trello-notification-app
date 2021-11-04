@@ -17,7 +17,7 @@ function findItemInAdaptiveCard(card, id) {
     list = card.columns;
   }
   if (card.actions) {
-    list = card.actions;
+    list = [...list].concat(card.actions);
   }
   for (const item of list) {
     found = findItemInAdaptiveCard(item, id);
