@@ -20,7 +20,7 @@ async function sendMessageCard(webhookUri, message) {
   });
 }
 
-async function sendAuthorizeRequestCard(webhookUri) {
+async function sendAuthorizeRequestCard(webhookUri, webhookId) {
   await axios.post(webhookUri,
     createAuthTokenRequestCard({
       webhookId,
@@ -114,7 +114,7 @@ async function interactiveMessage(req, res) {
     return;
   }
   if (!trelloUser || !trelloUser.token) {
-    await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id);
+    await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
     res.status(200);
     res.send('ok');
     return;
@@ -142,7 +142,7 @@ async function interactiveMessage(req, res) {
       if (e.response.status === 401) {
         trelloUser.token = '';
         await trelloUser.save();
-        await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id);
+        await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
       } else if (e.response.status === 403) {
         await sendMessageCard(
           trelloWebhook.rc_webhook_id,
