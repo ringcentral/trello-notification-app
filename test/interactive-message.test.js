@@ -44,6 +44,16 @@ describe('Interactive Messages', () => {
     expect(res.status).toEqual(404);
   });
 
+  it('should get 401 with INTERACTIVE_MESSAGES_SHARED_SECRET and wrong signature', async () => {
+    process.env.INTERACTIVE_MESSAGES_SHARED_SECRET = 'test-secret';
+    const res = await request(server).post('/interactive-messages').send({
+      data: {},
+      user: {},
+    });
+    delete process.env.INTERACTIVE_MESSAGES_SHARED_SECRET;
+    expect(res.status).toEqual(401);
+  });
+
   it('should send auth card with new rc user', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
