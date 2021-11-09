@@ -2,15 +2,10 @@ const { Template } = require('adaptivecards-templating');
 const { findItemInAdaptiveCard } = require('./findItemInAdaptiveCard');
 
 const boardTemplate = require('../adaptiveCards/board.json');
-const boardTemplateString = JSON.stringify(boardTemplate, null, 2);
 const listTemplate = require('../adaptiveCards/list.json');
-const listTemplateString = JSON.stringify(listTemplate, null, 2);
 const cardTemplate = require('../adaptiveCards/card.json');
-const cardTemplateString = JSON.stringify(cardTemplate, null, 2);
 const checklistTemplate = require('../adaptiveCards/checklist.json');
-const checklistTemplateString = JSON.stringify(checklistTemplate, null, 2);
 const authTemplate = require('../adaptiveCards/auth.json');
-const authTemplateString = JSON.stringify(authTemplate, null, 2);
 
 const ICON_URL = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png';
 
@@ -20,7 +15,7 @@ function getAdaptiveCardFromTemplate(cardTemplate, params) {
   const card = template.expand({
     $root: params
   });
-  return JSON.parse(card);
+  return card;
 }
 
 function formatDateTime(date) {
@@ -76,7 +71,7 @@ function getCardMessageSubject(action) {
     return `Removed [${action.member.fullName}](https://trello.com/${action.member.username}) from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'addAttachmentToCard') {
-    return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}). \\n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
+    return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
   }
   if (action.type === 'addLabelToCard') {
     return `Added label **${action.data.label.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
@@ -92,10 +87,10 @@ function getCardMessageSubject(action) {
       return `Updated description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) `;
     }
     if (action.display.translationKey === 'action_added_a_due_date') {
-      return `Added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:**  {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
+      return `Added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Due date:**  {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
     }
     if (action.display.translationKey === 'action_changed_a_due_date') {
-      return `Changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \\n**Due date:** {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
+      return `Changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Due date:** {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
     }
     if (action.display.translationKey === 'action_move_card_from_list_to_list') {
       return `Moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/b/${action.data.board.shortLink})`;
@@ -225,20 +220,13 @@ function getAvatarUrl(action) {
   }
 }
 
-function escapeNewLine(str) {
-  if (!str) {
-    return '';
-  }
-  return str.replace(/\n/g, "\\n");
-}
-
 function getCardFromTrelloMessage(trelloMessage, webhookId) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
   if (BOARD_TYPES.indexOf(action.type) > -1) {
-    const subject = escapeNewLine(getBoardMessageSubject(action));
-    card = getAdaptiveCardFromTemplate(boardTemplateString, {
+    const subject = getBoardMessageSubject(action);
+    card = getAdaptiveCardFromTemplate(boardTemplate, {
       summary,
       avatarUrl: getAvatarUrl(action),
       subject,
@@ -248,8 +236,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
       boardLink: trelloMessage.model.shortUrl,
     });
   } else if (LIST_TYPES.indexOf(action.type) > -1) {
-    const subject = escapeNewLine(getListMessageSubject(action));
-    card = getAdaptiveCardFromTemplate(listTemplateString, {
+    const subject = getListMessageSubject(action);
+    card = getAdaptiveCardFromTemplate(listTemplate, {
       summary,
       avatarUrl: getAvatarUrl(action),
       subject,
@@ -260,8 +248,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
       listName: trelloMessage.action.data.list.name,
     });
   } else if (CARD_TYPES.indexOf(action.type) > -1) {
-    const subject = escapeNewLine(getCardMessageSubject(action));
-    card = getAdaptiveCardFromTemplate(cardTemplateString, {
+    const subject = getCardMessageSubject(action);
+    card = getAdaptiveCardFromTemplate(cardTemplate, {
       summary,
       avatarUrl: getAvatarUrl(action),
       subject,
@@ -270,8 +258,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
       boardName: trelloMessage.model.name,
       boardLink: trelloMessage.model.shortUrl,
       listName: trelloMessage.action.data.list ? trelloMessage.action.data.list.name : trelloMessage.action.data.card.name,
-      comment: escapeNewLine(trelloMessage.action.data.text),
-      description: escapeNewLine(trelloMessage.action.data.card.desc),
+      comment: trelloMessage.action.data.text,
+      description: trelloMessage.action.data.card.desc,
       webhookId,
       cardId: trelloMessage.action.data.card.id,
     });
@@ -290,8 +278,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
       }
     }
   } else if (CHECKLIST_TYPES.indexOf(action.type) > -1) {
-    const subject = escapeNewLine(getChecklistMessageSubject(action));
-    card = getAdaptiveCardFromTemplate(checklistTemplateString, {
+    const subject = getChecklistMessageSubject(action);
+    card = getAdaptiveCardFromTemplate(checklistTemplate, {
       summary,
       avatarUrl: getAvatarUrl(action),
       subject,
@@ -321,7 +309,7 @@ function formatAdaptiveCardMessage(trelloMessage, webhookId) {
 }
 
 function createAuthTokenRequestCard({ webhookId, authorizeUrl }) {
-  const card = getAdaptiveCardFromTemplate(authTemplateString, {
+  const card = getAdaptiveCardFromTemplate(authTemplate, {
     webhookId,
     authorizeUrl,
   });
