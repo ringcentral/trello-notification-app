@@ -134,6 +134,51 @@ describe('Interactive Messages', () => {
     scope.done();
   });
 
+  it('should save token invalid message when authorize with invalid token', async() => {
+    const scope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { result: 'OK' });
+    const trelloScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('/1/members/me?'))
+      .reply(401, { error: 'invalid token' });
+    let requestBody = null;
+    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        token: 'test-token',
+        action: 'authorize',
+      },
+      user: {
+        id: 'test-user-id2',
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(requestBody.title).toContain('the token is invalid');
+    scope.done();
+    trelloScope.done();
+  });
+
+  it('should get 403 when request trello user info unsuccessfully', async() => {
+    const trelloScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('/1/members/me?'))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        token: 'test-token',
+        action: 'authorize',
+      },
+      user: {
+        id: 'test-user-id2',
+      },
+    });
+    expect(res.status).toEqual(403);
+    trelloScope.done();
+  });
+
   it('should save authorization token successfully for new user', async() => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
