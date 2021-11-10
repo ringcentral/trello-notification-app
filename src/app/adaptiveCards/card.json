@@ -198,90 +198,130 @@
       ],
       "separator": true,
       "spacing": "Medium"
-    }
-  ],
-  "actions": [
-    {
-      "type": "Action.ShowCard",
-      "title": "Join",
-      "card": {
-        "type": "AdaptiveCard",
-        "body": [
-          {
-            "type": "TextBlock",
-            "text": "Join into this card?"
-          }
-        ],
-        "actions": [
-          {
-            "type": "Action.Submit",
-            "title": "Join",
-            "data": {
-              "action": "joinCard",
-              "webhookId": "${webhookId}",
-              "cardId": "${cardId}"
-            }
-          }
-        ]
-      }
     },
     {
-      "type": "Action.ShowCard",
-      "title": "Comment",
-      "card": {
-        "type": "AdaptiveCard",
-        "body": [
-          {
-            "type": "Input.Text",
-            "id": "comment",
-            "placeholder": "Add a comment",
-            "maxLength": 500,
-            "label": "Comment",
-            "errorMessage": "Please add a comment",
-            "isRequired": true,
-            "isMultiline": true
-          }
-        ],
-        "actions": [
-          {
-            "type": "Action.Submit",
-            "title": "Comment",
-            "data": {
-              "action": "commentCard",
-              "webhookId": "${webhookId}",
-              "cardId": "${cardId}"
+      "type": "Container",
+      "items": [
+        {
+          "type": "ActionSet",
+          "id": "actions",
+          "actions": [
+            {
+              "type": "Action.ShowCard",
+              "title": "Join",
+              "card": {
+                "type": "AdaptiveCard",
+                "body": [
+                  {
+                    "type": "TextBlock",
+                    "text": "Join into this card?"
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "Action.Submit",
+                    "title": "Join",
+                    "data": {
+                      "action": "joinCard",
+                      "webhookId": "${webhookId}",
+                      "cardId": "${cardId}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Action.ShowCard",
+              "title": "Comment",
+              "card": {
+                "type": "AdaptiveCard",
+                "body": [
+                  {
+                    "type": "Input.Text",
+                    "id": "comment",
+                    "placeholder": "Add a comment",
+                    "maxLength": 500,
+                    "label": "Comment",
+                    "errorMessage": "Please add a comment",
+                    "isRequired": true,
+                    "isMultiline": true
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "Action.Submit",
+                    "title": "Comment",
+                    "data": {
+                      "action": "commentCard",
+                      "webhookId": "${webhookId}",
+                      "cardId": "${cardId}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Action.ShowCard",
+              "title": "Due Date",
+              "card": {
+                "type": "AdaptiveCard",
+                "body": [
+                  {
+                    "type": "Input.Date",
+                    "id": "dueDate",
+                    "isRequired": true,
+                    "label": "Due Date",
+                    "errorMessage": "Please enter a date",
+                    "placeholder": "Enter a date"
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "Action.Submit",
+                    "title": "Set Due Date",
+                    "data": {
+                      "action": "setCardDueDate",
+                      "webhookId": "${webhookId}",
+                      "cardId": "${cardId}"
+                    }
+                  }
+                ]
+              }
             }
-          }
-        ]
-      }
+          ],
+          "isVisible": true
+        }
+      ]
     },
     {
-      "type": "Action.ShowCard",
-      "title": "Due Date",
-      "card": {
-        "type": "AdaptiveCard",
-        "body": [
+      "type": "ColumnSet",
+      "columns": [
           {
-            "type": "Input.Date",
-            "id": "dueDate",
-            "isRequired": true,
-            "label": "Due Date",
-            "errorMessage": "Please enter a date",
-            "placeholder": "Enter a date"
-          }
-        ],
-        "actions": [
+              "type": "Column",
+              "width": "14px",
+              "items": [
+                  {
+                      "type": "Image",
+                      "url": "https://raw.githubusercontent.com/ringcentral/bugsnag-notification-app/main/icon/feedback.png",
+                      "height": "12px"
+                  }
+              ],
+              "verticalContentAlignment": "Center"
+          },
           {
-            "type": "Action.Submit",
-            "title": "Set Due Date",
-            "data": {
-              "action": "setCardDueDate",
-              "webhookId": "${webhookId}",
-              "cardId": "${cardId}"
-            }
+              "type": "Column",
+              "items": [
+                  {
+                      "type": "TextBlock",
+                      "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+                      "wrap": true,
+                      "size": "Small"
+                  }
+              ],
+              "width": "stretch",
+              "verticalContentAlignment": "Center"
           }
-        ]
-      }
+      ]
     }
   ],
   "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",

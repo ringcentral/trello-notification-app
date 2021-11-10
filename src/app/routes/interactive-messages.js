@@ -75,10 +75,23 @@ async function interactiveMessage(req, res) {
   if (action === 'authorize') {
     const token = body.data.token;
     trello.setToken(token);
-    const trelloUserInfo = await trello.getUserInfo();
+    let trelloUserInfo;
+    try {
+      trelloUserInfo = await trello.getUserInfo();
+    } catch (e) {
+      if (e.response && e.response.status === 401) {
+        await sendMessageCard(
+          trelloWebhook.rc_webhook_id,
+          `Hi ${body.user.firstName} ${body.user.lastName}, the token is invalid.`,
+        );
+        res.status(200);
+        res.send('ok');
+        return;
+      }
+    }
     if (!trelloUserInfo || !trelloUserInfo.id) {
       res.status(403);
-      res.send('Trello token invalid.');
+      res.send('Fetch Trello data error.');
       return;
     }
     if (!trelloUser || trelloUserInfo.id !== trelloUser.id) {
