@@ -159,6 +159,36 @@
             ],
             "separator": true,
             "spacing": "Medium"
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "14px",
+                    "items": [
+                        {
+                            "type": "Image",
+                            "url": "https://raw.githubusercontent.com/ringcentral/bugsnag-notification-app/main/icon/feedback.png",
+                            "height": "12px"
+                        }
+                    ],
+                    "verticalContentAlignment": "Center"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+                            "wrap": true,
+                            "size": "Small"
+                        }
+                    ],
+                    "width": "stretch",
+                    "verticalContentAlignment": "Center"
+                }
+            ]
         }
     ],
     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
