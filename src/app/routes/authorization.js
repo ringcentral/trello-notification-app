@@ -3,6 +3,7 @@ const { decodeToken, generateToken } = require('../lib/jwt');
 
 const { TrelloUser } = require('../models/trello-user');
 
+// authorize Trello with only read permission
 async function authorize(req, res) {
   const trello = new Trello({
     appKey: process.env.TRELLO_APP_KEY,
@@ -10,6 +11,16 @@ async function authorize(req, res) {
   });
   res.redirect(trello.authorizationUrl());
 };
+
+// authorize Trello with read and write permission
+async function fullAuthorize(req, res) {
+  const trello = new Trello({
+    name: 'RingCentral Notification Actions',
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+  });
+  res.redirect(trello.authorizationUrl({ scope: 'read,write' }));
+}
 
 function oauthCallback (req, res) {
   res.render('oauth-callback');
@@ -98,6 +109,7 @@ async function revokeToken(req, res) {
 }
 
 exports.authorize = authorize;
+exports.fullAuthorize = fullAuthorize;
 exports.revokeToken = revokeToken;
 exports.oauthCallback = oauthCallback;
 exports.saveToken = saveToken;

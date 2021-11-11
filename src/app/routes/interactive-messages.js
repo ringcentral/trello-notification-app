@@ -25,7 +25,7 @@ async function sendAuthorizeRequestCard(webhookUri, webhookId) {
   await axios.post(webhookUri,
     createAuthTokenRequestCard({
       webhookId,
-      authorizeUrl: `${process.env.APP_SERVER}/trello/authorize`,
+      authorizeUrl: `${process.env.APP_SERVER}/trello/full-authorize`,
     }),
     {
       headers: {
@@ -98,7 +98,7 @@ async function interactiveMessage(req, res) {
       trelloUser = await TrelloUser.findByPk(trelloUserInfo.id);
     }
     if (trelloUser) {
-      trelloUser.token = body.data.token;
+      trelloUser.writeable_token = body.data.token;
       trelloUser.username = trelloUserInfo.username;
       trelloUser.fullName = trelloUserInfo.fullName;
       await trelloUser.save();
@@ -107,7 +107,7 @@ async function interactiveMessage(req, res) {
         id: trelloUserInfo.id,
         username: trelloUserInfo.username,
         fullName: trelloUserInfo.fullName,
-        token,
+        writeable_token: token,
       });
     }
     if (rcUser) {
@@ -127,13 +127,13 @@ async function interactiveMessage(req, res) {
     res.send('ok');
     return;
   }
-  if (!trelloUser || !trelloUser.token) {
+  if (!trelloUser || !trelloUser.writeable_token) {
     await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
     res.status(200);
     res.send('ok');
     return;
   }
-  trello.setToken(trelloUser.token);
+  trello.setToken(trelloUser.writeable_token);
   try {
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
@@ -153,7 +153,7 @@ async function interactiveMessage(req, res) {
   } catch (e) {
     if (e.response) {
       if (e.response.status === 401) {
-        trelloUser.token = '';
+        trelloUser.writeable_token = '';
         await trelloUser.save();
         await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
       } else if (e.response.status === 403) {

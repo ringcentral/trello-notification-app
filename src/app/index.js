@@ -16,8 +16,10 @@ exports.appExtend = (app) => {
   // Create or Update Trello webhook
   app.post('/webhooks', webhooksRoute.createWebhook);
 
-  // authorize trello
+  // authorize trello with only read permission
   app.get('/trello/authorize', authorizationRoute.authorize);
+  // authorize trello with read and write permission
+  app.get('/trello/full-authorize', authorizationRoute.fullAuthorize);
   app.get('/trello/oauth-callback', authorizationRoute.oauthCallback);
   app.post('/trello/token', authorizationRoute.saveToken);
   app.post('/trello/revoke', authorizationRoute.revokeToken);
