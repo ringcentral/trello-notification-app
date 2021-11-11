@@ -84,6 +84,9 @@ async function webhookInfo(req, res) {
       res.send('Unauthorized.');
       return;
     }
+    console.error(e && e.message);
+    res.status(500);
+    res.send('Internal error');
   }
 }
 

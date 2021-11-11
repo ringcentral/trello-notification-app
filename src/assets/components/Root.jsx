@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import {
-  RcThemeProvider,
-  RcStepper,
-  RcStep,
-  RcStepLabel,
-  RcLoading,
-  RcStepButton,
   RcAlert,
   RcIconButton,
+  RcLoading,
+  RcStep,
+  RcStepButton,
+  RcStepLabel,
+  RcStepper,
+  RcThemeProvider,
 } from '@ringcentral/juno';
-import { Feedback } from '@ringcentral/juno/icon';
 import { styled } from '@ringcentral/juno/foundation';
+import { Feedback } from '@ringcentral/juno/icon';
 
 import { AuthorizationPanel } from './AuthorizationPanel';
 import { BoardSelectionPanel } from './BoardSelectionPanel';
@@ -282,6 +286,7 @@ export function App({ integrationHelper, client }) {
                   try {
                     await client.saveToken(e.data.authCallback);
                     setAuthorized(true);
+                    setError('');
                   } catch (e) {
                     console.error(e);
                     setError('Authorization error please retry later.')

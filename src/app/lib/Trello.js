@@ -20,10 +20,11 @@ class Trello {
     redirectUrl,
     apiServer = 'https://api.trello.com',
     token = '',
+    name = '',
   }) {
     this._appKey = appKey;
     this._authorizeUrl = authorizeUrl;
-    this._name = 'RingCentral Notifications';
+    this._name = name || 'RingCentral Notifications';
     this._token = token;
     this._redirectUrl = redirectUrl;
     this._appServer = apiServer;
@@ -33,11 +34,11 @@ class Trello {
     this._token = token;
   }
 
-  authorizationUrl() {
+  authorizationUrl({ scope = 'read' } = {}) {
     const query = obj2uri({
       expiration: 'never',
       name: this._name,
-      scope: 'read,write',
+      scope,
       response_type: 'token',
       key: this._appKey,
       return_url: this._redirectUrl,
@@ -55,7 +56,7 @@ class Trello {
       fields: 'name,url',
       key: this._appKey,
       token: this._token,
-    })
+    });
     const uri = `${this._appServer}/1/members/me/boards?${query}`;
     const response = await axios.get(uri);
     return response.data;
