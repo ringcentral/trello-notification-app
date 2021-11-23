@@ -34,6 +34,19 @@ const { formatAdaptiveCardMessage } = require('../lib/formatAdaptiveCardMessage'
 //   });
 // }
 
+async function updateBoardLabels(trello, trelloWebhook) {
+  const labels = await trello.getLabels(trelloWebhook.config.boardId);
+  trelloWebhook.config = {
+    ...trelloWebhook.config,
+    labels,
+  };
+  await trelloWebhook.save();
+}
+
+function shouldUpdateBoardLabels(actionType) {
+  return ['createLabel', 'updateLabel', 'deleteLabel'].indexOf(actionType) > -1;
+}
+
 async function notifyV2(req, res) {
   const trelloWebhookId = req.params.id;
   // console.log(JSON.stringify(req.body, null, 2));
@@ -44,18 +57,29 @@ async function notifyV2(req, res) {
       res.send('Not found');
       return;
     }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+    });
+    let trelloUser
+    if (shouldUpdateBoardLabels(req.body.action.type)) {
+      console.log('update labels');
+      trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+      trello.setToken(trelloUser.token);
+      await updateBoardLabels(trello, trelloWebhook);
+    }
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
     if (filterId) {
       let card = {};
       if (req.body.action.type.indexOf('Card') > -1) {
-        const trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
-        const trello = new Trello({
-          appKey: process.env.TRELLO_APP_KEY,
-          redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
-        });
+        if (!trelloUser) {
+          trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+        }
         trello.setToken(trelloUser.token);
         card = await trello.getCard(req.body.action.data.card.id);
-        console.log(card);
+        if (!trelloWebhook.config.labels) {
+          await updateBoardLabels(trello, trelloWebhook);
+        }
       }
       const glipMessage = formatAdaptiveCardMessage(
         req.body,
