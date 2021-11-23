@@ -149,6 +149,10 @@ async function interactiveMessage(req, res) {
       await trello.addCardComment(body.data.cardId, body.data.comment);
     } else if (action === 'setCardDueDate') {
       await trello.setCardDueDate(body.data.cardId, body.data.dueDate);
+    } else if (action === 'addLabel') {
+      await trello.setCardLabel(body.data.cardId, body.data.addLabel);
+    } else if (action === 'removeLabel') {
+      await trello.removeCardLabel(body.data.cardId, body.data.removeLabel);
     }
   } catch (e) {
     if (e.response) {

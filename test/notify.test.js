@@ -3,6 +3,7 @@ const nock = require('nock');
 const axios = require('axios');
 const { server } = require('../src/server');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
+const { TrelloUser } = require('../src/app/models/trello-user');
 const { RCWebhook } = require('../src/app/models/rc-webhook');
 
 axios.defaults.adapter = require('axios/lib/adapters/http')
@@ -38,20 +39,26 @@ const completeCheckItemData = require('../example-payloads/updateCheckItemStateO
 const incompleteCheckItemData = require('../example-payloads/updateCheckItemStateOnCard-incomplete.json');
 const deleteCheckItemData = require('../example-payloads/deleteCheckItem.json');
 
+const createLabelData = require('../example-payloads/createLabel.json');
 
 describe('Notify', () => {
   const rcWebhookUri = 'http://test.com/webhook/12121';
   let trelloWebhook;
+  let trelloUser;
 
   beforeAll(async () => {
     const rcWebhookRecord = await await RCWebhook.create({
       id: rcWebhookUri,
     });
     const filters = "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem,createCard,changeCardDescription,moveCard,changeCardDueDate,renameCard,commentCard,archiveUnarchiveCard,addAttachmentToCard,addLabelToCard,removeLabelFromCard,addMemberToCard,removeMemberFromCard,createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard";
+    const trelloUser = await TrelloUser.create({
+      id: 'test-trello-user-id',
+      token: 'test-token',
+    });
     trelloWebhook = await TrelloWebhook.create({
       id: rcWebhookRecord.trello_webhook_id,
       rc_webhook_id: rcWebhookUri,
-      trello_user_id: 'test-user-id',
+      trello_user_id: trelloUser.id,
       config: {
         boardId: 'test-board-id',
         filters: String(filters),
@@ -180,6 +187,19 @@ describe('Notify', () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const trelloBoardLabelsScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('labels'))
+      .reply(200, [{
+        id: 'test-label-id',
+        name: 'test-label-name',
+      }]);
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -190,12 +210,25 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
+    trelloBoardLabelsScope.done();
   });
 
   it('should get 200 with commentCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [{
+          id: 'test-label-id',
+          name: 'test-label-name',
+          color: 'blue',
+        }],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -206,12 +239,25 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with addMemberToCard message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [
+          {
+            id: 'test-label-id',
+            name: 'test-label-name',
+          }
+        ],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -222,12 +268,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with removeMemberFromCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -238,12 +292,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with addAttachmentToCard message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -254,12 +316,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with addLabelToCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -270,12 +340,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with removeLabelFromCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -286,6 +364,7 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
 
@@ -293,6 +372,13 @@ describe('Notify', () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -303,12 +389,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with unarchiveCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -319,12 +413,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with updateCardDescriptionData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -335,12 +437,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with addCardDueDateData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -351,12 +461,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with changeCardDueDateData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -367,12 +485,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with moveCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -383,12 +509,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with renameCardData message', async () => {
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
     let requestBody = null;
     scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
@@ -399,6 +533,7 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+    trelloCardScope.done();
   });
 
   it('should get 200 with addChecklistToCardData message', async () => {
@@ -463,6 +598,20 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
     scope.done();
+  });
+
+  it('should get 200 with createLabel message', async () => {
+    const trelloBoardLabelsScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('labels'))
+      .reply(200, [{
+        id: 'test-label-id',
+        name: 'test-label-name',
+      }]);
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createLabelData);
+    expect(res.status).toEqual(200);
+    trelloBoardLabelsScope.done();
   });
 
   it('should get 200 with deleteCheckItemData message', async () => {

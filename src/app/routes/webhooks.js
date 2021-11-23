@@ -126,6 +126,11 @@ async function createWebhook(req, res) {
   let rcWebhookRecord;
   let trelloWebhook;
   try {
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      token: trelloUser.token,
+    });
+    const labels = await trello.getLabels(boardId);
     rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
     if (rcWebhookRecord) {
       trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
@@ -142,6 +147,7 @@ async function createWebhook(req, res) {
         config: {
           boardId,
           filters: String(filters),
+          labels,
         },
       });
     } else {
@@ -150,13 +156,10 @@ async function createWebhook(req, res) {
       trelloWebhook.config = {
         boardId,
         filters: String(filters),
+        labels,
       };
       await trelloWebhook.save();
     }
-    const trello = new Trello({
-      appKey: process.env.TRELLO_APP_KEY,
-      token: trelloUser.token,
-    });
     if (trelloWebhook.trello_webhook_id) {
       await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
       trelloWebhook.trello_webhook_id = '';

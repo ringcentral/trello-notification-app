@@ -9,6 +9,7 @@ const authTemplate = require('../adaptiveCards/auth.json');
 
 const ICON_URL = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png';
 
+const COLOR_IMAGE_URL_BASE = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/';
 
 function getAdaptiveCardFromTemplate(cardTemplate, params) {
   const template = new Template(cardTemplate);
@@ -21,6 +22,39 @@ function getAdaptiveCardFromTemplate(cardTemplate, params) {
 function formatDateTime(date) {
   const dateTime = new Date(date);
   return `${dateTime.toISOString().split('.')[0]}Z`;
+}
+
+function formatLabels(labels) {
+  if (!labels) {
+    return [];
+  }
+  return labels.map((label) => {
+    let name = label.name;
+    if (!name) {
+      name = label.color;
+    }
+    const colorImage = label.color ? `${COLOR_IMAGE_URL_BASE}${label.color}.png` : `${COLOR_IMAGE_URL_BASE}nocolor.png`;
+    return {
+      id: label.id,
+      name,
+      color: label.color,
+      colorImage,
+    }
+  });
+}
+
+function getUnselectedLabels(boardLabels, selectedLabels) {
+  if (!boardLabels) {
+    return [];
+  }
+  if (!selectedLabels) {
+    return boardLabels;
+  }
+  return boardLabels.filter((label) => !selectedLabels.find((selectedLabel) => selectedLabel.id === label.id));
+}
+
+function getLabelText(label) {
+  return label.name || label.color;
 }
 
 const BOARD_TYPES = ['addMemberToBoard', 'moveListFromBoard', 'updateBoard'];
@@ -56,7 +90,7 @@ function getListMessageSubject(action) {
   }
 }
 
-const CARD_TYPES = ['createCard', 'commentCard', 'addMemberToCard', 'removeMemberFromCard', 'addAttachmentToCard', 'addLabelToCard', 'removeLabelFromCard', 'updateCard'];
+export const CARD_TYPES = ['createCard', 'commentCard', 'addMemberToCard', 'removeMemberFromCard', 'addAttachmentToCard', 'addLabelToCard', 'removeLabelFromCard', 'updateCard'];
 function getCardMessageSubject(action) {
   if (action.type === 'createCard') {
     return `New card created: [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
@@ -74,10 +108,10 @@ function getCardMessageSubject(action) {
     return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
   }
   if (action.type === 'addLabelToCard') {
-    return `Added label **${action.data.label.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `Added label **${getLabelText(action.data.label)}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'removeLabelFromCard') {
-    return `Removed label **${action.data.label.name}** from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `Removed label **${getLabelText(action.data.label)}** from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_archived_card') {
@@ -220,7 +254,7 @@ function getAvatarUrl(action) {
   }
 }
 
-function getCardFromTrelloMessage(trelloMessage, webhookId) {
+function getCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
@@ -249,7 +283,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
     });
   } else if (CARD_TYPES.indexOf(action.type) > -1) {
     const subject = getCardMessageSubject(action);
-    card = getAdaptiveCardFromTemplate(cardTemplate, {
+    const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels))
+    const params = {
       summary,
       avatarUrl: getAvatarUrl(action),
       subject,
@@ -262,7 +297,22 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
       description: trelloMessage.action.data.card.desc,
       webhookId,
       cardId: trelloMessage.action.data.card.id,
-    });
+      defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id,
+      unselectedLabels: unselectedLabels,
+      defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id,
+      selectedLabels: formatLabels(trelloCard.labels),
+    };
+    card = getAdaptiveCardFromTemplate(cardTemplate, params);
+    if (unselectedLabels.length === 0) {
+      const addLabelForm = findItemInAdaptiveCard(card, 'addLabelForm');
+      addLabelForm.isVisible = false;
+    }
+    if (trelloCard.labels.length === 0) {
+      const removeLabelForm = findItemInAdaptiveCard(card, 'removeLabelForm');
+      removeLabelForm.isVisible = false;
+      const selectedLabels = findItemInAdaptiveCard(card, 'selectedLabels');
+      selectedLabels.isVisible = false;
+    }
     if (action.type === 'commentCard') {
       const commentArea = findItemInAdaptiveCard(card, 'commentArea');
       delete commentArea.isVisible;
@@ -294,8 +344,8 @@ function getCardFromTrelloMessage(trelloMessage, webhookId) {
   return card;
 }
 
-function formatAdaptiveCardMessage(trelloMessage, webhookId) {
-  const card = getCardFromTrelloMessage(trelloMessage, webhookId);
+function formatAdaptiveCardMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
+  const card = getCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard });
   const message = {
     icon: ICON_URL,
   };
