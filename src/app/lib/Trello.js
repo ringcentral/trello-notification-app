@@ -183,6 +183,49 @@ class Trello {
   async setCardDueDate(cardId, dueDate) {
     return this.updateCard(cardId, { due: dueDate });
   }
+
+  async getLabels(boardId) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      fields: 'id,name,color',
+    });
+    const uri = `${this._appServer}/1/boards/${boardId}/labels?${query}`;
+    const response = await axios.get(uri);
+    return response.data;
+  }
+
+  async setCardLabel(cardId, labelId) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      value: labelId,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}/idLabels?${query}`;
+    const response = await axios.post(uri);
+    return response.data;
+  }
+
+  async removeCardLabel(cardId, labelId) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}/idLabels/${labelId}?${query}`;
+    const response = await axios.delete(uri);
+    return response.data;
+  }
+
+  async getCard(cardId) {
+    const query = obj2uri({
+      key: this._appKey,
+      token: this._token,
+      fields: 'id,name,desc,labels',
+    });
+    const uri = `${this._appServer}/1/cards/${cardId}?${query}`;
+    const response = await axios.get(uri);
+    return response.data;
+  }
 }
 
 exports.Trello = Trello;

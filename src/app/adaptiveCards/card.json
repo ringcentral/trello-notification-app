@@ -259,6 +259,176 @@
                   }
                 ]
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "ActionSet",
+          "id": "secondActions",
+          "actions": [
+            {
+              "type": "Action.ShowCard",
+              "title": "Label",
+              "card": {
+                "type": "AdaptiveCard",
+                "body": [
+                  {
+                    "type": "ColumnSet",
+                    "id": "selectedLabels",
+                    "columns": [
+                      {
+                        "$data": "${selectedLabels}",
+                        "type": "Column",
+                        "width": "auto",
+                        "items": [
+                          {
+                            "type": "ColumnSet",
+                            "columns": [
+                              {
+                                "type": "Column",
+                                "width": "16px",
+                                "items": [
+                                  {
+                                    "type": "Image",
+                                    "url": "${colorImage}",
+                                    "height": "16px",
+                                    "style": "Person"
+                                  }
+                                ],
+                                "verticalContentAlignment": "Center",
+                                "spacing": "None"
+                              },
+                              {
+                                "type": "Column",
+                                "width": "stretch",
+                                "items": [
+                                  {
+                                    "type": "TextBlock",
+                                    "text": "${name}"
+                                  }
+                                ],
+                                "spacing": "Small",
+                                "verticalContentAlignment": "Center"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Container",
+                    "id": "removeLabelForm",
+                    "items": [
+                      {
+                        "type": "TextBlock",
+                        "text": "Remove label",
+                        "size": "Small",
+                        "weight": "Bolder"
+                      },
+                      {
+                        "type": "ColumnSet",
+                        "columns": [
+                          {
+                            "type": "Column",
+                            "items": [
+                              {
+                                "type": "Input.ChoiceSet",
+                                "id": "removeLabel",
+                                "value": "${defaultRemoveLabelValue}",
+                                "choices": [
+                                  {
+                                    "$data": "${selectedLabels}",
+                                    "title": "${name}",
+                                    "value": "${id}"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Column",
+                            "items": [
+                              {
+                                "type": "ActionSet",
+                                "actions": [
+                                  {
+                                    "type": "Action.Submit",
+                                    "title": "Remove",
+                                    "data": {
+                                      "action": "removeLabel",
+                                      "webhookId": "${webhookId}",
+                                      "cardId": "${cardId}"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Container",
+                    "id": "addLabelForm",
+                    "items": [
+                      {
+                        "type": "TextBlock",
+                        "text": "Add label",
+                        "size": "Small",
+                        "weight": "Bolder"
+                      },
+                      {
+                        "type": "ColumnSet",
+                        "columns": [
+                          {
+                            "type": "Column",
+                            "items": [
+                              {
+                                "type": "Input.ChoiceSet",
+                                "id": "addLabel",
+                                "value": "${defaultAddLabelValue}",
+                                "choices": [
+                                  {
+                                    "$data": "${unselectedLabels}",
+                                    "title": "${name}",
+                                    "value": "${id}"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Column",
+                            "items": [
+                              {
+                                "type": "ActionSet",
+                                "actions": [
+                                  {
+                                    "type": "Action.Submit",
+                                    "title": "Add",
+                                    "data": {
+                                      "action": "addLabel",
+                                      "webhookId": "${webhookId}",
+                                      "cardId": "${cardId}"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
             },
             {
               "type": "Action.ShowCard",
@@ -288,39 +458,38 @@
                 ]
               }
             }
-          ],
-          "isVisible": true
+          ]
         }
       ]
     },
     {
       "type": "ColumnSet",
       "columns": [
-          {
-              "type": "Column",
-              "width": "14px",
-              "items": [
-                  {
-                      "type": "Image",
-                      "url": "https://raw.githubusercontent.com/ringcentral/bugsnag-notification-app/main/icon/feedback.png",
-                      "height": "12px"
-                  }
-              ],
-              "verticalContentAlignment": "Center"
-          },
-          {
-              "type": "Column",
-              "items": [
-                  {
-                      "type": "TextBlock",
-                      "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
-                      "wrap": true,
-                      "size": "Small"
-                  }
-              ],
-              "width": "stretch",
-              "verticalContentAlignment": "Center"
-          }
+        {
+          "type": "Column",
+          "width": "14px",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+              "height": "12px"
+            }
+          ],
+          "verticalContentAlignment": "Center"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+              "wrap": true,
+              "size": "Small"
+            }
+          ],
+          "width": "stretch",
+          "verticalContentAlignment": "Center"
+        }
       ]
     }
   ],

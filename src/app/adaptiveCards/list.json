@@ -169,7 +169,7 @@
                     "items": [
                         {
                             "type": "Image",
-                            "url": "https://raw.githubusercontent.com/ringcentral/bugsnag-notification-app/main/icon/feedback.png",
+                            "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
                             "height": "12px"
                         }
                     ],

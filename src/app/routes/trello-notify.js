@@ -1,7 +1,9 @@
 const axios = require('axios');
 
 const { TrelloWebhook } = require('../models/trello-webhook');
+const { TrelloUser } = require('../models/trello-user');
 const { getFilterId } = require('../lib/filter');
+const { Trello } = require('../lib/Trello');
 // const { formatGlipWebhookCardMessage } = require('../lib/formatMessage');
 const { formatAdaptiveCardMessage } = require('../lib/formatAdaptiveCardMessage');
 
@@ -44,7 +46,25 @@ async function notifyV2(req, res) {
     }
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
     if (filterId) {
-      const glipMessage = formatAdaptiveCardMessage(req.body, trelloWebhookId);
+      let card = {};
+      if (req.body.action.type.indexOf('Card') > -1) {
+        const trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+        const trello = new Trello({
+          appKey: process.env.TRELLO_APP_KEY,
+          redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+        });
+        trello.setToken(trelloUser.token);
+        card = await trello.getCard(req.body.action.data.card.id);
+        console.log(card);
+      }
+      const glipMessage = formatAdaptiveCardMessage(
+        req.body,
+        trelloWebhookId,
+        {
+          trelloCard: card,
+          boardLabels: trelloWebhook.config.labels || [],
+        }
+      );
       await axios.post(trelloWebhook.rc_webhook_id, glipMessage, {
         headers: {
           Accept: 'application/json',

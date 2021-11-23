@@ -283,6 +283,7 @@ export function App({ integrationHelper, client }) {
                     setLoading(false);
                     return;
                   }
+                  setLoading(true);
                   try {
                     await client.saveToken(e.data.authCallback);
                     setAuthorized(true);
