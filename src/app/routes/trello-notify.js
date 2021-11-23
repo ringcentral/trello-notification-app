@@ -5,7 +5,7 @@ const { TrelloUser } = require('../models/trello-user');
 const { getFilterId } = require('../lib/filter');
 const { Trello } = require('../lib/Trello');
 // const { formatGlipWebhookCardMessage } = require('../lib/formatMessage');
-const { formatAdaptiveCardMessage } = require('../lib/formatAdaptiveCardMessage');
+const { formatAdaptiveCardMessage, CARD_TYPES } = require('../lib/formatAdaptiveCardMessage');
 
 // async function notify(req, res) {
 //   const trelloWebhookId = req.params.id;
@@ -47,6 +47,10 @@ function shouldUpdateBoardLabels(actionType) {
   return ['createLabel', 'updateLabel', 'deleteLabel'].indexOf(actionType) > -1;
 }
 
+function shouldFetchCard(actionType) {
+  return CARD_TYPES.indexOf(actionType) > -1;
+}
+
 async function notifyV2(req, res) {
   const trelloWebhookId = req.params.id;
   // console.log(JSON.stringify(req.body, null, 2));
@@ -63,7 +67,6 @@ async function notifyV2(req, res) {
     });
     let trelloUser
     if (shouldUpdateBoardLabels(req.body.action.type)) {
-      console.log('update labels');
       trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
       trello.setToken(trelloUser.token);
       await updateBoardLabels(trello, trelloWebhook);
@@ -71,7 +74,7 @@ async function notifyV2(req, res) {
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
     if (filterId) {
       let card = {};
-      if (req.body.action.type.indexOf('Card') > -1) {
+      if (shouldFetchCard(req.body.action.type)) {
         if (!trelloUser) {
           trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
         }

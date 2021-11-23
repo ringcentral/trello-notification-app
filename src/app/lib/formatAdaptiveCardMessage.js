@@ -90,7 +90,7 @@ function getListMessageSubject(action) {
   }
 }
 
-const CARD_TYPES = ['createCard', 'commentCard', 'addMemberToCard', 'removeMemberFromCard', 'addAttachmentToCard', 'addLabelToCard', 'removeLabelFromCard', 'updateCard'];
+export const CARD_TYPES = ['createCard', 'commentCard', 'addMemberToCard', 'removeMemberFromCard', 'addAttachmentToCard', 'addLabelToCard', 'removeLabelFromCard', 'updateCard'];
 function getCardMessageSubject(action) {
   if (action.type === 'createCard') {
     return `New card created: [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
