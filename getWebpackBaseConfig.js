@@ -2,7 +2,7 @@
 module.exports = function getBaseConfig() {
   return {
     entry: {
-      app: './src/assets/app.js',
+      app: './src/client/app.js',
     },
     resolve: {
       extensions: ['.js', '.jsx'],
