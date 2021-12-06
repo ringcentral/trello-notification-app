@@ -7,9 +7,7 @@ const cardTemplate = require('../adaptiveCards/card.json');
 const checklistTemplate = require('../adaptiveCards/checklist.json');
 const authTemplate = require('../adaptiveCards/auth.json');
 
-const ICON_URL = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png';
-
-const COLOR_IMAGE_URL_BASE = 'https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/';
+const { ICON_URL, COLOR_IMAGE_URL_BASE } = require('./constants');
 
 function getAdaptiveCardFromTemplate(cardTemplate, params) {
   const template = new Template(cardTemplate);
@@ -254,7 +252,7 @@ function getAvatarUrl(action) {
   }
 }
 
-function getCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
+function getAdaptiveCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
@@ -344,40 +342,13 @@ function getCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trell
   return card;
 }
 
-function formatAdaptiveCardMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
-  const card = getCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard });
-  const message = {
-    icon: ICON_URL,
-  };
-  if (card) {
-    message.attachments = [card];
-  } else {
-    message.title = 'New event';
-    message.activity = 'Trello';
-  }
-  return message;
-}
-
 function createAuthTokenRequestCard({ webhookId, authorizeUrl }) {
-  const card = getAdaptiveCardFromTemplate(authTemplate, {
+  return getAdaptiveCardFromTemplate(authTemplate, {
     webhookId,
     authorizeUrl,
   });
-  return {
-    attachments: [card],
-    icon: ICON_URL,
-  };
 }
 
-function createMessageCard({ message }) {
-  return {
-    icon: ICON_URL,
-    title: message,
-    activity: 'Trello',
-  }
-}
-
-exports.formatAdaptiveCardMessage = formatAdaptiveCardMessage;
+exports.getAdaptiveCardFromTrelloMessage = getAdaptiveCardFromTrelloMessage;
 exports.createAuthTokenRequestCard = createAuthTokenRequestCard;
-exports.createMessageCard = createMessageCard;
 exports.CARD_TYPES = CARD_TYPES;
