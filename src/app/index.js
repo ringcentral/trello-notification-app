@@ -2,15 +2,14 @@ const path = require('path');
 
 const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
-const trelloNotifyRoute = require('./routes/trello-notify');
-const interactiveMessageRoute = require('./routes/interactive-messages');
+const notificationRoute = require('./routes/notification');
 
 // extends or override express app as you need
 exports.appExtend = (app) => {
   app.set('views', path.resolve(__dirname, './views'));
   app.set('view engine', 'pug');
 
-  // RingCentral notification app main page
+  // RingCentral notification app setup page
   app.get('/webhooks/new', webhooksRoute.newWebhook);
   app.get('/webhooks/info', webhooksRoute.webhookInfo);
   // Create or Update Trello webhook
@@ -25,8 +24,8 @@ exports.appExtend = (app) => {
   app.post('/trello/revoke', authorizationRoute.revokeToken);
 
   // trello incoming webhook
-  app.post('/trello-notify/:id', trelloNotifyRoute.notify);
-  app.head('/trello-notify/:id', trelloNotifyRoute.head);
+  app.post('/trello-notify/:id', notificationRoute.notification);
+  app.head('/trello-notify/:id', notificationRoute.notificationHead);
 
-  app.post('/interactive-messages', interactiveMessageRoute.interactiveMessage);
+  app.post('/interactive-messages', notificationRoute.interactiveMessage);
 }

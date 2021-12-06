@@ -1,39 +1,95 @@
-const axios = require('axios');
 const crypto = require('crypto');
-const { Trello } = require('../lib/Trello');
 
 const { TrelloWebhook } = require('../models/trello-webhook');
-const { RcUser } = require('../models/rc-user');
 const { TrelloUser } = require('../models/trello-user');
+const { RcUser } = require('../models/rc-user');
+const { getFilterId } = require('../lib/filter');
+const { Trello } = require('../lib/Trello');
 const {
-  createAuthTokenRequestCard, 
-  createMessageCard,
+  getAdaptiveCardFromTrelloMessage,
+  CARD_TYPES,
 } = require('../lib/formatAdaptiveCardMessage');
 
-async function sendMessageCard(webhookUri, message) {
-  await axios.post(webhookUri, createMessageCard({
-    message,
-  }), {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
+const {
+  sendTextMessage,
+  sendAuthorizeRequestCard,
+  sendAdaptiveCardMessage,
+} = require('../lib/messageHelper');
+
+async function updateBoardLabels(trello, trelloWebhook) {
+  const labels = await trello.getLabels(trelloWebhook.config.boardId);
+  trelloWebhook.config = {
+    ...trelloWebhook.config,
+    labels,
+  };
+  await trelloWebhook.save();
+}
+
+function shouldUpdateBoardLabels(actionType) {
+  return ['createLabel', 'updateLabel', 'deleteLabel'].indexOf(actionType) > -1;
+}
+
+function shouldFetchCard(actionType) {
+  return CARD_TYPES.indexOf(actionType) > -1;
+}
+
+async function notification(req, res) {
+  const trelloWebhookId = req.params.id;
+  // console.log(JSON.stringify(req.body, null, 2));
+  try {
+    const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+    if (!trelloWebhook) {
+      res.status(404);
+      res.send('Not found');
+      return;
     }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+    });
+    let trelloUser
+    if (shouldUpdateBoardLabels(req.body.action.type)) {
+      trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+      trello.setToken(trelloUser.token);
+      await updateBoardLabels(trello, trelloWebhook);
+    }
+    const filterId = getFilterId(req.body, trelloWebhook.config.filters);
+    if (filterId) {
+      let card = {};
+      if (shouldFetchCard(req.body.action.type)) {
+        if (!trelloUser) {
+          trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+        }
+        trello.setToken(trelloUser.token);
+        card = await trello.getCard(req.body.action.data.card.id);
+        if (!trelloWebhook.config.labels) {
+          await updateBoardLabels(trello, trelloWebhook);
+        }
+      }
+      const adaptiveCard = getAdaptiveCardFromTrelloMessage(
+        req.body,
+        trelloWebhookId,
+        {
+          trelloCard: card,
+          boardLabels: trelloWebhook.config.labels || [],
+        }
+      );
+      await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
+    }
+  } catch (e) {
+    console.error(e)
+  }
+  res.status(200);
+  res.json({
+    result: 'OK',
   });
 }
 
-async function sendAuthorizeRequestCard(webhookUri, webhookId) {
-  await axios.post(webhookUri,
-    createAuthTokenRequestCard({
-      webhookId,
-      authorizeUrl: `${process.env.APP_SERVER}/trello/full-authorize`,
-    }),
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+function head(req, res) {
+  res.status(200);
+  res.json({
+    result: 'OK',
+  });
 }
 
 async function interactiveMessage(req, res) {
@@ -80,7 +136,7 @@ async function interactiveMessage(req, res) {
       trelloUserInfo = await trello.getUserInfo();
     } catch (e) {
       if (e.response && e.response.status === 401) {
-        await sendMessageCard(
+        await sendTextMessage(
           trelloWebhook.rc_webhook_id,
           `Hi ${body.user.firstName} ${body.user.lastName}, the token is invalid.`,
         );
@@ -119,7 +175,7 @@ async function interactiveMessage(req, res) {
         trello_user_id: trelloUser.id
       });
     }
-    await sendMessageCard(
+    await sendTextMessage(
       trelloWebhook.rc_webhook_id,
       `Hi ${body.user.firstName} ${body.user.lastName}, you have authorized Trello successfully. Please click previous action button again to execute that action.`,
     );
@@ -138,7 +194,7 @@ async function interactiveMessage(req, res) {
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
       if (members.find(member => member.id === trelloUser.id)) {
-        await sendMessageCard(
+        await sendTextMessage(
           trelloWebhook.rc_webhook_id,
           `Hi ${body.user.firstName}, you had joined the card.`,
         );
@@ -161,7 +217,7 @@ async function interactiveMessage(req, res) {
         await trelloUser.save();
         await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
       } else if (e.response.status === 403) {
-        await sendMessageCard(
+        await sendTextMessage(
           trelloWebhook.rc_webhook_id,
           `Hi ${body.user.firstName}, your Trello account doesn't have permission to perform this action.`,
         );
@@ -174,4 +230,6 @@ async function interactiveMessage(req, res) {
   res.send('ok');
 };
 
-exports.interactiveMessage = interactiveMessage
+exports.notification = notification;
+exports.notificationHead = head;
+exports.interactiveMessage = interactiveMessage;
