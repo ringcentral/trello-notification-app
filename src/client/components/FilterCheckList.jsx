@@ -90,10 +90,10 @@ export function FilterCheckList({ selectedFilters, setSelectedFilters, analytics
                           onChange={(event) => {
                             if (event.target.checked) {
                               setSelectedFilters(selectedFilters.filter(f => f !== item.id).concat([item.id]));
-                              analytics.track(`Select filters: ${item.name}`);
+                              analytics.track(`Select filter: ${item.name}`);
                             } else {
                               setSelectedFilters(selectedFilters.filter(f => f !== item.id));
-                              analytics.track(`Unselect filters: ${item.name}`);
+                              analytics.track(`Unselect filter: ${item.name}`);
                             }
                           }}
                         />
