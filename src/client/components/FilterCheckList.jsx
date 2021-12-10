@@ -37,7 +37,7 @@ function getSelectedCountInCategory(category, selectedFilters) {
   return count;
 }
 
-export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
+export function FilterCheckList({ selectedFilters, setSelectedFilters, analytics }) {
   return (
     <Fragment>
       {
@@ -67,8 +67,10 @@ export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
                       });
                       if (event.target.checked) {
                         setSelectedFilters(otherCategoryFilters.concat(category.items.map(item => item.id)));
+                        analytics.track(`Select all filters: ${category.name}`);
                       } else {
                         setSelectedFilters(otherCategoryFilters);
+                        analytics.track(`Unselect all filters: ${category.name}`);
                       }
                     }}
                   />
@@ -88,8 +90,10 @@ export function FilterCheckList({ selectedFilters, setSelectedFilters }) {
                           onChange={(event) => {
                             if (event.target.checked) {
                               setSelectedFilters(selectedFilters.filter(f => f !== item.id).concat([item.id]));
+                              analytics.track(`Select filters: ${item.name}`);
                             } else {
                               setSelectedFilters(selectedFilters.filter(f => f !== item.id));
+                              analytics.track(`Unselect filters: ${item.name}`);
                             }
                           }}
                         />

@@ -5,12 +5,16 @@ import { RingCentralNotificationIntegrationHelper } from 'ringcentral-notificati
 
 import { App } from './components/Root';
 import { Client } from './lib/client';
+import { Analytics } from './lib/analytics';
 
 const integrationHelper = new RingCentralNotificationIntegrationHelper()
 const client = new Client(window.trelloNotifications);
+const analytics = new Analytics({
+  segmentKey: window.trelloNotifications.segmentKey,
+});
 window.client = client;
 
 ReactDOM.render(
-  <App integrationHelper={integrationHelper} client={client} />,
+  <App integrationHelper={integrationHelper} client={client} analytics={analytics} />,
   document.querySelector('div#viewport'),
 );
