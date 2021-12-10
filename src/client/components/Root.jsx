@@ -59,6 +59,7 @@ function StepContent({
   setSelectedFilters,
   onLogin,
   onLogout,
+  analytics
 }) {
   if (activeStep === 1) {
     return (
@@ -67,6 +68,7 @@ function StepContent({
         value={boardId}
         onChange={(id) => {
           setBoardId(id);
+          analytics.track('Select Board');
         }}
         gotoUpperStep={() => setActiveStep(0)}
         gotoNextStep={() => {
@@ -80,6 +82,7 @@ function StepContent({
       <FilterCheckList
         selectedFilters={selectedFilters}
         setSelectedFilters={setSelectedFilters}
+        analytics={analytics}
       />
     );
   }
@@ -94,7 +97,7 @@ function StepContent({
   );
 }
 
-export function App({ integrationHelper, client }) {
+export function App({ integrationHelper, client, analytics }) {
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(
     client.trelloAuthorized ? 1 : 0
@@ -178,6 +181,7 @@ export function App({ integrationHelper, client }) {
     // Listen RingCentral app submit event to submit data to server
     integrationHelper.on('submit', async (e) => {
       setLoading(true);
+      analytics.track('Subscribe webhook');
       try {
         await client.createWebhook({
           boardId,
@@ -275,12 +279,14 @@ export function App({ integrationHelper, client }) {
             onLogin={() => {
               setLoading(true);
               integrationHelper.openWindow(client.authorizationUri);
+              analytics.track('Authorize Trello');
               async function onAuthCallback (e) {
                 if (e.data && e.data.authCallback) {
                   window.removeEventListener('message', onAuthCallback);
                   if (e.data.authCallback.indexOf('error') > -1) {
                     setError('Authorization error')
                     setLoading(false);
+                    analytics.track('Authorize Trello error');
                     return;
                   }
                   setLoading(true);
@@ -288,6 +294,7 @@ export function App({ integrationHelper, client }) {
                     await client.saveToken(e.data.authCallback);
                     setAuthorized(true);
                     setError('');
+                    analytics.track('Authorize Trello success');
                   } catch (e) {
                     console.error(e);
                     setError('Authorization error please retry later.')
@@ -311,10 +318,19 @@ export function App({ integrationHelper, client }) {
                 setLoading(false);
                 setError('Logout error please retry later.');
               }
+              analytics.track('Unauthorize Trello');
             }}
+            analytics={analytics}
           />
         </Container>
-        <FloatingLink href="https://github.com/ringcentral/trello-notification-app/issues/new" target="_blank" rel="noopener noreferrer">
+        <FloatingLink
+          href="https://github.com/ringcentral/trello-notification-app/issues/new"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            analytics.track('Click feedback button');
+          }}
+        >
           <RcIconButton
             symbol={Feedback}
             variant="contained"
