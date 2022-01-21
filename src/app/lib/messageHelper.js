@@ -18,7 +18,7 @@ async function sendTextMessage(webhookUri, message) {
   await sendMessageToRCWebhook(webhookUri, {
     icon: ICON_URL,
     title: message,
-    activity: 'Trello',
+    activity: 'Trello Add-in',
   });
 }
 
@@ -30,8 +30,8 @@ async function sendAdaptiveCardMessage(webhookUri, card) {
     message.attachments = [card];
   } else {
     message.title = 'New event';
-    message.activity = 'Trello';
   }
+  message.activity = 'Trello Add-in';
   await sendMessageToRCWebhook(webhookUri, message);
 }
 
