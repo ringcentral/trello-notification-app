@@ -10,12 +10,13 @@ const { TrelloUser } = require('../src/app/models/trello-user');
 axios.defaults.adapter = require('axios/lib/adapters/http')
 
 describe('Interactive Messages', () => {
-  const rcWebhookUri = 'http://test.com/webhook/12121';
+  const rcWebhookId = '12121';
+  const rcWebhookUri = `http://test.com/webhook/${rcWebhookId}`;
   let trelloWebhook;
 
   beforeAll(async () => {
     const rcWebhookRecord = await await RCWebhook.create({
-      id: rcWebhookUri,
+      id: rcWebhookId,
     });
     const filters = "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem,createCard,changeCardDescription,moveCard,changeCardDueDate,renameCard,commentCard,archiveUnarchiveCard,addAttachmentToCard,addLabelToCard,removeLabelFromCard,addMemberToCard,removeMemberFromCard,createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard";
     trelloWebhook = await TrelloWebhook.create({

@@ -15,12 +15,7 @@ describe('Webhook new', () => {
   });
 
   it('should get new webhook page successfully', async () => {
-    const res = await request(server).get('/webhooks/new?webhook=http://test.com');
-    expect(res.status).toEqual(200);
-  });
-
-  it('should get new webhook page successfully', async () => {
-    const res = await request(server).get('/webhooks/new?webhook=https://test.com');
+    const res = await request(server).get('/webhooks/new?webhook=http://test.com/webhook/12111');
     expect(res.status).toEqual(200);
   });
 });

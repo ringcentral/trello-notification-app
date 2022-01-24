@@ -29,10 +29,26 @@ async function newWebhook(req, res) {
   });
 }
 
+function getRCWebhookId(rcWebhookUri) {
+  if (
+    !rcWebhookUri ||
+    (
+      rcWebhookUri.indexOf('https://') !== 0 &&
+      rcWebhookUri.indexOf('http://') !== 0
+    )) {
+    return null;
+  }
+  const uriWithoutQuery = rcWebhookUri.split('?')[0];
+  const uriWithoutHash = uriWithoutQuery.split('#')[0];
+  const paths = uriWithoutHash.split('/');
+  return paths[paths.length - 1];
+}
+
 async function webhookInfo(req, res) {
   const jwtToken = req.query.token;
   const rcWebhookUri = req.query.rcWebhook;
-  if (!jwtToken || !rcWebhookUri) {
+  const rcWebhookId = getRCWebhookId(rcWebhookUri);
+  if (!jwtToken || !rcWebhookId) {
     res.status(403);
     res.send('Error params');
     return;
@@ -53,7 +69,7 @@ async function webhookInfo(req, res) {
       return;
     }
     let config = {};
-    const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
+    const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookId);
     if (rcWebhookRecord) {
       const trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
       if (trelloWebhook) {
@@ -94,10 +110,11 @@ async function webhookInfo(req, res) {
 async function createWebhook(req, res) {
   const jwtToken = req.body.token;
   const rcWebhookUri = req.body.rcWebhook;
+  const rcWebhookId = getRCWebhookId(rcWebhookUri);
   const boardId = req.body.boardId;
   const filters = req.body.filters;
 
-  if (!jwtToken || !rcWebhookUri || !boardId || !filters) {
+  if (!jwtToken || !rcWebhookId || !boardId || !filters) {
     res.status(403);
     res.send('Params invalid.');
     return;
@@ -132,12 +149,12 @@ async function createWebhook(req, res) {
       token: trelloUser.token,
     });
     const labels = await trello.getLabels(boardId);
-    rcWebhookRecord = await RCWebhook.findByPk(rcWebhookUri);
+    rcWebhookRecord = await RCWebhook.findByPk(rcWebhookId);
     if (rcWebhookRecord) {
       trelloWebhook = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id)
     } else {
       rcWebhookRecord = await RCWebhook.create({
-        id: rcWebhookUri,
+        id: rcWebhookId,
       });
     }
     if (!trelloWebhook) {
