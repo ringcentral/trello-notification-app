@@ -47,7 +47,7 @@ resources:
     rcWebhooksTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: trello-rc-notification-rc-webhooks
+        TableName: trello-rc-notification-rcWebhooks
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S

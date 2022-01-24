@@ -3,9 +3,9 @@ const { generate } = require('shortid');
 const { sequelize } = require('./sequelize');
 
 // Model for RingCentral Webhook config data
-exports.RCWebhook = sequelize.define('rc-webhooks', {
+exports.RCWebhook = sequelize.define('rcWebhooks', {
   id: {
-    type: Sequelize.STRING, // rc webhook uri
+    type: Sequelize.STRING, // rc webhook id
     primaryKey: true,
   },
   trello_webhook_id: {

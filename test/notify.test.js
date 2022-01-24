@@ -42,13 +42,14 @@ const deleteCheckItemData = require('../example-payloads/deleteCheckItem.json');
 const createLabelData = require('../example-payloads/createLabel.json');
 
 describe('Notify', () => {
-  const rcWebhookUri = 'http://test.com/webhook/12121';
+  const rcWebhookId = '12121';
+  const rcWebhookUri = `http://test.com/webhook/${rcWebhookId}`;
   let trelloWebhook;
   let trelloUser;
 
   beforeAll(async () => {
     const rcWebhookRecord = await await RCWebhook.create({
-      id: rcWebhookUri,
+      id: rcWebhookId,
     });
     const filters = "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem,createCard,changeCardDescription,moveCard,changeCardDueDate,renameCard,commentCard,archiveUnarchiveCard,addAttachmentToCard,addLabelToCard,removeLabelFromCard,addMemberToCard,removeMemberFromCard,createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard";
     const trelloUser = await TrelloUser.create({
