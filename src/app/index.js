@@ -1,8 +1,11 @@
 const path = require('path');
+const { extendApp: extendBotApp } = require('ringcentral-chatbot-core');
 
 const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
 const notificationRoute = require('./routes/notification');
+const { botHandler } = require('./bot/handler');
+const { botConfig } = require('./bot/config');
 
 // extends or override express app as you need
 exports.appExtend = (app) => {
@@ -27,5 +30,9 @@ exports.appExtend = (app) => {
   app.post('/trello-notify/:id', notificationRoute.notification);
   app.head('/trello-notify/:id', notificationRoute.notificationHead);
 
+  // interactive messages from adaptive card in RingCentral app
   app.post('/interactive-messages', notificationRoute.interactiveMessage);
+
+  // bots:
+  extendBotApp(app, [], botHandler, botConfig);
 }
