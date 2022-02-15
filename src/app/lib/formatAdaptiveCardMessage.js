@@ -349,6 +349,7 @@ function createAuthTokenRequestCard({ webhookId, authorizeUrl }) {
   });
 }
 
+exports.getAdaptiveCardFromTemplate = getAdaptiveCardFromTemplate;
 exports.getAdaptiveCardFromTrelloMessage = getAdaptiveCardFromTrelloMessage;
 exports.createAuthTokenRequestCard = createAuthTokenRequestCard;
 exports.CARD_TYPES = CARD_TYPES;

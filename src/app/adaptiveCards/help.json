@@ -1,0 +1,94 @@
+{
+    "type": "AdaptiveCard",
+    "fallbackText": "Hi, I am Trello Bot.",
+    "body": [
+        {
+            "type": "TextBlock",
+            "weight": "Bolder",
+            "text": "Hi team!"
+        },
+        {
+            "type": "TextBlock",
+            "text": "I am **Trello Bot**. To connect Trello with this conversation, please click **Subscribe** button.",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
+            "text": "You can also **mention** me with following commands to execute related actions. \n* help\n* subscribe\n* authorize\n* unauthorize",
+            "wrap": true
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "items": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": "14px",
+                                    "items": [
+                                        {
+                                            "type": "Image",
+                                            "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+                                            "height": "12px"
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center"
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+                                            "wrap": true,
+                                            "size": "Small"
+                                        }
+                                    ],
+                                    "width": "stretch",
+                                    "verticalContentAlignment": "Center"
+                                }
+                            ]
+                        }
+                    ],
+                    "verticalContentAlignment": "Bottom"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                    "type": "ActionSet",
+                                    "id": "submitActions",
+                                    "actions": [
+                                        {
+                                            "type": "Action.Submit",
+                                            "title": "Subscribe",
+                                            "data": {
+                                                "messageType": "Bot",
+                                                "action": "subscribe",
+                                                "botId": "${botId}"
+                                            },
+                                            "style": "positive"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "width": "auto",
+                    "verticalContentAlignment": "Bottom"
+                }
+            ],
+            "horizontalAlignment": "Center"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.5"
+}
