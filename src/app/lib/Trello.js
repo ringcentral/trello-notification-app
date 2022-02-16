@@ -34,6 +34,10 @@ class Trello {
     this._token = token;
   }
 
+  setRedirectUrl(redirectUrl) {
+    this._redirectUrl = redirectUrl;
+  }
+
   authorizationUrl({ scope = 'read' } = {}) {
     const query = obj2uri({
       expiration: 'never',

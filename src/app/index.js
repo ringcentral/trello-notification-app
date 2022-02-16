@@ -35,4 +35,6 @@ exports.appExtend = (app) => {
 
   // bots:
   extendBotApp(app, [], botHandler, botConfig);
+  app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
+  app.post('/trello/bot-oauth-callback/:botToken', authorizationRoute.botSaveToken);
 }

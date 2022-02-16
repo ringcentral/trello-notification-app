@@ -1,7 +1,13 @@
+const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
+
 const { Trello } = require('../lib/Trello');
 const { decodeToken, generateToken } = require('../lib/jwt');
+const { findItemInAdaptiveCard } = require('../lib/findItemInAdaptiveCard');
+const { showTrelloSettingAtSetupCard } = require('../lib/formatAdaptiveCardMessage');
+const { getAdaptiveCard } = require('../bot/actions');
 
 const { TrelloUser } = require('../models/trello-user');
+const { RcUser } = require('../models/rc-user');
 
 // authorize Trello with only read permission
 async function authorize(req, res) {
@@ -22,9 +28,82 @@ async function fullAuthorize(req, res) {
   res.redirect(trello.authorizationUrl({ scope: 'read,write' }));
 }
 
-function oauthCallback (req, res) {
+function oauthCallback(req, res) {
   res.render('oauth-callback');
 };
+
+function botOauthCallback(req, res) {
+  res.render('bot-oauth-callback');
+}
+
+async function botSaveToken(req, res) {
+  const botToken = req.params.botToken;
+  const decodedToken = decodeToken(botToken);
+  if (!decodedToken) {
+    res.status(401);
+    res.send('User token invalid.');
+    return;
+  }
+  const rcUserId = decodedToken.userId;
+  const botId = decodedToken.botId;
+  const cardId = decodedToken.cardId;
+  const trelloToken = req.query.token;
+  console.log(decodedToken);
+  if (!trelloToken) {
+    res.status(401);
+    res.send('Trello token invalid.');
+    return;
+  }
+  const trello = new Trello({
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: '',
+  });
+  try {
+    trello.setToken(trelloToken);
+    const trelloUserInfo = await trello.getUserInfo();
+    if (!trelloUserInfo || !trelloUserInfo.id) {
+      res.status(403);
+      res.send('Fetch Trello data error.');
+      return;
+    }
+    let trelloUser = await TrelloUser.findByPk(trelloUserInfo.id);
+    if (trelloUser) {
+      trelloUser.writeable_token = trelloToken;
+      await trelloUser.save();
+    } else {
+      trelloUser = await TrelloUser.create({
+        id: trelloUserInfo.id,
+        username: trelloUserInfo.username,
+        fullName: trelloUserInfo.fullName,
+        writeable_token: trelloToken,
+      });
+    }
+    const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
+    if (rcUser) {
+      rcUser.trello_user_id = trelloUser.id;
+      await rcUser.save();
+    } else {
+      await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUser.id,
+      });
+    }
+    const bot = await Bot.findByPk(botId);
+    const rcCard = await getAdaptiveCard(bot, cardId);
+    const boards = await trello.getBoards();
+    showTrelloSettingAtSetupCard(rcCard, { boards });
+    await bot.updateAdaptiveCard(cardId, rcCard);
+  } catch (e) {
+    if (e.response && e.response.status === 401) {
+      res.status(401);
+      res.send('Token invalid.');
+      return;
+    }
+    console.error(e);
+  }
+  res.status(200);
+  res.send('ok');
+}
 
 async function saveToken(req, res) {
   const token = req.body.token;
@@ -113,3 +192,5 @@ exports.fullAuthorize = fullAuthorize;
 exports.revokeToken = revokeToken;
 exports.oauthCallback = oauthCallback;
 exports.saveToken = saveToken;
+exports.botOauthCallback = botOauthCallback;
+exports.botSaveToken = botSaveToken;

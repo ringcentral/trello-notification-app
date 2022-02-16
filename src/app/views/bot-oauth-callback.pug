@@ -1,0 +1,27 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(http-equiv='x-ua-compatible' content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1, shrink-to-fit=no')
+    title Auth Callback
+    link(href='//developer.ringcentral.com/assets/images/favicon.ico?v=20181214-0738', type='image/vnd.microsoft.icon', rel='shortcut icon')
+  body
+    #container Loading
+    script(type="text/javascript" src="https://unpkg.com/es6-promise@latest/dist/es6-promise.auto.js")
+    script(type="text/javascript" src="https://unpkg.com/whatwg-fetch@latest/dist/fetch.umd.js")
+    script.
+      var container = window.document.getElementById('container');
+      var tokenHash = window.location.hash.substr(1);
+      var parsedQuery = new URLSearchParams(tokenHash);
+      if (parsedQuery.get('error')) {
+        container.innerText = "Authorization error from Trello.";
+      } else {
+        fetch(window.location.pathname + '?' + tokenHash, {
+          method: 'POST',
+        }).then(function(response) {
+          window.close();
+        }).catch(function (e) {
+          container.innerText = "Authorization error.";
+        });
+      }

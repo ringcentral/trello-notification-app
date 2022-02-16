@@ -27,7 +27,7 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "Trello setup for conversation \"${conversationName}\"",
+                  "text": "Trello setup for \"${conversationName}\"",
                   "wrap": true
                 }
               ],
@@ -40,6 +40,7 @@
     },
     {
       "type": "Container",
+      "isVisible": false,
       "items": [
         {
           "type": "TextBlock",
@@ -53,20 +54,27 @@
           "wrap": true
         },
         {
+          "type": "TextBlock",
+          "id": "authButtonGenerating",
+          "text": "Authorization button generating..",
+          "color": "Accent"
+        },
+        {
           "type": "ActionSet",
+          "id": "authActionSet",
           "actions": [
             {
               "type": "Action.OpenUrl",
               "title": "Authorize Trello",
               "url": "${authorizeUrl}"
             }
-          ]
+          ],
+          "isVisible": false
         }
       ],
       "separator": true,
       "spacing": "Medium",
-      "id": "authorize",
-      "isVisible": false
+      "id": "authorize"
     },
     {
       "type": "Container",
@@ -126,16 +134,7 @@
               "type": "Input.ChoiceSet",
               "id": "boardId",
               "value": "1",
-              "choices": [
-                {
-                  "title": "First Board",
-                  "value": "1"
-                },
-                {
-                  "title": "Second Board",
-                  "value": "2"
-                }
-              ]
+              "choices": []
             },
             {
               "type": "ActionSet",
@@ -220,7 +219,7 @@
               "type": "Input.ChoiceSet",
               "id": "listFilters",
               "isMultiSelect": true,
-              "value": "createList,archiveUnarchiveList",
+              "value": "createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard",
               "choices": [
                 {
                   "title": "List Created",
@@ -301,7 +300,7 @@
               "type": "Input.ChoiceSet",
               "id": "cardFilters",
               "isMultiSelect": true,
-              "value": "createCard,changeCardDescription",
+              "value": "createCard,changeCardDescription,renameCard,changeCardDueDate,moveCard,commentCard,addLabelToCard,removeLabelFromCard,addAttachmentToCard,archiveUnarchiveCard,addMemberToCard,removeMemberFromCard",
               "choices": [
                 {
                   "title": "Card Created",
@@ -408,7 +407,7 @@
               "type": "Input.ChoiceSet",
               "id": "checklistFilters",
               "isMultiSelect": true,
-              "value": "1",
+              "value": "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem",
               "choices": [
                 {
                   "title": "Checklist Added to Card",
@@ -432,6 +431,7 @@
         },
         {
           "type": "ActionSet",
+          "id": "submitActionSet",
           "actions": [
             {
               "type": "Action.Submit",
@@ -440,7 +440,9 @@
               "data": {
                 "botId": "${botId}",
                 "messageType": "Bot",
-                "conversationId": "${conversationId}"
+                "conversationId": "${conversationId}",
+                "action": "subscribe",
+                "subscriptionId": "${subscriptionId}"
               }
             }
           ]
@@ -448,6 +450,13 @@
       ],
       "isVisible": false,
       "separator": true
+    },
+    {
+      "type": "Container",
+        "id": "operationLog",
+        "style": "good",
+        "items": [],
+        "isVisible": false
     },
     {
       "type": "ColumnSet",

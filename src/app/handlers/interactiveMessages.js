@@ -1,3 +1,4 @@
+const { generate } = require('shortid');
 const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { TrelloWebhook } = require('../models/trello-webhook');
@@ -134,11 +135,36 @@ async function notificationInteractiveMessagesHandler(req, res) {
   res.send('ok');
 };
 
+function getFiltersFromSubmitData(data) {
+  const filters = [];
+  if (data.listFilters) {
+    filters.push(data.listFilters);
+  }
+  if (data.cardFilters) {
+    filters.push(data.cardFilters);
+  }
+  if (data.checklistFilters) {
+    filters.push(data.checklistFilters);
+  }
+  return filters.join(',');
+}
+
+async function updateBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
+  const existingSubscriptions = rcUser.bot_subscriptions || [];
+  const subscriptions = existingSubscriptions.filter(sub => sub.id !== trelloWebhook.id);
+  subscriptions.push({
+    id: trelloWebhook.id,
+    conversation_id: trelloWebhook.conversation_id,
+  });
+  rcUser.bot_subscriptions = subscriptions;
+  await rcUser.save();
+}
+
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
-  const groupId = body.conversation.id;
   const botId = body.data.botId;
   const cardId = req.body.card.id;
+  console.log(body);
   try {
     const bot = await Bot.findByPk(botId);
     if (!bot) {
@@ -148,11 +174,64 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     const action = body.data.action;
     if (action === 'setup') {
-      await botActions.sendSetupCardSentMessage(
+      res.status(200);
+      res.send('ok');
+      await botActions.sendSetupCard({
         bot,
-        groupId,
-        `${body.user.firstName} ${body.user.lastName}`,
-      );
+        group: body.conversation,
+        user: {
+          id: body.user.extId,
+          name: `${body.user.firstName} ${body.user.lastName}`,
+        },
+      });
+      return;
+    }
+    const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
+    let trelloUser;
+    if (rcUser) {
+      trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
+    }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: '',
+    });
+    if (action === 'subscribe') {
+      if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
+        const rcCard = await botActions.getAdaptiveCard(bot, cardId);
+        await botActions.sendSetupCardWithAuthorizationStep({
+          bot,
+          setupCard: rcCard,
+          cardId,
+          user: { id: body.user.extId },
+          trello,
+        });
+        res.status(200);
+        res.send('ok');
+        return;
+      }
+      const trelloWebhookId = body.data.trelloWebhookId;
+      let trelloWebhook;
+      if (trelloWebhookId) {
+        trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+        trelloWebhook.config = {
+          boardId: body.data.boardId,
+          filters: getFiltersFromSubmitData(body.data),
+        };
+        await trelloWebhook.save();
+      } else {
+        trelloWebhook = await TrelloWebhook.create({
+          id: generate(),
+          bot_id: bot.id,
+          trello_user_id: trelloUser.id,
+          conversation_id: body.conversation.id,
+          config: {
+            boardId: body.data.boardId,
+            filters: getFiltersFromSubmitData(body.data),
+          },
+        });
+      }
+      await updateBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
+      await botActions.sendSubscribeSuccessIntoSetupCard({ bot, cardId, trelloWebhookId: trelloWebhook.id });
     }
     res.status(200);
     res.send('ok');

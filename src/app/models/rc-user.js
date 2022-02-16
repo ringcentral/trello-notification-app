@@ -10,4 +10,7 @@ exports.RcUser = sequelize.define('rc-users', {
   trello_user_id: {
     type: Sequelize.STRING,
   },
+  bot_subscriptions: {
+    type: Sequelize.JSON
+  },
 });

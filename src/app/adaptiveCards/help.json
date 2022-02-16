@@ -9,12 +9,12 @@
         },
         {
             "type": "TextBlock",
-            "text": "I am **Trello Bot**. To connect Trello with this conversation, please click **Subscribe** button.",
+            "text": "I am **Trello Bot**. To connect Trello with this conversation, please click **Setup** button.",
             "wrap": true
         },
         {
             "type": "TextBlock",
-            "text": "You can also **mention** me with following commands to execute related actions. \n* help\n* subscribe\n* authorize\n* unauthorize",
+            "text": "You can also **mention** me with following commands to execute related actions. \n* help\n* setup\n* authorize\n* unauthorize",
             "wrap": true
         },
         {
@@ -69,7 +69,7 @@
                                     "actions": [
                                         {
                                             "type": "Action.Submit",
-                                            "title": "Subscribe",
+                                            "title": "Setup",
                                             "data": {
                                                 "messageType": "Bot",
                                                 "action": "setup",
