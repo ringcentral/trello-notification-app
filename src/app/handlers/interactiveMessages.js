@@ -5,6 +5,8 @@ const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 const { Trello } = require('../lib/Trello');
 
+const botActions = require('../bot/actions');
+
 const {
   sendTextMessage,
   sendAuthorizeRequestCard,
@@ -143,6 +145,14 @@ async function botInteractiveMessagesHandler(req, res) {
       res.status(404);
       res.send('Params error');
       return;
+    }
+    const action = body.data.action;
+    if (action === 'setup') {
+      await botActions.sendSetupCardSentMessage(
+        bot,
+        groupId,
+        `${body.user.firstName} ${body.user.lastName}`,
+      );
     }
     res.status(200);
     res.send('ok');

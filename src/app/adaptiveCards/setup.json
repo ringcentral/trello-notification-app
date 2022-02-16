@@ -1,0 +1,483 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.3",
+  "body": [
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png",
+                  "height": "24px"
+                }
+              ],
+              "verticalContentAlignment": "Center"
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Trello setup for conversation \"${conversationName}\"",
+                  "wrap": true
+                }
+              ],
+              "verticalContentAlignment": "Center",
+              "spacing": "Small"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "Step 1: Authorize",
+          "wrap": true,
+          "weight": "Bolder"
+        },
+        {
+          "type": "TextBlock",
+          "text": "Please click following button to authorize:",
+          "wrap": true
+        },
+        {
+          "type": "ActionSet",
+          "actions": [
+            {
+              "type": "Action.OpenUrl",
+              "title": "Authorize Trello",
+              "url": "${authorizeUrl}"
+            }
+          ]
+        }
+      ],
+      "separator": true,
+      "spacing": "Medium",
+      "id": "authorize",
+      "isVisible": false
+    },
+    {
+      "type": "Container",
+      "id": "boardsSelection",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "text": "Step 1: Select board",
+                  "wrap": true,
+                  "weight": "Bolder"
+                }
+              ],
+              "width": "stretch",
+              "verticalContentAlignment": "Center"
+            },
+            {
+              "type": "Column",
+              "width": "16px",
+              "items": [
+                {
+                  "id": "editBoard",
+                  "type": "Image",
+                  "url": "https://user-images.githubusercontent.com/7036536/154206010-6455f907-9ea8-468b-b40c-d43a6e833dd8.png",
+                  "height": "16px",
+                  "isVisible": false,
+                  "selectAction": {
+                    "type": "Action.ToggleVisibility",
+                    "targetElements": [
+                      "editBoard",
+                      "selectBoardForm",
+                      "filterSettings"
+                    ],
+                    "title": "Edit Board"
+                  }
+                }
+              ],
+              "verticalContentAlignment": "Center"
+            }
+          ]
+        },
+        {
+          "type": "Container",
+          "id": "selectBoardForm",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Please select board that you want to receive messages:",
+              "wrap": true
+            },
+            {
+              "type": "Input.ChoiceSet",
+              "id": "boardId",
+              "value": "1",
+              "choices": [
+                {
+                  "title": "First Board",
+                  "value": "1"
+                },
+                {
+                  "title": "Second Board",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "type": "ActionSet",
+              "actions": [
+                {
+                  "type": "Action.ToggleVisibility",
+                  "title": "Next step",
+                  "targetElements": [
+                    "editBoard",
+                    "filterSettings",
+                    "selectBoardForm"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "id": "filterSettings",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "Step 2: Set filters",
+          "wrap": true,
+          "weight": "Bolder"
+        },
+        {
+          "type": "TextBlock",
+          "text": "Please select event types that you want to receive:",
+          "wrap": true,
+          "separator": true
+        },
+        {
+          "type": "Container",
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "Boards & Lists",
+                      "wrap": true,
+                      "weight": "Bolder"
+                    }
+                  ],
+                  "width": "stretch",
+                  "verticalContentAlignment": "Center"
+                },
+                {
+                  "type": "Column",
+                  "width": "16px",
+                  "items": [
+                    {
+                      "id": "downArrow0",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "height": "16px",
+                      "isVisible": false
+                    },
+                    {
+                      "id": "upArrow0",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "height": "16px"
+                    }
+                  ],
+                  "verticalContentAlignment": "Center"
+                }
+              ],
+              "selectAction": {
+                "type": "Action.ToggleVisibility",
+                "targetElements": ["listFilters", "upArrow0", "downArrow0"]
+              }
+            },
+            {
+              "type": "Input.ChoiceSet",
+              "id": "listFilters",
+              "isMultiSelect": true,
+              "value": "createList,archiveUnarchiveList",
+              "choices": [
+                {
+                  "title": "List Created",
+                  "value": "createList"
+                },
+                {
+                  "title": "List Archived/Unarchived",
+                  "value": "archiveUnarchiveList"
+                },
+                {
+                  "title": "List Renamed",
+                  "value": "renameList"
+                },
+                {
+                  "title": "Board Renamed",
+                  "value": "renameBoard"
+                },
+                {
+                  "title": "List Moved to Another Board",
+                  "value": "moveListFromBoard"
+                },
+                {
+                  "title": "Member Added to Board",
+                  "value": "addMemberToBoard"
+                }
+              ],
+              "style": "expanded"
+            }
+          ],
+          "spacing": "Medium"
+        },
+        {
+          "type": "Container",
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "Cards",
+                      "wrap": true,
+                      "weight": "Bolder"
+                    }
+                  ],
+                  "width": "stretch",
+                  "verticalContentAlignment": "Center"
+                },
+                {
+                  "type": "Column",
+                  "width": "16px",
+                  "items": [
+                    {
+                      "id": "downArrow1",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "height": "16px"
+                    },
+                    {
+                      "id": "upArrow1",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "height": "16px",
+                      "isVisible": false
+                    }
+                  ],
+                  "verticalContentAlignment": "Center"
+                }
+              ],
+              "selectAction": {
+                "type": "Action.ToggleVisibility",
+                "targetElements": ["cardFilters", "upArrow1", "downArrow1"]
+              }
+            },
+            {
+              "type": "Input.ChoiceSet",
+              "id": "cardFilters",
+              "isMultiSelect": true,
+              "value": "createCard,changeCardDescription",
+              "choices": [
+                {
+                  "title": "Card Created",
+                  "value": "createCard"
+                },
+                {
+                  "title": "Description Changed",
+                  "value": "changeCardDescription"
+                },
+                {
+                  "title": "Card Renamed",
+                  "value": "renameCard"
+                },
+                {
+                  "title": "Due Date Changed",
+                  "value": "changeCardDueDate"
+                },
+                {
+                  "title": "Card Moved",
+                  "value": "moveCard"
+                },
+                {
+                  "title": "Comment Added to Card",
+                  "value": "commentCard"
+                },
+                {
+                  "title": "Label Added to Card",
+                  "value": "addLabelToCard"
+                },
+                {
+                  "title": "Label Removed from Card",
+                  "value": "removeLabelFromCard"
+                },
+                {
+                  "title": "Attachment Added to Card",
+                  "value": "addAttachmentToCard"
+                },
+                {
+                  "title": "Card Archived/Unarchived",
+                  "value": "archiveUnarchiveCard"
+                },
+                {
+                  "title": "Member Added to Card",
+                  "value": "addMemberToCard"
+                },
+                {
+                  "title": "Member Removed from Card",
+                  "value": "removeMemberFromCard"
+                }
+              ],
+              "style": "expanded",
+              "isVisible": false
+            }
+          ],
+          "separator": true,
+          "spacing": "Medium"
+        },
+        {
+          "type": "Container",
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "Checklists",
+                      "wrap": true,
+                      "weight": "Bolder"
+                    }
+                  ],
+                  "width": "stretch",
+                  "verticalContentAlignment": "Center"
+                },
+                {
+                  "type": "Column",
+                  "width": "16px",
+                  "items": [
+                    {
+                      "id": "downArrow2",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "height": "16px"
+                    },
+                    {
+                      "id": "upArrow2",
+                      "type": "Image",
+                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "height": "16px",
+                      "isVisible": false
+                    }
+                  ],
+                  "verticalContentAlignment": "Center"
+                }
+              ],
+              "selectAction": {
+                "type": "Action.ToggleVisibility",
+                "targetElements": ["checklistFilters", "upArrow2", "downArrow2"]
+              }
+            },
+            {
+              "type": "Input.ChoiceSet",
+              "id": "checklistFilters",
+              "isMultiSelect": true,
+              "value": "1",
+              "choices": [
+                {
+                  "title": "Checklist Added to Card",
+                  "value": "addChecklistToCard"
+                },
+                {
+                  "title": "Checklist Item Marked Complete/Incomplete",
+                  "value": "updateCheckItemStateOnCard"
+                },
+                {
+                  "title": "Checklist Item Created",
+                  "value": "createCheckItem"
+                }
+              ],
+              "style": "expanded",
+              "isVisible": false
+            }
+          ],
+          "separator": true,
+          "spacing": "Medium"
+        },
+        {
+          "type": "ActionSet",
+          "actions": [
+            {
+              "type": "Action.Submit",
+              "title": "Submit",
+              "style": "positive",
+              "data": {
+                "botId": "${botId}",
+                "messageType": "Bot",
+                "conversationId": "${conversationId}"
+              }
+            }
+          ]
+        }
+      ],
+      "isVisible": false,
+      "separator": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "14px",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+              "height": "12px"
+            }
+          ],
+          "verticalContentAlignment": "Center"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+              "wrap": true,
+              "size": "Small"
+            }
+          ],
+          "width": "stretch",
+          "verticalContentAlignment": "Center"
+        }
+      ]
+    }
+  ]
+}

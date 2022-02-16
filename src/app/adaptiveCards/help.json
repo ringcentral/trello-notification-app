@@ -72,7 +72,7 @@
                                             "title": "Subscribe",
                                             "data": {
                                                 "messageType": "Bot",
-                                                "action": "subscribe",
+                                                "action": "setup",
                                                 "botId": "${botId}"
                                             },
                                             "style": "positive"

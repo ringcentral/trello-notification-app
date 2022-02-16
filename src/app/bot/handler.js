@@ -1,5 +1,9 @@
 const botActions = require('./actions');
 
+async function subscribeHandler(bot, group, userId) {
+  await botActions.sendSetupCardSentMessage(bot, group.id, null, userId);
+}
+
 async function botHandler({
   type, // could be 'BotAdded', 'BotRemoved', 'Message4Bot', 'BotGroupLeft', 'BotJoinGroup', 'Maintain', 'SetupDatabase'
   bot, // the bot instance, check src/models/Bot.ts for instance methods
@@ -8,15 +12,17 @@ async function botHandler({
   userId, // message creator's id
   message // message object, check ringcentral api document for detail
 }) {
+  console.log(JSON.stringify(group, null, 2));
   if (type === 'BotJoinGroup') {
     await botActions.sendHelpCard(bot, group.id);
     return;
   }
   if (type === 'Message4Bot') {
-    // if (text === 'subscribe') {
-    //   await botActions.sendSubscribeCard(bot, group.id);
-    //   return;
-    // }
+
+    if (text === 'subscribe') {
+      await subscribeHandler(bot, group, userId);
+      return;
+    }
     // if (text === 'authorize') {
     //   await botActions.sendAuthCard(bot, group.id);
     //   return;
