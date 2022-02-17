@@ -11,6 +11,7 @@ const messageTemplate = require('../adaptiveCards/message.json');
 const authTemplate = require('../adaptiveCards/authInCard.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
 const subscriptionsTemplate = require('../adaptiveCards/subscriptions.json');
+const subscriptionRemovedTemplate = require('../adaptiveCards/subscriptionRemoved.json');
 
 const { Trello } = require('../lib/Trello');
 const { generateToken } = require('../lib/jwt');
@@ -169,10 +170,11 @@ async function sendSetupCard({ bot, group, user }) {
     });
     return;
   }
-  if (rcUser.bot_subscriptions && rcUser.bot_subscriptions.length > 0) {
+  const existingSubscriptions = rcUser.bot_subscriptions && rcUser.bot_subscriptions.filter(sub => sub.conversation_id === group.id);
+  if (existingSubscriptions && existingSubscriptions.length > 0) {
     await sendSubscriptionsCard({
       bot,
-      botSubscriptions: rcUser.bot_subscriptions,
+      botSubscriptions: existingSubscriptions,
       boards: trelloData.boards,
       conversation: {
         id: setupGroup.id,
@@ -183,7 +185,7 @@ async function sendSetupCard({ bot, group, user }) {
   } else {
     await sendSubscribeCard({
       bot,
-      title: cardTitle,
+      title: `Trello setup for "${setupGroup.name || 'this conversation'}"`,
       conversation: {
         id: setupGroup.id,
         name: setupGroup.name,
@@ -239,6 +241,19 @@ async function sendSubscriptionsCard({
   await bot.sendAdaptiveCard(directGroup.id, subscriptionsCard);
 }
 
+async function sendSubscribeRemovedCard({
+  bot,
+  existingCardId,
+  boardName,
+  conversationName,
+}) {
+  const card = getAdaptiveCardFromTemplate(subscriptionRemovedTemplate, {
+    boardName,
+    title: `Trello setup for "${conversationName || 'this conversation'}"`,
+  });
+  await bot.updateAdaptiveCard(existingCardId, card);
+}
+
 exports.sendHelpCard = sendHelpCard;
 exports.sendMessageCard = sendMessageCard;
 exports.sendSetupCard = sendSetupCard;
@@ -246,3 +261,4 @@ exports.getAdaptiveCard = getAdaptiveCard;
 exports.sendAuthCard = sendAuthCard;
 exports.sendSubscriptionsCard = sendSubscriptionsCard;
 exports.sendSubscribeCard = sendSubscribeCard;
+exports.sendSubscribeRemovedCard = sendSubscribeRemovedCard;

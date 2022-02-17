@@ -161,6 +161,13 @@ async function saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
   await rcUser.save();
 }
 
+async function removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
+  const existingSubscriptions = rcUser.bot_subscriptions || [];
+  const subscriptions = existingSubscriptions.filter(sub => sub.id !== trelloWebhook.id);
+  rcUser.bot_subscriptions = subscriptions;
+  await rcUser.save();
+}
+
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
@@ -229,6 +236,24 @@ async function botInteractiveMessagesHandler(req, res) {
         },
         existingCardId: cardId,
         subscription: trelloWebhook,
+      });
+      res.status(200);
+      res.send('ok');
+      return;
+    }
+    if (action === 'removeSubscription') {
+      const trelloWebhook = await TrelloWebhook.findByPk(body.data.subscriptionId);
+      if (!trelloWebhook) {
+        res.status(404);
+        res.send('Not found');
+        return;
+      }
+      await removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
+      await trelloWebhook.destroy();
+      await botActions.sendSubscribeRemovedCard({
+        bot,
+        boardName: body.data.boardName,
+        existingCardId: cardId,
       });
       res.status(200);
       res.send('ok');

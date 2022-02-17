@@ -72,10 +72,10 @@
                 },
                 {
                     "type": "Container",
+                    "$data": "${subscriptions}",
                     "items": [
                         {
                             "type": "ColumnSet",
-                            "$data": "${subscriptions}",
                             "columns": [
                                 {
                                     "type": "Column",
@@ -90,44 +90,95 @@
                                 },
                                 {
                                     "type": "Column",
-                                    "width": "auto",
+                                    "width": "18px",
                                     "items": [
                                         {
-                                            "type": "ActionSet",
-                                            "actions": [
-                                                {
-                                                    "type": "Action.Submit",
-                                                    "data": {
-                                                        "subscriptionId": "${id}",
-                                                        "action": "editSubscription"
-                                                    },
-                                                    "title": "Edit"
-                                                }
-                                            ]
+                                            "id": "downArrow-${id}",
+                                            "type": "Image",
+                                            "url": "https://user-images.githubusercontent.com/7036536/154206010-6455f907-9ea8-468b-b40c-d43a6e833dd8.png",
+                                            "height": "18px"
+                                        },
+                                        {
+                                            "id": "upArrow-${id}",
+                                            "type": "Image",
+                                            "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                                            "height": "18px",
+                                            "isVisible": false
                                         }
                                     ],
                                     "verticalContentAlignment": "Center"
                                 }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "ActionSet",
-                    "id": "submitActionSet",
-                    "actions": [
-                        {
-                            "type": "Action.Submit",
-                            "title": "Add new subscription",
-                            "style": "positive",
-                            "data": {
-                                "action": "addSubscription"
+                            ],
+                            "selectAction": {
+                                "type": "Action.ToggleVisibility",
+                                "targetElements": [
+                                    "actions-${id}",
+                                    "downArrow-${id}",
+                                    "upArrow-${id}"
+                                ]
                             }
+                        },
+                        {
+                            "type": "ActionSet",
+                            "id": "actions-${id}",
+                            "isVisible": false,
+                            "actions": [
+                                {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "subscriptionId": "${id}",
+                                        "boardName": "${boardName}",
+                                        "action": "removeSubscription"
+                                    },
+                                    "title": "Remove",
+                                    "style": "destructive"
+                                },
+                                {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "subscriptionId": "${id}",
+                                        "action": "editSubscription"
+                                    },
+                                    "title": "Edit"
+                                }
+                            ]
                         }
                     ]
                 }
             ],
             "separator": true
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "verticalContentAlignment": "Center"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "ActionSet",
+                            "id": "submitActionSet",
+                            "actions": [
+                                {
+                                    "type": "Action.Submit",
+                                    "title": "Add new subscription",
+                                    "style": "positive",
+                                    "data": {
+                                        "action": "addSubscription"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "width": "auto",
+                    "verticalContentAlignment": "Center"
+                }
+            ],
+            "spacing": "Medium"
         },
         {
             "type": "ColumnSet",
