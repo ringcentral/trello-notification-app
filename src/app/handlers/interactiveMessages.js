@@ -161,11 +161,6 @@ async function saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
   await rcUser.save();
 }
 
-async function getSetupCardTitle(bot, conversationId) {
-  const conversation = await bot.getGroup(conversationId)
-  return `Trello setup for "${conversation.name || 'this conversation'}"`;
-}
-
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
@@ -203,13 +198,12 @@ async function botInteractiveMessagesHandler(req, res) {
     });
     if (action === 'subscribe') {
       if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-        const cardTitle = await getSetupCardTitle(bot, body.data.conversationId);
         await botActions.sendAuthCard({
           bot,
           user: { id: body.user.extId },
-          conversation,
+          conversationId: body.data.conversationId,
           existingCardId: cardId,
-          title: cardTitle,
+          title: `Trello setup for "${body.data.conversationName || 'this conversation'}"`,
           trello,
         });
         res.status(200);
@@ -231,7 +225,7 @@ async function botInteractiveMessagesHandler(req, res) {
           id: generate(),
           bot_id: bot.id,
           trello_user_id: trelloUser.id,
-          conversation_id: body.conversation.id,
+          conversation_id: body.data.conversationId,
           config: {
             boardId: body.data.boardId,
             filters: getFiltersFromSubmitData(body.data),
@@ -239,13 +233,14 @@ async function botInteractiveMessagesHandler(req, res) {
         });
       }
       await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
-      const cardTitle = await getSetupCardTitle(bot, body.data.conversationId);
       await botActions.sendSubscriptionsCard({
         bot,
         botSubscriptions: rcUser.bot_subscriptions,
         trello,
-        title: cardTitle,
-        conversationId: body.data.conversationId,
+        conversation: {
+          id: body.data.conversationId,
+          name: body.data.conversationName,
+        },
         existingCardId: cardId,
       });
     }

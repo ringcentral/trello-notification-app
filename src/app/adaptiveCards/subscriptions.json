@@ -102,7 +102,8 @@
                                 "botId": "${botId}",
                                 "messageType": "Bot",
                                 "conversationId": "${conversationId}",
-                                "action": "addSubscription"
+                                "action": "addSubscription",
+                                "conversationName": "${conversationName}"
                             }
                         }
                     ]

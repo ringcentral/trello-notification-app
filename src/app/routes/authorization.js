@@ -89,11 +89,13 @@ async function botSaveToken(req, res) {
     }
     const bot = await Bot.findByPk(botId);
     const boards = await trello.getBoards();
-    const group = await await bot.getGroup(conversationId);
+    const group = await bot.getGroup(conversationId);
     await botActions.sendNewSubscriptionCard({
       bot,
-      title: `Trello setup for "${group.name || 'this conversation'}"`,
-      conversationId,
+      conversation: {
+        id: conversationId,
+        name: group.name || '',
+      },
       trelloData: {
         boards,
       },

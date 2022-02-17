@@ -405,7 +405,8 @@
                 "messageType": "Bot",
                 "conversationId": "${conversationId}",
                 "action": "subscribe",
-                "subscriptionId": "${subscriptionId}"
+                "trelloWebhookId": "${trelloWebhookId}",
+                "conversationName": "${conversationName}"
               }
             }
           ]

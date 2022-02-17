@@ -18,14 +18,6 @@ async function botHandler({
       await botActions.sendSetupCard({ bot, group, user: { id: userId }});
       return;
     }
-    // if (text === 'authorize') {
-    //   await botActions.sendAuthCard(bot, group.id);
-    //   return;
-    // }
-    // if (text === 'unauthorize') {
-    //   await botActions.sendUnauthorizedCard(bot, group.id);
-    //   return;
-    // }
     // await bot.setupWebHook();
     // await bot.ensureWebHook();
     // await bot.getUser(userId);
