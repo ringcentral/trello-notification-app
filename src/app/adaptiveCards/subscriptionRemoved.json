@@ -43,7 +43,7 @@
             "items": [
                 {
                     "type": "TextBlock",
-                    "text": "The subscription for ${boardName} has been removed successfully.",
+                    "text": "The subscription for **${boardName}** has been removed successfully.",
                     "wrap": true
                 }
             ],

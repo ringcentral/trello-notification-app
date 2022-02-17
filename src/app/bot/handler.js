@@ -13,16 +13,23 @@ async function botHandler({
     return;
   }
   if (type === 'Message4Bot') {
-    console.log(group);
     if (text === 'setup') {
       await botActions.sendSetupCard({ bot, group, user: { id: userId }});
+      return;
+    }
+    if (text === 'unauthorize') {
+      await botActions.handleUnauthorize({ bot, group, user: { id: userId }});
+      return;
+    }
+    if (text === 'authorize') {
+      await botActions.handleAuthorize({ bot, group, user: { id: userId }});
       return;
     }
     // await bot.setupWebHook();
     // await bot.ensureWebHook();
     // await bot.getUser(userId);
     // await bot.sendMessage(group.id, { text: 'Hi!' });
-    await botActions.sendHelpCard(bot, group.id);
+    await botActions.sendHelpCard(bot, group);
   }
 }
 

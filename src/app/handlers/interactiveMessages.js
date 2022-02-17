@@ -205,6 +205,37 @@ async function botInteractiveMessagesHandler(req, res) {
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
     });
+    if (action === 'unauthorize') {
+      if (!trelloUser || !trelloUser.writeable_token) {
+        botActions.setMessageCard(
+          bot,
+          cardId,
+          `Hi **${body.user.firstName} ${body.user.lastName}**, You have not authorized Trello yet.`
+        );
+      } else {
+        await trello.setToken(trelloUser.writeable_token);
+        await trello.revokeToken();
+        trelloUser.writeable_token = '';
+        await trelloUser.save();
+        if (rcUser.bot_subscriptions) {
+          await TrelloWebhook.destroy({
+            where: {
+              id: rcUser.bot_subscriptions.map(sub => sub.id),
+            }
+          });
+          rcUser.bot_subscriptions = null;
+          await rcUser.save();
+        }
+        botActions.setMessageCard(
+          bot,
+          cardId,
+          `Hi **${body.user.firstName} ${body.user.lastName}**, You have unauthorized Trello successfully.`
+        );
+      }
+      res.status(200);
+      res.send('ok');
+      return;
+    }
     if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
       if (SETUP_ACTIONS.indexOf(action) > -1) {
         await botActions.sendAuthCard({
@@ -340,7 +371,7 @@ async function botInteractiveMessagesHandler(req, res) {
       const boards = await trello.getBoards();
       await botActions.sendSubscriptionsCard({
         bot,
-        botSubscriptions: rcUser.bot_subscriptions,
+        botSubscriptions: rcUser.bot_subscriptions.filter(sub => sub.conversation_id === body.data.conversationId),
         boards,
         conversation: {
           id: body.data.conversationId,

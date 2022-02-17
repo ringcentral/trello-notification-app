@@ -34,6 +34,10 @@ class Trello {
     this._token = token;
   }
 
+  setName(name) {
+    this._name = name;
+  }
+
   setRedirectUrl(redirectUrl) {
     this._redirectUrl = redirectUrl;
   }

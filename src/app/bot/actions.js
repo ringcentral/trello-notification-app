@@ -10,6 +10,7 @@ const helpTemplate = require('../adaptiveCards/help.json');
 const messageTemplate = require('../adaptiveCards/message.json');
 const authTemplate = require('../adaptiveCards/authInCard.json');
 const authSuccessTemplate = require('../adaptiveCards/authSuccess.json');
+const unauthorizeTemplate = require('../adaptiveCards/unauthorize.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
 const subscriptionsTemplate = require('../adaptiveCards/subscriptions.json');
 const subscriptionRemovedTemplate = require('../adaptiveCards/subscriptionRemoved.json');
@@ -25,15 +26,15 @@ async function sendHelpCard(bot, group) {
     botId: bot.id,
     conversationName: group.name || '',
   });
-  await bot.sendAdaptiveCard(groupId, joinWelcomeCard);
+  await bot.sendAdaptiveCard(group.id, joinWelcomeCard);
 }
 
-async function sendMessageCard(bot, groupId, message) {
+async function setMessageCard(bot, cardId, message) {
   const messageCard = getAdaptiveCardFromTemplate(messageTemplate, {
     botId: bot.id,
     message,
   });
-  await bot.sendAdaptiveCard(groupId, messageCard);
+  await bot.updateAdaptiveCard(cardId, messageCard);
 }
 
 async function createDirectGroup(bot, user) {
@@ -100,6 +101,7 @@ async function sendAuthCard({
     gId: conversationId,
     next: nextAction,
   });
+  trello.setName('RingCentral Bot');
   trello.setRedirectUrl(`${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${botToken}`);
   const newAuthCard = getAdaptiveCardFromTemplate(authTemplate, {
     title,
@@ -121,9 +123,11 @@ async function sendAuthCardIntoDirectGroup({ bot, user, trello, conversation }) 
     title: 'Connect with Trello',
     trello,
   });
-  await bot.sendMessage(conversation.id, {
-    text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect your Trello account firstly before you use those interactive buttons.`,
-  });
+  if (conversation.id !== directGroup.id) {
+    await bot.sendMessage(conversation.id, {
+      text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect your Trello account. After authorized, you can enable interactive button features.`,
+    });
+  }
 }
 
 async function sendAuthSuccessCard({
@@ -135,6 +139,66 @@ async function sendAuthSuccessCard({
     trelloUserName,
   });
   await bot.updateAdaptiveCard(authCardId, card);
+}
+
+async function handleAuthorize({ bot, group, user }) {
+  const rcUser = await RcUser.findByPk(`rcext-${user.id}`);
+  let trelloUser;
+  if (rcUser) {
+    trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
+  }
+  if (trelloUser && trelloUser.writeable_token) {
+    await bot.sendMessage(group.id, {
+      text: `Hi ![:Person](${user.id}), you have authorized Trello.`,
+    });
+    return;
+  }
+  const trello = new Trello({
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: '',
+  });
+  await sendAuthCardIntoDirectGroup({
+    bot,
+    conversation: group,
+    user,
+    trello,
+  });
+}
+
+async function handleUnauthorize({
+  bot,
+  group,
+  user,
+}) {
+  const rcUser = await RcUser.findByPk(`rcext-${user.id}`);
+  let trelloUser;
+  if (rcUser) {
+    trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
+  }
+  if (!trelloUser || !trelloUser.writeable_token) {
+    await bot.sendMessage(group.id, {
+      text: `Hi ![:Person](${user.id}), you have not authorized Trello yet.`,
+    });
+    return;
+  }
+  if (rcUser && rcUser.bot_subscriptions && rcUser.bot_subscriptions.length > 0) {
+    const card = getAdaptiveCardFromTemplate(unauthorizeTemplate, {
+      botId: bot.id,
+    });
+    await bot.sendAdaptiveCard(group.id, card);
+    return;
+  }
+  const trello = new Trello({
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: '',
+    token: trelloUser.writeable_token,
+  });
+  await trello.revokeToken();
+  trelloUser.writeable_token = '';
+  await trelloUser.save();
+  await bot.sendMessage(group.id, {
+    text: `Hi ![:Person](${user.id}), you have unauthorized Trello successfully.`,
+  });
 }
 
 async function sendSubscribeCard({
@@ -149,7 +213,7 @@ async function sendSubscribeCard({
   const config = subscription && subscription.config;
   const setupCard = getAdaptiveCardFromTemplate(setupTemplate, {
     botId: bot.id,
-    title: `Trello setup for "${conversation.name || 'this conversation'}"`,
+    title: `Trello setup for **${conversation.name || 'this conversation'}**`,
     conversationId: conversation.id,
     conversationName: conversation.name,
     subscriptionId: (subscription && subscription.id) || '',
@@ -188,7 +252,7 @@ async function sendSetupCard({ bot, group, user }) {
       directGroup,
       conversationId: group.id,
       trello,
-      title: `Trello setup for "${setupGroup.name || 'current conversation'}"`,
+      title: `Trello setup for **${setupGroup.name || 'current conversation'}**`,
       nextAction: 'subscribe',
     });
     if (group.id !== directGroup.id) {
@@ -198,7 +262,9 @@ async function sendSetupCard({ bot, group, user }) {
     }
     return;
   }
-  const existingSubscriptions = rcUser.bot_subscriptions && rcUser.bot_subscriptions.filter(sub => sub.conversation_id === group.id);
+  const existingSubscriptions =
+    rcUser.bot_subscriptions &&
+    rcUser.bot_subscriptions.filter(sub => sub.conversation_id === group.id);
   if (existingSubscriptions && existingSubscriptions.length > 0) {
     await sendSubscriptionsCard({
       bot,
@@ -213,7 +279,7 @@ async function sendSetupCard({ bot, group, user }) {
   } else {
     await sendSubscribeCard({
       bot,
-      title: `Trello setup for "${setupGroup.name || 'current conversation'}"`,
+      title: `Trello setup for **${setupGroup.name || 'current conversation'}**`,
       conversation: {
         id: setupGroup.id,
         name: setupGroup.name,
@@ -258,7 +324,7 @@ async function sendSubscriptionsCard({
     };
   });
   const subscriptionsCard = getAdaptiveCardFromTemplate(subscriptionsTemplate, {
-    title: `Trello setup for "${conversation.name || 'current conversation'}"`,
+    title: `Trello setup for **${conversation.name || 'current conversation'}**`,
     subscriptions,
     botId: bot.id,
     conversationId: conversation.id,
@@ -279,7 +345,7 @@ async function sendSubscribeRemovedCard({
 }) {
   const card = getAdaptiveCardFromTemplate(subscriptionRemovedTemplate, {
     boardName,
-    title: `Trello setup for "${conversationName || 'current conversation'}"`,
+    title: `Trello setup for **${conversationName || 'current conversation'}**`,
   });
   await bot.updateAdaptiveCard(existingCardId, card);
 }
@@ -314,7 +380,7 @@ async function addOperationLogIntoCard({ bot, cardId, data, user }) {
 }
 
 exports.sendHelpCard = sendHelpCard;
-exports.sendMessageCard = sendMessageCard;
+exports.setMessageCard = setMessageCard;
 exports.sendSetupCard = sendSetupCard;
 exports.getAdaptiveCard = getAdaptiveCard;
 exports.sendAuthCard = sendAuthCard;
@@ -324,3 +390,5 @@ exports.sendSubscribeRemovedCard = sendSubscribeRemovedCard;
 exports.sendAuthSuccessCard = sendAuthSuccessCard;
 exports.sendAuthCardIntoDirectGroup = sendAuthCardIntoDirectGroup;
 exports.addOperationLogIntoCard = addOperationLogIntoCard;
+exports.handleUnauthorize = handleUnauthorize;
+exports.handleAuthorize = handleAuthorize;
