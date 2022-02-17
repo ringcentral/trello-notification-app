@@ -48,7 +48,6 @@ async function botSaveToken(req, res) {
   const conversationId = decodedToken.gId;
   const nextAction = decodedToken.next;
   const trelloToken = req.query.token;
-  console.log(decodedToken);
   if (!trelloToken) {
     res.status(401);
     res.send('Trello token invalid.');

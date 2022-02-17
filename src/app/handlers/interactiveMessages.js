@@ -347,8 +347,30 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
+    if (action === 'joinCard') {
+      const members = await trello.getCardMembers(body.data.cardId);
+      if (members.find(member => member.id === trelloUser.id)) {
+        await bot.sendMessage(body.conversation.id, {
+          text: `Hi ![:Person](${body.user.extId}), you had joined the card.`,
+        });
+        res.status(200);
+        res.send('ok');
+        return;
+      } else {
+        await trello.joinCard(body.data.cardId, trelloUser.id);
+      }
+    } else if (action === 'commentCard') {
+      await trello.addCardComment(body.data.cardId, body.data.comment);
+    } else if (action === 'setCardDueDate') {
+      await trello.setCardDueDate(body.data.cardId, body.data.dueDate);
+    } else if (action === 'addLabel') {
+      await trello.setCardLabel(body.data.cardId, body.data.addLabel);
+    } else if (action === 'removeLabel') {
+      await trello.removeCardLabel(body.data.cardId, body.data.removeLabel);
+    }
     res.status(200);
     res.send('ok');
+    await botActions.addOperationLogIntoCard({ bot, cardId, data: body.data, user: body.user });
   } catch (e) {
     console.error(e);
     res.status(500);

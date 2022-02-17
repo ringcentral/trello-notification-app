@@ -280,6 +280,35 @@ async function sendSubscribeRemovedCard({
   await bot.updateAdaptiveCard(existingCardId, card);
 }
 
+async function addOperationLogIntoCard({ bot, cardId, data, user }) {
+  const card = await getAdaptiveCard(bot, cardId);
+  const operationLogItem = findItemInAdaptiveCard(card, 'operationLog');
+  if (!operationLogItem) {
+    return null;
+  }
+  const name = `${user.firstName} ${user.lastName}`;
+  const currentTime = new Date();
+  const operationTime = `${currentTime.toISOString().split('.')[0]}Z`;
+  let description;
+  const action = data.action;
+  if (action === 'joinCard') {
+    description = `${name} joined the card at {{DATE(${operationTime})}} {{TIME(${operationTime})}}`;
+  } else if (action === 'commentCard') {
+    description = `${name} commented at {{DATE(${operationTime})}} {{TIME(${operationTime})}}:\n${data.comment}`;
+  } else if (action === 'setCardDueDate') {
+    description = `${name} set the due date to ${data.dueDate}`;
+  }
+  if (description) {
+    operationLogItem.items = [{
+      type: 'TextBlock',
+      text: description,
+      wrap: true,
+    }];
+    delete operationLogItem.isVisible;
+    await bot.updateAdaptiveCard(cardId, card);
+  }
+}
+
 exports.sendHelpCard = sendHelpCard;
 exports.sendMessageCard = sendMessageCard;
 exports.sendSetupCard = sendSetupCard;
@@ -290,3 +319,4 @@ exports.sendSubscribeCard = sendSubscribeCard;
 exports.sendSubscribeRemovedCard = sendSubscribeRemovedCard;
 exports.sendAuthSuccessCard = sendAuthSuccessCard;
 exports.sendAuthCardIntoDirectGroup = sendAuthCardIntoDirectGroup;
+exports.addOperationLogIntoCard = addOperationLogIntoCard;

@@ -473,6 +473,13 @@
       ]
     },
     {
+      "type": "Container",
+      "id": "operationLog",
+      "style": "good",
+      "items": [],
+      "isVisible": false
+    },
+    {
       "type": "ColumnSet",
       "columns": [
         {
