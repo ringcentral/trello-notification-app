@@ -73,7 +73,8 @@
                                             "data": {
                                                 "messageType": "Bot",
                                                 "action": "setup",
-                                                "botId": "${botId}"
+                                                "botId": "${botId}",
+                                                "conversationName": "${conversationName}"
                                             },
                                             "style": "positive"
                                         }

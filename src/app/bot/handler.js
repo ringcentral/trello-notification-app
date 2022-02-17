@@ -9,7 +9,7 @@ async function botHandler({
   message // message object, check ringcentral api document for detail
 }) {
   if (type === 'BotJoinGroup') {
-    await botActions.sendHelpCard(bot, group.id);
+    await botActions.sendHelpCard(bot, group);
     return;
   }
   if (type === 'Message4Bot') {

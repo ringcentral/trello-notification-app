@@ -184,7 +184,6 @@ async function createWebhook(req, res) {
     }
     await trelloWebhook.save();
     const webhook = await trello.createWebhook({
-      id: trelloWebhook.trello_webhook_id,
       description: 'RingCentral Notifications',
       callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
       idModel: boardId,

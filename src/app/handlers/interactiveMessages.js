@@ -182,6 +182,8 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     const action = body.data.action;
     if (action === 'setup') {
+      res.status(200);
+      res.send('ok');
       await botActions.sendSetupCard({
         bot,
         group: body.conversation,
@@ -190,8 +192,6 @@ async function botInteractiveMessagesHandler(req, res) {
           name: `${body.user.firstName} ${body.user.lastName}`,
         },
       });
-      res.status(200);
-      res.send('ok');
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -217,6 +217,23 @@ async function botInteractiveMessagesHandler(req, res) {
       redirectUrl: '',
     });
     trello.setToken(trelloUser.writeable_token);
+    if (action === 'addSubscription') {
+      const boards = await trello.getBoards();
+      await botActions.sendSubscribeCard({
+        bot,
+        conversation: {
+          id: body.data.conversationId,
+          name: body.data.conversationName,
+        },
+        trelloData: {
+          boards,
+        },
+        existingCardId: cardId,
+      });
+      res.status(200);
+      res.send('ok');
+      return;
+    }
     if (action === 'editSubscription') {
       const trelloWebhook = await TrelloWebhook.findByPk(body.data.subscriptionId);
       if (!trelloWebhook) {
@@ -254,6 +271,7 @@ async function botInteractiveMessagesHandler(req, res) {
         bot,
         boardName: body.data.boardName,
         existingCardId: cardId,
+        conversationName: body.data.conversationName,
       });
       res.status(200);
       res.send('ok');
@@ -286,6 +304,21 @@ async function botInteractiveMessagesHandler(req, res) {
           },
         });
       }
+      res.status(200);
+      res.send('ok');
+      if (trelloWebhook.trello_webhook_id) {
+        await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
+        trelloWebhook.trello_webhook_id = '';
+        await trelloWebhook.save();
+      }
+      const webhook = await trello.createWebhook({
+        description: 'RingCentral Bot Notifications',
+        callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
+        idModel: body.data.boardId,
+        active: true,
+      });
+      trelloWebhook.trello_webhook_id = webhook.id;
+      await trelloWebhook.save();
       await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
       const boards = await trello.getBoards();
       await botActions.sendSubscriptionsCard({
@@ -298,9 +331,8 @@ async function botInteractiveMessagesHandler(req, res) {
         },
         existingCardId: cardId,
       });
+      return;
     }
-    res.status(200);
-    res.send('ok');
   } catch (e) {
     console.error(e);
     res.status(500);

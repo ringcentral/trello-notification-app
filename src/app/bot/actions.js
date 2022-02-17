@@ -19,9 +19,10 @@ const { generateToken } = require('../lib/jwt');
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 
-async function sendHelpCard(bot, groupId) {
+async function sendHelpCard(bot, group) {
   const joinWelcomeCard = getAdaptiveCardFromTemplate(helpTemplate, {
     botId: bot.id,
+    conversationName: group.name || '',
   });
   await bot.sendAdaptiveCard(groupId, joinWelcomeCard);
 }
@@ -106,10 +107,6 @@ async function sendAuthCard({
   const authActionSetItem = findItemInAdaptiveCard(newAuthCard, 'authActionSet');
   delete authActionSetItem.isVisible;
   await bot.updateAdaptiveCard(cardId, newAuthCard);
-}
-
-function getCardFilterValue(card, filterName) {
-
 }
 
 async function sendSubscribeCard({

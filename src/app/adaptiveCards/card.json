@@ -224,6 +224,8 @@
                     "data": {
                       "action": "joinCard",
                       "webhookId": "${webhookId}",
+                      "messageType": "${messageType}",
+                      "botId": "${botId}",
                       "cardId": "${cardId}"
                     }
                   }
@@ -254,6 +256,8 @@
                     "data": {
                       "action": "commentCard",
                       "webhookId": "${webhookId}",
+                      "messageType": "${messageType}",
+                      "botId": "${botId}",
                       "cardId": "${cardId}"
                     }
                   }
@@ -363,6 +367,8 @@
                                     "data": {
                                       "action": "removeLabel",
                                       "webhookId": "${webhookId}",
+                                      "messageType": "${messageType}",
+                                      "botId": "${botId}",
                                       "cardId": "${cardId}"
                                     }
                                   }
@@ -416,6 +422,8 @@
                                     "data": {
                                       "action": "addLabel",
                                       "webhookId": "${webhookId}",
+                                      "messageType": "${messageType}",
+                                      "botId": "${botId}",
                                       "cardId": "${cardId}"
                                     }
                                   }
@@ -452,6 +460,8 @@
                     "data": {
                       "action": "setCardDueDate",
                       "webhookId": "${webhookId}",
+                      "messageType": "${messageType}",
+                      "botId": "${botId}",
                       "cardId": "${cardId}"
                     }
                   }

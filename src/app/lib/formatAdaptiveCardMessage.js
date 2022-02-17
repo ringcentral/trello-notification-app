@@ -252,7 +252,7 @@ function getAvatarUrl(action) {
   }
 }
 
-function getAdaptiveCardFromTrelloMessage(trelloMessage, webhookId, { boardLabels, trelloCard }) {
+function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', boardLabels, trelloCard, botId = '' }) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
@@ -294,6 +294,8 @@ function getAdaptiveCardFromTrelloMessage(trelloMessage, webhookId, { boardLabel
       comment: trelloMessage.action.data.text,
       description: trelloMessage.action.data.card.desc,
       webhookId,
+      botId,
+      messageType: botId ? 'Bot' : 'Notification',
       cardId: trelloMessage.action.data.card.id,
       defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id,
       unselectedLabels: unselectedLabels,

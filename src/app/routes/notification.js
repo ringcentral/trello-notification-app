@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
@@ -45,6 +46,7 @@ async function notification(req, res) {
       res.send('Not found');
       return;
     }
+    const isBotNotification = !!trelloWebhook.bot_id;
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
@@ -52,7 +54,11 @@ async function notification(req, res) {
     let trelloUser
     if (shouldUpdateBoardLabels(req.body.action.type)) {
       trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
-      trello.setToken(trelloUser.token);
+      if (isBotNotification) {
+        trello.setToken(trelloUser.writeable_token);
+      } else {
+        trello.setToken(trelloUser.token);
+      }
       await updateBoardLabels(trello, trelloWebhook);
     }
     const filterId = getFilterId(req.body, trelloWebhook.config.filters);
@@ -62,21 +68,34 @@ async function notification(req, res) {
         if (!trelloUser) {
           trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
         }
-        trello.setToken(trelloUser.token);
+        if (isBotNotification) {
+          trello.setToken(trelloUser.writeable_token);
+        } else {
+          trello.setToken(trelloUser.token);
+        }
         card = await trello.getCard(req.body.action.data.card.id);
         if (!trelloWebhook.config.labels) {
           await updateBoardLabels(trello, trelloWebhook);
         }
       }
-      const adaptiveCard = getAdaptiveCardFromTrelloMessage(
-        req.body,
-        trelloWebhookId,
-        {
-          trelloCard: card,
-          boardLabels: trelloWebhook.config.labels || [],
+      const adaptiveCard = getAdaptiveCardFromTrelloMessage({
+        trelloMessage: req.body,
+        webhookId: trelloWebhookId,
+        botId: trelloWebhook.bot_id,
+        trelloCard: card,
+        boardLabels: trelloWebhook.config.labels || [],
+      });
+      if (isBotNotification) {
+        const bot = await Bot.findByPk(trelloWebhook.bot_id);
+        if (!bot) {
+          res.status(404);
+          res.send('Not found');
+          return;
         }
-      );
-      await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
+        await bot.sendAdaptiveCard(trelloWebhook.conversation_id, adaptiveCard);
+      } else {
+        await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
+      }
     }
   } catch (e) {
     console.error(e)
