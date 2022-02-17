@@ -168,6 +168,8 @@ async function removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
   await rcUser.save();
 }
 
+const SETUP_ACTIONS = ['setup', 'addSubscription', 'editSubscription', 'removeSubscription', 'subscribe'];
+
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
@@ -199,23 +201,35 @@ async function botInteractiveMessagesHandler(req, res) {
     if (rcUser) {
       trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
     }
-    if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-      await botActions.sendAuthCard({
-        bot,
-        user: { id: body.user.extId },
-        conversationId: body.data.conversationId,
-        existingCardId: cardId,
-        title: `Trello setup for "${body.data.conversationName || 'this conversation'}"`,
-        trello,
-      });
-      res.status(200);
-      res.send('ok');
-      return;
-    }
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
     });
+    if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
+      if (SETUP_ACTIONS.indexOf(action) > -1) {
+        await botActions.sendAuthCard({
+          bot,
+          user: { id: body.user.extId },
+          conversationId: body.data.conversationId,
+          existingCardId: cardId,
+          title: `Trello notification setup for "${body.data.conversationName || 'this conversation'}"`,
+          nextAction: 'subscribe',
+          trello,
+        });
+        res.status(200);
+        res.send('ok');
+      } else {
+        res.status(200);
+        res.send('ok');
+        await botActions.sendAuthCardIntoDirectGroup({
+          bot,
+          user: { id: body.user.extId },
+          conversation: body.conversation,
+          trello,
+        });
+      }
+      return;
+    }
     trello.setToken(trelloUser.writeable_token);
     if (action === 'addSubscription') {
       const boards = await trello.getBoards();
@@ -333,6 +347,8 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
+    res.status(200);
+    res.send('ok');
   } catch (e) {
     console.error(e);
     res.status(500);

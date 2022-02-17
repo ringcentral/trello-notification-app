@@ -2,7 +2,7 @@
     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
     "type": "AdaptiveCard",
     "version": "1.3",
-    "fallbackText": "${title}",
+    "fallbackText": "Connected with Trello successfully.",
     "body": [
       {
         "type": "Container",
@@ -29,7 +29,7 @@
                   {
                     "type": "TextBlock",
                     "id": "title",
-                    "text": "${title}",
+                    "text": "Connected with Trello",
                     "wrap": true
                   }
                 ],
@@ -45,32 +45,8 @@
         "items": [
           {
             "type": "TextBlock",
-            "text": "Authorize",
-            "wrap": true,
-            "weight": "Bolder"
-          },
-          {
-            "type": "TextBlock",
-            "text": "Please click following button to authorize:",
+            "text": "You have connected with your Trello account **${trelloUserName}** successfully. \nYou can update trello card inside team messaging now.",
             "wrap": true
-          },
-          {
-            "type": "TextBlock",
-            "id": "authButtonGenerating",
-            "text": "Authorization button generating..",
-            "color": "Accent"
-          },
-          {
-            "type": "ActionSet",
-            "id": "authActionSet",
-            "actions": [
-              {
-                "type": "Action.OpenUrl",
-                "title": "Authorize Trello",
-                "url": "${authorizeUrl}"
-              }
-            ],
-            "isVisible": false
           }
         ],
         "separator": true,

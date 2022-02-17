@@ -46,6 +46,7 @@ async function botSaveToken(req, res) {
   const botId = decodedToken.bId;
   const cardId = decodedToken.cId;
   const conversationId = decodedToken.gId;
+  const nextAction = decodedToken.next;
   const trelloToken = req.query.token;
   console.log(decodedToken);
   if (!trelloToken) {
@@ -88,19 +89,27 @@ async function botSaveToken(req, res) {
       });
     }
     const bot = await Bot.findByPk(botId);
-    const boards = await trello.getBoards();
-    const group = await bot.getGroup(conversationId);
-    await botActions.sendSubscribeCard({
-      bot,
-      conversation: {
-        id: conversationId,
-        name: group.name || '',
-      },
-      trelloData: {
-        boards,
-      },
-      existingCardId: cardId,
-    });
+    if (nextAction === 'subscribe') {
+      const boards = await trello.getBoards();
+      const group = await bot.getGroup(conversationId);
+      await botActions.sendSubscribeCard({
+        bot,
+        conversation: {
+          id: conversationId,
+          name: group.name || '',
+        },
+        trelloData: {
+          boards,
+        },
+        existingCardId: cardId,
+      });
+    } else {
+      await botActions.sendAuthSuccessCard({
+        bot,
+        authCardId: cardId,
+        trelloUserName: trelloUserInfo.fullName,
+      });
+    }
   } catch (e) {
     if (e.response && e.response.status === 401) {
       res.status(401);

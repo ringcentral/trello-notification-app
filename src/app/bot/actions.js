@@ -9,6 +9,7 @@ const {
 const helpTemplate = require('../adaptiveCards/help.json');
 const messageTemplate = require('../adaptiveCards/message.json');
 const authTemplate = require('../adaptiveCards/authInCard.json');
+const authSuccessTemplate = require('../adaptiveCards/authSuccess.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
 const subscriptionsTemplate = require('../adaptiveCards/subscriptions.json');
 const subscriptionRemovedTemplate = require('../adaptiveCards/subscriptionRemoved.json');
@@ -77,10 +78,11 @@ async function sendAuthCard({
   bot,
   user,
   directGroup,
-  conversationId,
+  conversationId = '',
   existingCardId,
   title,
   trello,
+  nextAction = '',
 }) {
   let cardId = existingCardId;
   if (!cardId) {
@@ -96,6 +98,7 @@ async function sendAuthCard({
     bId: bot.id,
     cId: cardId,
     gId: conversationId,
+    next: nextAction,
   });
   trello.setRedirectUrl(`${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${botToken}`);
   const newAuthCard = getAdaptiveCardFromTemplate(authTemplate, {
@@ -107,6 +110,31 @@ async function sendAuthCard({
   const authActionSetItem = findItemInAdaptiveCard(newAuthCard, 'authActionSet');
   delete authActionSetItem.isVisible;
   await bot.updateAdaptiveCard(cardId, newAuthCard);
+}
+
+async function sendAuthCardIntoDirectGroup({ bot, user, trello, conversation }) {
+  const directGroup = await createDirectGroup(bot, user);
+  await sendAuthCard({
+    bot,
+    user,
+    directGroup,
+    title: 'Connect with Trello',
+    trello,
+  });
+  await bot.sendMessage(conversation.id, {
+    text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect your Trello account firstly before you use those interactive buttons.`,
+  });
+}
+
+async function sendAuthSuccessCard({
+  bot,
+  authCardId,
+  trelloUserName,
+}) {
+  const card = getAdaptiveCardFromTemplate(authSuccessTemplate, {
+    trelloUserName,
+  });
+  await bot.updateAdaptiveCard(authCardId, card);
 }
 
 async function sendSubscribeCard({
@@ -161,6 +189,7 @@ async function sendSetupCard({ bot, group, user }) {
       conversationId: group.id,
       trello,
       title: `Trello setup for "${setupGroup.name || 'this conversation'}"`,
+      nextAction: 'subscribe',
     });
     await bot.sendMessage(group.id, {
       text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
@@ -259,3 +288,5 @@ exports.sendAuthCard = sendAuthCard;
 exports.sendSubscriptionsCard = sendSubscriptionsCard;
 exports.sendSubscribeCard = sendSubscribeCard;
 exports.sendSubscribeRemovedCard = sendSubscribeRemovedCard;
+exports.sendAuthSuccessCard = sendAuthSuccessCard;
+exports.sendAuthCardIntoDirectGroup = sendAuthCardIntoDirectGroup;
