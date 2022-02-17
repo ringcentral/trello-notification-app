@@ -1,0 +1,112 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.3",
+    "fallbackText": "${title}",
+    "body": [
+      {
+        "type": "Container",
+        "items": [
+          {
+            "type": "ColumnSet",
+            "columns": [
+              {
+                "type": "Column",
+                "width": "auto",
+                "items": [
+                  {
+                    "type": "Image",
+                    "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png",
+                    "height": "24px"
+                  }
+                ],
+                "verticalContentAlignment": "Center"
+              },
+              {
+                "type": "Column",
+                "width": "stretch",
+                "items": [
+                  {
+                    "type": "TextBlock",
+                    "id": "title",
+                    "text": "${title}",
+                    "wrap": true
+                  }
+                ],
+                "verticalContentAlignment": "Center",
+                "spacing": "Small"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Container",
+        "items": [
+          {
+            "type": "TextBlock",
+            "text": "Step 1: Authorize",
+            "wrap": true,
+            "weight": "Bolder"
+          },
+          {
+            "type": "TextBlock",
+            "text": "Please click following button to authorize:",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "id": "authButtonGenerating",
+            "text": "Authorization button generating..",
+            "color": "Accent"
+          },
+          {
+            "type": "ActionSet",
+            "id": "authActionSet",
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Authorize Trello",
+                "url": "${authorizeUrl}"
+              }
+            ],
+            "isVisible": false
+          }
+        ],
+        "separator": true,
+        "spacing": "Medium",
+        "id": "authorize"
+      },
+      {
+        "type": "ColumnSet",
+        "columns": [
+          {
+            "type": "Column",
+            "width": "14px",
+            "items": [
+              {
+                "type": "Image",
+                "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+                "height": "12px"
+              }
+            ],
+            "verticalContentAlignment": "Center"
+          },
+          {
+            "type": "Column",
+            "items": [
+              {
+                "type": "TextBlock",
+                "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+                "wrap": true,
+                "size": "Small"
+              }
+            ],
+            "width": "stretch",
+            "verticalContentAlignment": "Center"
+          }
+        ]
+      }
+    ]
+  }
+  

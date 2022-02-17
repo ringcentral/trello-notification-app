@@ -349,20 +349,7 @@ function createAuthTokenRequestCard({ webhookId, authorizeUrl }) {
   });
 }
 
-function showTrelloSettingAtSetupCard(card, trelloData) {
-  const authorizeContainerItem = findItemInAdaptiveCard(card, 'authorize');
-  authorizeContainerItem.isVisible = false;
-  const boardsSelectionItem = findItemInAdaptiveCard(card, 'boardsSelection');
-  delete boardsSelectionItem.isVisible;
-  const boards = trelloData.boards;
-  const boardIdItem = findItemInAdaptiveCard(card, 'boardId');
-  boardIdItem.choices = boards.map(board => ({ title: board.name, value: board.id }));
-  boardIdItem.value = boards[0] && boards[0].id;
-  return card
-}
-
 exports.getAdaptiveCardFromTemplate = getAdaptiveCardFromTemplate;
 exports.getAdaptiveCardFromTrelloMessage = getAdaptiveCardFromTrelloMessage;
 exports.createAuthTokenRequestCard = createAuthTokenRequestCard;
-exports.showTrelloSettingAtSetupCard = showTrelloSettingAtSetupCard;
 exports.CARD_TYPES = CARD_TYPES;

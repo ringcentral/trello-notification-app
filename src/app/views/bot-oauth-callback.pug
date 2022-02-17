@@ -7,7 +7,7 @@ html
     title Auth Callback
     link(href='//developer.ringcentral.com/assets/images/favicon.ico?v=20181214-0738', type='image/vnd.microsoft.icon', rel='shortcut icon')
   body
-    #container Loading
+    #container Wait a moment...
     script(type="text/javascript" src="https://unpkg.com/es6-promise@latest/dist/es6-promise.auto.js")
     script(type="text/javascript" src="https://unpkg.com/whatwg-fetch@latest/dist/fetch.umd.js")
     script.
@@ -20,7 +20,11 @@ html
         fetch(window.location.pathname + '?' + tokenHash, {
           method: 'POST',
         }).then(function(response) {
-          window.close();
+          if (response.status === 200) {
+            window.close();
+            return;
+          }
+          container.innerText = "Authorization error.";
         }).catch(function (e) {
           container.innerText = "Authorization error.";
         });

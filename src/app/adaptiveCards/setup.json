@@ -27,7 +27,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "Trello setup for \"${conversationName}\"",
+                  "id": "title",
+                  "text": "${title}",
                   "wrap": true
                 }
               ],
@@ -37,44 +38,6 @@
           ]
         }
       ]
-    },
-    {
-      "type": "Container",
-      "isVisible": false,
-      "items": [
-        {
-          "type": "TextBlock",
-          "text": "Step 1: Authorize",
-          "wrap": true,
-          "weight": "Bolder"
-        },
-        {
-          "type": "TextBlock",
-          "text": "Please click following button to authorize:",
-          "wrap": true
-        },
-        {
-          "type": "TextBlock",
-          "id": "authButtonGenerating",
-          "text": "Authorization button generating..",
-          "color": "Accent"
-        },
-        {
-          "type": "ActionSet",
-          "id": "authActionSet",
-          "actions": [
-            {
-              "type": "Action.OpenUrl",
-              "title": "Authorize Trello",
-              "url": "${authorizeUrl}"
-            }
-          ],
-          "isVisible": false
-        }
-      ],
-      "separator": true,
-      "spacing": "Medium",
-      "id": "authorize"
     },
     {
       "type": "Container",
@@ -450,13 +413,6 @@
       ],
       "isVisible": false,
       "separator": true
-    },
-    {
-      "type": "Container",
-        "id": "operationLog",
-        "style": "good",
-        "items": [],
-        "isVisible": false
     },
     {
       "type": "ColumnSet",

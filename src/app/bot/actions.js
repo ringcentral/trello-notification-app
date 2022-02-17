@@ -1,9 +1,11 @@
-const { getAdaptiveCardFromTemplate, showTrelloSettingAtSetupCard } = require('../lib/formatAdaptiveCardMessage');
+const { getAdaptiveCardFromTemplate } = require('../lib/formatAdaptiveCardMessage');
 const { findItemInAdaptiveCard } = require('../lib/findItemInAdaptiveCard');
 
 const helpTemplate = require('../adaptiveCards/help.json');
 const messageTemplate = require('../adaptiveCards/message.json');
+const authTemplate = require('../adaptiveCards/authInCard.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
+const subscriptionsTemplate = require('../adaptiveCards/subscriptions.json');
 
 const { Trello } = require('../lib/Trello');
 const { generateToken } = require('../lib/jwt');
@@ -42,10 +44,18 @@ async function getTrelloData(trello, rcUser) {
     return null;
   };
   trello.setToken(trelloUser.writeable_token);
-  const boards = await trello.getBoards();
-  return {
-    boards,
-  };
+  try {
+    const boards = await trello.getBoards();
+    return {
+      boards,
+    };
+  } catch (e) {
+    if (e.response && e.response.status === 401) {
+      trelloUser.writeable_token = '';
+      await trelloUser.save();
+      return null;
+    }
+  }
 }
 
 async function getSetupGroup(bot, group) {
@@ -55,6 +65,67 @@ async function getSetupGroup(bot, group) {
   const rcGroup = await bot.getGroup(group.id);
   return rcGroup;
 }
+
+async function sendAuthCard({
+  bot,
+  user,
+  directGroup,
+  conversation,
+  existingCardId,
+  title,
+  trello,
+}) {
+  let cardId = existingCardId;
+  if (!cardId) {
+    const authCard = getAdaptiveCardFromTemplate(authTemplate, {
+      title,
+      authorizeUrl: '',
+    });
+    const rcCard = await bot.sendAdaptiveCard(directGroup.id, authCard);
+    cardId = rcCard.id;
+  }
+  const botToken = generateToken({
+    uId: user.id,
+    bId: bot.id,
+    cId: cardId,
+    gId: conversation.id,
+  });
+  trello.setRedirectUrl(`${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${botToken}`);
+  const newAuthCard = getAdaptiveCardFromTemplate(authTemplate, {
+    title,
+    authorizeUrl: trello.authorizationUrl({ scope: 'read,write' }),
+  });
+  const authButtonGeneratingItem = findItemInAdaptiveCard(newAuthCard, 'authButtonGenerating');
+  authButtonGeneratingItem.isVisible = false;
+  const authActionSetItem = findItemInAdaptiveCard(newAuthCard, 'authActionSet');
+  delete authActionSetItem.isVisible;
+  await bot.updateAdaptiveCard(cardId, newAuthCard);
+}
+
+async function sendNewSubscriptionCard({
+  bot,
+  title,
+  conversationId,
+  trelloData,
+  directGroup,
+  existingCardId,
+}) {
+  const setupCard = getAdaptiveCardFromTemplate(setupTemplate, {
+    botId: bot.id,
+    title,
+    conversationId,
+    trelloWebhookId: '',
+  });
+  const boards = trelloData.boards;
+  const boardIdItem = findItemInAdaptiveCard(setupCard, 'boardId');
+  boardIdItem.choices = boards.map(board => ({ title: board.name, value: board.id }));
+  boardIdItem.value = boards[0] && boards[0].id;
+  if (existingCardId) {
+    await bot.updateAdaptiveCard(existingCardId, setupCard);
+    return;
+  }
+  await bot.sendAdaptiveCard(directGroup.id, setupCard);
+};
 
 async function sendSetupCard({ bot, group, user }) {
   const setupGroup = await getSetupGroup(bot, group);
@@ -69,29 +140,32 @@ async function sendSetupCard({ bot, group, user }) {
     appKey: process.env.TRELLO_APP_KEY,
     redirectUrl: '',
   });
-  const setupCard = getAdaptiveCardFromTemplate(setupTemplate, {
-    botId: bot.id,
-    conversationName: setupGroup.name || 'this conversation', // TODO: group chat doesn't have name
-    authorizeUrl: '',
-    conversationId: group.id,
-    trelloWebhookId: '',
-  });
   const rcUser = await RcUser.findByPk(`rcext-${user.id}`);
   const trelloData = await getTrelloData(trello, rcUser);
+  const cardTitle = `Trello setup for "${setupGroup.name || 'this conversation'}"`;
   if (!trelloData) {
-    showAuthorizationAtSetupCard(setupCard);
-  } else {
-    showTrelloSettingAtSetupCard(setupCard, trelloData);
-  }
-  const rcCard = await bot.sendAdaptiveCard(directGroup.id, setupCard);
-  if (!trelloData) {
-    await sendSetupCardWithAuthorizationStep({
+    await sendAuthCard({
       bot,
-      cardId: rcCard.id,
       user,
+      directGroup,
+      conversation: {
+        id: group.id,
+      },
       trello,
+      title: cardTitle,
     });
+    await bot.sendMessage(group.id, {
+      text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
+    });
+    return;
   }
+  await sendNewSubscriptionCard({
+    bot,
+    title: cardTitle,
+    conversationId: group.id,
+    trelloData,
+    directGroup,
+  });
   await bot.sendMessage(group.id, {
     text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
   });
@@ -110,55 +184,41 @@ async function getAdaptiveCard(bot, cardId) {
   };
 }
 
-function showAuthorizationAtSetupCard(setupCard) {
-  const authorizeContainerItem = findItemInAdaptiveCard(setupCard, 'authorize');
-  delete authorizeContainerItem.isVisible;
-  const boardsSelectionItem = findItemInAdaptiveCard(setupCard, 'boardsSelection');
-  boardsSelectionItem.isVisible = false;
-}
-
-async function sendSetupCardWithAuthorizationStep({ bot, setupCard, cardId, user, trello }) {
-  showAuthorizationAtSetupCard(setupCard);
-  const authButtonGeneratingItem = findItemInAdaptiveCard(setupCard, 'authButtonGenerating');
-  authButtonGeneratingItem.isVisible = false;
-  const authActionSetItem = findItemInAdaptiveCard(setupCard, 'authActionSet');
-  delete authActionSetItem.isVisible;
-  const botToken = generateToken({
-    userId: user.id,
-    botId: bot.id,
-    cardId,
+async function sendSubscriptionsCard({
+  bot,
+  botSubscriptions,
+  trello,
+  title,
+  conversationId,
+  directGroup,
+  existingCardId,
+}) {
+  const boards = await trello.getBoards();
+  const subscriptions = botSubscriptions.map((botSubscription) => {
+    const board = boards.find(board => board.id === botSubscription.boardId);
+    return {
+      id: botSubscription.id,
+      boardName: board && board.name,
+      botId: bot.id,
+    };
   });
-  trello.setRedirectUrl(`${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${botToken}`);
-  authActionSetItem.actions[0].url = trello.authorizationUrl({ scope: 'read,write' });
-  await bot.updateAdaptiveCard(cardId, setupCard);
-}
-
-async function sendSubscribeSuccessIntoSetupCard({ bot, cardId, trelloWebhookId }) {
-  const rcCard = await getAdaptiveCard(bot, cardId);
-  const submitActionSetItem = findItemInAdaptiveCard(rcCard, 'submitActionSet');
-  submitActionSetItem.actions[0].data.trelloWebhookId = trelloWebhookId;
-  submitActionSetItem.actions[0].title = 'Update';
-  const operationLogItem = findItemInAdaptiveCard(rcCard, 'operationLog');
-  const currentTime = new Date();
-  const operationTime = `${currentTime.toISOString().split('.')[0]}Z`;
-  operationLogItem.items = [{
-    type: 'TextBlock',
-    wrap: true,
-    text: `Subscribed successfully at {{DATE(${operationTime})}} {{TIME(${operationTime})}}`,
-  }];
-  delete operationLogItem.isVisible;
-  const editBoardItem = findItemInAdaptiveCard(rcCard, 'editBoard');
-  delete editBoardItem.isVisible;
-  const selectBoardFormItem = findItemInAdaptiveCard(rcCard, 'selectBoardForm');
-  selectBoardFormItem.isVisible = false;
-  const filterSettingsItem = findItemInAdaptiveCard(rcCard, 'filterSettings');
-  delete filterSettingsItem.isVisible;
-  await bot.updateAdaptiveCard(cardId, rcCard);
+  const subscriptionsCard = getAdaptiveCardFromTemplate(subscriptionsTemplate, {
+    title,
+    subscriptions,
+    botId: bot.id,
+    conversationId,
+  });
+  if (existingCardId) {
+    await bot.updateAdaptiveCard(existingCardId, subscriptionsCard);
+    return;
+  }
+  await bot.sendAdaptiveCard(directGroup.id, subscriptionsCard);
 }
 
 exports.sendHelpCard = sendHelpCard;
 exports.sendMessageCard = sendMessageCard;
 exports.sendSetupCard = sendSetupCard;
 exports.getAdaptiveCard = getAdaptiveCard;
-exports.sendSetupCardWithAuthorizationStep = sendSetupCardWithAuthorizationStep;
-exports.sendSubscribeSuccessIntoSetupCard = sendSubscribeSuccessIntoSetupCard;
+exports.sendAuthCard = sendAuthCard;
+exports.sendSubscriptionsCard = sendSubscriptionsCard;
+exports.sendNewSubscriptionCard = sendNewSubscriptionCard;

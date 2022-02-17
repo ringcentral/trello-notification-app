@@ -149,15 +149,21 @@ function getFiltersFromSubmitData(data) {
   return filters.join(',');
 }
 
-async function updateBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
+async function saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
   const existingSubscriptions = rcUser.bot_subscriptions || [];
   const subscriptions = existingSubscriptions.filter(sub => sub.id !== trelloWebhook.id);
   subscriptions.push({
     id: trelloWebhook.id,
     conversation_id: trelloWebhook.conversation_id,
+    boardId: trelloWebhook.config.boardId,
   });
   rcUser.bot_subscriptions = subscriptions;
   await rcUser.save();
+}
+
+async function getSetupCardTitle(bot, conversationId) {
+  const conversation = await bot.getGroup(conversationId)
+  return `Trello setup for "${conversation.name || 'this conversation'}"`;
 }
 
 async function botInteractiveMessagesHandler(req, res) {
@@ -197,18 +203,20 @@ async function botInteractiveMessagesHandler(req, res) {
     });
     if (action === 'subscribe') {
       if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-        const rcCard = await botActions.getAdaptiveCard(bot, cardId);
-        await botActions.sendSetupCardWithAuthorizationStep({
+        const cardTitle = await getSetupCardTitle(bot, body.data.conversationId);
+        await botActions.sendAuthCard({
           bot,
-          setupCard: rcCard,
-          cardId,
           user: { id: body.user.extId },
+          conversation,
+          existingCardId: cardId,
+          title: cardTitle,
           trello,
         });
         res.status(200);
         res.send('ok');
         return;
       }
+      trello.setToken(trelloUser.writeable_token);
       const trelloWebhookId = body.data.trelloWebhookId;
       let trelloWebhook;
       if (trelloWebhookId) {
@@ -230,8 +238,16 @@ async function botInteractiveMessagesHandler(req, res) {
           },
         });
       }
-      await updateBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
-      await botActions.sendSubscribeSuccessIntoSetupCard({ bot, cardId, trelloWebhookId: trelloWebhook.id });
+      await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
+      const cardTitle = await getSetupCardTitle(bot, body.data.conversationId);
+      await botActions.sendSubscriptionsCard({
+        bot,
+        botSubscriptions: rcUser.bot_subscriptions,
+        trello,
+        title: cardTitle,
+        conversationId: body.data.conversationId,
+        existingCardId: cardId,
+      });
     }
     res.status(200);
     res.send('ok');

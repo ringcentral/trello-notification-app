@@ -2,9 +2,7 @@ const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { Trello } = require('../lib/Trello');
 const { decodeToken, generateToken } = require('../lib/jwt');
-const { findItemInAdaptiveCard } = require('../lib/findItemInAdaptiveCard');
-const { showTrelloSettingAtSetupCard } = require('../lib/formatAdaptiveCardMessage');
-const { getAdaptiveCard } = require('../bot/actions');
+const botActions = require('../bot/actions');
 
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
@@ -44,9 +42,10 @@ async function botSaveToken(req, res) {
     res.send('User token invalid.');
     return;
   }
-  const rcUserId = decodedToken.userId;
-  const botId = decodedToken.botId;
-  const cardId = decodedToken.cardId;
+  const rcUserId = decodedToken.uId;
+  const botId = decodedToken.bId;
+  const cardId = decodedToken.cId;
+  const conversationId = decodedToken.gId;
   const trelloToken = req.query.token;
   console.log(decodedToken);
   if (!trelloToken) {
@@ -89,10 +88,17 @@ async function botSaveToken(req, res) {
       });
     }
     const bot = await Bot.findByPk(botId);
-    const rcCard = await getAdaptiveCard(bot, cardId);
     const boards = await trello.getBoards();
-    showTrelloSettingAtSetupCard(rcCard, { boards });
-    await bot.updateAdaptiveCard(cardId, rcCard);
+    const group = await await bot.getGroup(conversationId);
+    await botActions.sendNewSubscriptionCard({
+      bot,
+      title: `Trello setup for "${group.name || 'this conversation'}"`,
+      conversationId,
+      trelloData: {
+        boards,
+      },
+      existingCardId: cardId,
+    });
   } catch (e) {
     if (e.response && e.response.status === 401) {
       res.status(401);
