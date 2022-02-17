@@ -279,6 +279,9 @@ async function botInteractiveMessagesHandler(req, res) {
         res.send('Not found');
         return;
       }
+      if (trelloWebhook.trello_webhook_id) {
+        await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
+      }
       await removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
       await trelloWebhook.destroy();
       await botActions.sendSubscribeRemovedCard({

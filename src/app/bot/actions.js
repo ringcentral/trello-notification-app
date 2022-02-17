@@ -188,12 +188,14 @@ async function sendSetupCard({ bot, group, user }) {
       directGroup,
       conversationId: group.id,
       trello,
-      title: `Trello setup for "${setupGroup.name || 'this conversation'}"`,
+      title: `Trello setup for "${setupGroup.name || 'current conversation'}"`,
       nextAction: 'subscribe',
     });
-    await bot.sendMessage(group.id, {
-      text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
-    });
+    if (group.id !== directGroup.id) {
+      await bot.sendMessage(group.id, {
+        text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
+      });
+    }
     return;
   }
   const existingSubscriptions = rcUser.bot_subscriptions && rcUser.bot_subscriptions.filter(sub => sub.conversation_id === group.id);
@@ -211,7 +213,7 @@ async function sendSetupCard({ bot, group, user }) {
   } else {
     await sendSubscribeCard({
       bot,
-      title: `Trello setup for "${setupGroup.name || 'this conversation'}"`,
+      title: `Trello setup for "${setupGroup.name || 'current conversation'}"`,
       conversation: {
         id: setupGroup.id,
         name: setupGroup.name,
@@ -220,9 +222,11 @@ async function sendSetupCard({ bot, group, user }) {
       directGroup,
     });
   }
-  await bot.sendMessage(group.id, {
-    text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
-  });
+  if (group.id !== directGroup.id) {
+    await bot.sendMessage(group.id, {
+      text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
+    });
+  }
 }
 
 async function getAdaptiveCard(bot, cardId) {
@@ -254,11 +258,11 @@ async function sendSubscriptionsCard({
     };
   });
   const subscriptionsCard = getAdaptiveCardFromTemplate(subscriptionsTemplate, {
-    title: `Trello setup for "${conversation.name || 'this conversation'}"`,
+    title: `Trello setup for "${conversation.name || 'current conversation'}"`,
     subscriptions,
     botId: bot.id,
     conversationId: conversation.id,
-    conversationName: conversation.name,
+    conversationName: conversation.name || '',
   });
   if (existingCardId) {
     await bot.updateAdaptiveCard(existingCardId, subscriptionsCard);
@@ -275,7 +279,7 @@ async function sendSubscribeRemovedCard({
 }) {
   const card = getAdaptiveCardFromTemplate(subscriptionRemovedTemplate, {
     boardName,
-    title: `Trello setup for "${conversationName || 'this conversation'}"`,
+    title: `Trello setup for "${conversationName || 'current conversation'}"`,
   });
   await bot.updateAdaptiveCard(existingCardId, card);
 }
