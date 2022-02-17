@@ -90,7 +90,7 @@ async function botSaveToken(req, res) {
     const bot = await Bot.findByPk(botId);
     const boards = await trello.getBoards();
     const group = await bot.getGroup(conversationId);
-    await botActions.sendNewSubscriptionCard({
+    await botActions.sendSubscribeCard({
       bot,
       conversation: {
         id: conversationId,

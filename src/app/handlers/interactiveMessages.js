@@ -175,8 +175,6 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     const action = body.data.action;
     if (action === 'setup') {
-      res.status(200);
-      res.send('ok');
       await botActions.sendSetupCard({
         bot,
         group: body.conversation,
@@ -185,6 +183,8 @@ async function botInteractiveMessagesHandler(req, res) {
           name: `${body.user.firstName} ${body.user.lastName}`,
         },
       });
+      res.status(200);
+      res.send('ok');
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -192,29 +192,58 @@ async function botInteractiveMessagesHandler(req, res) {
     if (rcUser) {
       trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
     }
+    if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
+      await botActions.sendAuthCard({
+        bot,
+        user: { id: body.user.extId },
+        conversationId: body.data.conversationId,
+        existingCardId: cardId,
+        title: `Trello setup for "${body.data.conversationName || 'this conversation'}"`,
+        trello,
+      });
+      res.status(200);
+      res.send('ok');
+      return;
+    }
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
     });
-    if (action === 'subscribe') {
-      if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-        await botActions.sendAuthCard({
-          bot,
-          user: { id: body.user.extId },
-          conversationId: body.data.conversationId,
-          existingCardId: cardId,
-          title: `Trello setup for "${body.data.conversationName || 'this conversation'}"`,
-          trello,
-        });
-        res.status(200);
-        res.send('ok');
+    trello.setToken(trelloUser.writeable_token);
+    if (action === 'editSubscription') {
+      const trelloWebhook = await TrelloWebhook.findByPk(body.data.subscriptionId);
+      if (!trelloWebhook) {
+        res.status(404);
+        res.send('Not found');
         return;
       }
-      trello.setToken(trelloUser.writeable_token);
-      const trelloWebhookId = body.data.trelloWebhookId;
+      const boards = await trello.getBoards();
+      await botActions.sendSubscribeCard({
+        bot,
+        conversation: {
+          id: trelloWebhook.conversation_id,
+          name: body.data.conversationName,
+        },
+        trelloData: {
+          boards,
+        },
+        existingCardId: cardId,
+        subscription: trelloWebhook,
+      });
+      res.status(200);
+      res.send('ok');
+      return;
+    }
+    if (action === 'subscribe') {
+      const subscriptionId = body.data.subscriptionId;
       let trelloWebhook;
-      if (trelloWebhookId) {
-        trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+      if (subscriptionId) {
+        trelloWebhook = await TrelloWebhook.findByPk(subscriptionId);
+        if (!trelloWebhook) {
+          res.status(404);
+          res.send('Not found');
+          return;
+        }
         trelloWebhook.config = {
           boardId: body.data.boardId,
           filters: getFiltersFromSubmitData(body.data),
@@ -233,10 +262,11 @@ async function botInteractiveMessagesHandler(req, res) {
         });
       }
       await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
+      const boards = await trello.getBoards();
       await botActions.sendSubscriptionsCard({
         bot,
         botSubscriptions: rcUser.bot_subscriptions,
-        trello,
+        boards,
         conversation: {
           id: body.data.conversationId,
           name: body.data.conversationName,

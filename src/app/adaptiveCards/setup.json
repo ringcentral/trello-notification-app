@@ -42,6 +42,7 @@
     {
       "type": "Container",
       "id": "boardsSelection",
+      "separator": true,
       "items": [
         {
           "type": "ColumnSet",
@@ -96,8 +97,12 @@
             {
               "type": "Input.ChoiceSet",
               "id": "boardId",
-              "value": "1",
-              "choices": []
+              "value": "${boardId}",
+              "choices": [{
+                "$data": "${boards}",
+                "title": "${name}",
+                "value": "${id}"
+              }]
             },
             {
               "type": "ActionSet",
@@ -182,7 +187,7 @@
               "type": "Input.ChoiceSet",
               "id": "listFilters",
               "isMultiSelect": true,
-              "value": "createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard",
+              "value": "${listFilters}",
               "choices": [
                 {
                   "title": "List Created",
@@ -263,7 +268,7 @@
               "type": "Input.ChoiceSet",
               "id": "cardFilters",
               "isMultiSelect": true,
-              "value": "createCard,changeCardDescription,renameCard,changeCardDueDate,moveCard,commentCard,addLabelToCard,removeLabelFromCard,addAttachmentToCard,archiveUnarchiveCard,addMemberToCard,removeMemberFromCard",
+              "value": "${cardFilters}",
               "choices": [
                 {
                   "title": "Card Created",
@@ -370,7 +375,7 @@
               "type": "Input.ChoiceSet",
               "id": "checklistFilters",
               "isMultiSelect": true,
-              "value": "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem",
+              "value": "${checklistFilters}",
               "choices": [
                 {
                   "title": "Checklist Added to Card",
@@ -405,7 +410,7 @@
                 "messageType": "Bot",
                 "conversationId": "${conversationId}",
                 "action": "subscribe",
-                "trelloWebhookId": "${trelloWebhookId}",
+                "subscriptionId": "${subscriptionId}",
                 "conversationName": "${conversationName}"
               }
             }

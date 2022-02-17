@@ -35,6 +35,30 @@
                             "spacing": "Small"
                         }
                     ]
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "botId",
+                    "value": "${botId}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "conversationId",
+                    "value": "${conversationId}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "conversationName",
+                    "value": "${conversationName}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "messageType",
+                    "value": "Bot",
+                    "isVisible": false
                 }
             ]
         },
@@ -74,10 +98,8 @@
                                                 {
                                                     "type": "Action.Submit",
                                                     "data": {
-                                                        "botId": "${botId}",
-                                                        "messageType": "Bot",
-                                                        "trelloWebhookId": "${id}",
-                                                        "action": "edit"
+                                                        "subscriptionId": "${id}",
+                                                        "action": "editSubscription"
                                                     },
                                                     "title": "Edit"
                                                 }
@@ -99,11 +121,7 @@
                             "title": "Add new subscription",
                             "style": "positive",
                             "data": {
-                                "botId": "${botId}",
-                                "messageType": "Bot",
-                                "conversationId": "${conversationId}",
-                                "action": "addSubscription",
-                                "conversationName": "${conversationName}"
+                                "action": "addSubscription"
                             }
                         }
                     ]

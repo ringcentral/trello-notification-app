@@ -1,5 +1,10 @@
 const { getAdaptiveCardFromTemplate } = require('../lib/formatAdaptiveCardMessage');
 const { findItemInAdaptiveCard } = require('../lib/findItemInAdaptiveCard');
+const {
+  getListFiltersFromFilters,
+  getCardFiltersFromFilters,
+  getChecklistFiltersFromFilters,
+} = require('../lib/filter');
 
 const helpTemplate = require('../adaptiveCards/help.json');
 const messageTemplate = require('../adaptiveCards/message.json');
@@ -102,25 +107,32 @@ async function sendAuthCard({
   await bot.updateAdaptiveCard(cardId, newAuthCard);
 }
 
-async function sendNewSubscriptionCard({
+function getCardFilterValue(card, filterName) {
+
+}
+
+async function sendSubscribeCard({
   bot,
   conversation,
   trelloData,
   directGroup,
   existingCardId,
+  subscription,
 }) {
+  const boards = trelloData.boards;
+  const config = subscription && subscription.config;
   const setupCard = getAdaptiveCardFromTemplate(setupTemplate, {
     botId: bot.id,
     title: `Trello setup for "${conversation.name || 'this conversation'}"`,
     conversationId: conversation.id,
     conversationName: conversation.name,
-    trelloWebhookId: '',
+    subscriptionId: (subscription && subscription.id) || '',
+    boardId: config && config.boardId || (boards[0] && boards[0].id) || '',
+    boards: boards.map(board => ({ name: board.name, id: board.id })),
+    listFilters: getListFiltersFromFilters(config && config.filters),
+    cardFilters: getCardFiltersFromFilters(config && config.filters),
+    checklistFilters: getChecklistFiltersFromFilters(config && config.filters),
   });
-  console.log(JSON.stringify(setupCard, null, 2));
-  const boards = trelloData.boards;
-  const boardIdItem = findItemInAdaptiveCard(setupCard, 'boardId');
-  boardIdItem.choices = boards.map(board => ({ title: board.name, value: board.id }));
-  boardIdItem.value = boards[0] && boards[0].id;
   if (existingCardId) {
     await bot.updateAdaptiveCard(existingCardId, setupCard);
     return;
@@ -157,16 +169,29 @@ async function sendSetupCard({ bot, group, user }) {
     });
     return;
   }
-  await sendNewSubscriptionCard({
-    bot,
-    title: cardTitle,
-    conversation: {
-      id: setupGroup.id,
-      name: setupGroup.name,
-    },
-    trelloData,
-    directGroup,
-  });
+  if (rcUser.bot_subscriptions && rcUser.bot_subscriptions.length > 0) {
+    await sendSubscriptionsCard({
+      bot,
+      botSubscriptions: rcUser.bot_subscriptions,
+      boards: trelloData.boards,
+      conversation: {
+        id: setupGroup.id,
+        name: setupGroup.name,
+      },
+      directGroup,
+    });
+  } else {
+    await sendSubscribeCard({
+      bot,
+      title: cardTitle,
+      conversation: {
+        id: setupGroup.id,
+        name: setupGroup.name,
+      },
+      trelloData,
+      directGroup,
+    });
+  }
   await bot.sendMessage(group.id, {
     text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect Trello with this conversation.`,
   });
@@ -188,18 +213,16 @@ async function getAdaptiveCard(bot, cardId) {
 async function sendSubscriptionsCard({
   bot,
   botSubscriptions,
-  trello,
+  boards,
   conversation,
   directGroup,
   existingCardId,
 }) {
-  const boards = await trello.getBoards();
   const subscriptions = botSubscriptions.map((botSubscription) => {
     const board = boards.find(board => board.id === botSubscription.boardId);
     return {
       id: botSubscription.id,
       boardName: board && board.name,
-      botId: bot.id,
     };
   });
   const subscriptionsCard = getAdaptiveCardFromTemplate(subscriptionsTemplate, {
@@ -207,6 +230,7 @@ async function sendSubscriptionsCard({
     subscriptions,
     botId: bot.id,
     conversationId: conversation.id,
+    conversationName: conversation.name,
   });
   if (existingCardId) {
     await bot.updateAdaptiveCard(existingCardId, subscriptionsCard);
@@ -221,4 +245,4 @@ exports.sendSetupCard = sendSetupCard;
 exports.getAdaptiveCard = getAdaptiveCard;
 exports.sendAuthCard = sendAuthCard;
 exports.sendSubscriptionsCard = sendSubscriptionsCard;
-exports.sendNewSubscriptionCard = sendNewSubscriptionCard;
+exports.sendSubscribeCard = sendSubscribeCard;
