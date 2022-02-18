@@ -328,6 +328,7 @@ async function botInteractiveMessagesHandler(req, res) {
     if (action === 'subscribe') {
       const subscriptionId = body.data.subscriptionId;
       let trelloWebhook;
+      const labels = await trello.getLabels(body.data.boardId);
       if (subscriptionId) {
         trelloWebhook = await TrelloWebhook.findByPk(subscriptionId);
         if (!trelloWebhook) {
@@ -338,6 +339,7 @@ async function botInteractiveMessagesHandler(req, res) {
         trelloWebhook.config = {
           boardId: body.data.boardId,
           filters: getFiltersFromSubmitData(body.data),
+          labels,
         };
         await trelloWebhook.save();
       } else {
@@ -349,6 +351,7 @@ async function botInteractiveMessagesHandler(req, res) {
           config: {
             boardId: body.data.boardId,
             filters: getFiltersFromSubmitData(body.data),
+            labels,
           },
         });
       }
@@ -404,7 +407,12 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     res.status(200);
     res.send('ok');
-    await botActions.addOperationLogIntoCard({ bot, cardId, data: body.data, user: body.user });
+    await botActions.addOperationLogIntoCard({
+      bot,
+      cardId,
+      data: body.data,
+      user: body.user,
+    });
   } catch (e) {
     console.error(e);
     res.status(500);

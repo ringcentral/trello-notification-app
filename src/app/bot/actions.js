@@ -362,11 +362,41 @@ async function addOperationLogIntoCard({ bot, cardId, data, user }) {
   let description;
   const action = data.action;
   if (action === 'joinCard') {
-    description = `${name} joined the card at {{DATE(${operationTime})}} {{TIME(${operationTime})}}`;
+    description = `**${name}** joined the card at {{DATE(${operationTime})}} {{TIME(${operationTime})}}`;
   } else if (action === 'commentCard') {
-    description = `${name} commented at {{DATE(${operationTime})}} {{TIME(${operationTime})}}:\n${data.comment}`;
+    description = `**${name}** commented at {{DATE(${operationTime})}} {{TIME(${operationTime})}}:\n${data.comment}`;
   } else if (action === 'setCardDueDate') {
     description = `${name} set the due date to ${data.dueDate}`;
+  } else if (action === 'addLabel' || action === 'removeLabel') {
+    const removeLabelInputItem = findItemInAdaptiveCard(card, 'removeLabel');
+    const addLabelInputItem = findItemInAdaptiveCard(card, 'addLabel');
+    let unselectedLabels = addLabelInputItem.choices;
+    let selectedLabels = removeLabelInputItem.choices;
+    if (action === 'addLabel') {
+      const label = unselectedLabels.find(label => label.value === data.addLabel);
+      description = `${name} added the label **${label.title}**`;
+      unselectedLabels = unselectedLabels.filter(label => label.value !== data.addLabel);
+      selectedLabels.push(label);
+      if (unselectedLabels.length === 0) {
+        const addLabelFormItem = findItemInAdaptiveCard(card, 'addLabelForm');
+        addLabelFormItem.isVisible = false;
+      }
+      const removeLabelFormItem = findItemInAdaptiveCard(card, 'removeLabelForm');
+      delete removeLabelFormItem.isVisible;
+    } else {
+      const label = selectedLabels.find(label => label.value === data.removeLabel);
+      description = `${name} removed the label **${label.title}**`;
+      selectedLabels = selectedLabels.filter(label => label.value !== data.removeLabel);
+      unselectedLabels.push(label);
+      if (selectedLabels.length === 0) {
+        const removeLabelFormItem = findItemInAdaptiveCard(card, 'removeLabelForm');
+        removeLabelFormItem.isVisible = false;
+      }
+      const addLabelFormItem = findItemInAdaptiveCard(card, 'addLabelForm');
+      delete addLabelFormItem.isVisible;
+    }
+    removeLabelInputItem.choices = selectedLabels;
+    addLabelInputItem.choices = unselectedLabels;
   }
   if (description) {
     operationLogItem.items = [{
