@@ -73,6 +73,41 @@ describe('Bot', () => {
     rcCardScope.done();
   });
 
+  it('should still send reponse 200 when send help card error', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
+      .reply(500, {});
+    let requestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "54666613415546054",
+      "event": "/restapi/v1.0/glip/groups",
+      "timestamp": "2022-02-11T09:42:57.811Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": groupId,
+        "name": "Bot test",
+        "description": null,
+        "type": "Team",
+        "status": "Active",
+        "members": [
+          "170848004",
+          "170853004",
+          "713297005"
+        ],
+        "isPublic": false,
+        "creationTime": "2022-02-08T09:02:59.677Z",
+        "lastModifiedTime": "2022-02-11T09:42:57.471Z",
+        "eventType": "GroupJoined"
+      }
+    });
+    expect(res.status).toEqual(200);
+    rcCardScope.done();
+  });
+
   it('should send help card when bot get help command', async () => {
     const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
@@ -145,7 +180,6 @@ describe('Bot', () => {
         id: groupId,
         members: [
           "170848004",
-          "170853004",
           "713297005"
         ]
       });
@@ -172,7 +206,7 @@ describe('Bot', () => {
         "id": "5852045316",
         "groupId": groupId,
         "type": "TextMessage",
-        "text": `![:Person](${botId}) authorize`,
+        "text": `authorize`,
         "creatorId": "170848004",
         "addedPersonIds": null,
         "creationTime": "2022-02-11T09:49:54.614Z",
@@ -541,5 +575,58 @@ describe('Bot', () => {
     rcGroupScope.done();
     await rcUserRecord.destroy();
     await trelloUserRecord.destroy();
+  });
+
+  it('should send setup card not support at group conversation', async () => {
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .reply(200, {
+        id: groupId,
+        type: 'Group',
+        members: [
+          "170848004",
+          "170853004",
+          "713297005"
+        ]
+      });
+    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+      .reply(200, {});
+    let messageRequestBody = null;
+    rcMessageScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      messageRequestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) setup`,
+        "creatorId": "170848004",
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(200);
+    expect(messageRequestBody.text).toContain('only support to connect Trello for **Team** conversation');
   });
 });

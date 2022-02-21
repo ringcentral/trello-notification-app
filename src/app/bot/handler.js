@@ -8,28 +8,32 @@ async function botHandler({
   userId, // message creator's id
   message // message object, check ringcentral api document for detail
 }) {
-  if (type === 'BotJoinGroup') {
-    await botActions.sendHelpCard(bot, group);
-    return;
-  }
-  if (type === 'Message4Bot') {
-    if (text === 'setup') {
-      await botActions.sendSetupCard({ bot, group, user: { id: userId }});
+  try {
+    if (type === 'BotJoinGroup') {
+      await botActions.sendHelpCard(bot, group);
       return;
     }
-    if (text === 'unauthorize') {
-      await botActions.handleUnauthorize({ bot, group, user: { id: userId }});
-      return;
+    if (type === 'Message4Bot') {
+      if (text === 'setup') {
+        await botActions.sendSetupCard({ bot, group, user: { id: userId }});
+        return;
+      }
+      if (text === 'unauthorize') {
+        await botActions.handleUnauthorize({ bot, group, user: { id: userId }});
+        return;
+      }
+      if (text === 'authorize') {
+        await botActions.handleAuthorize({ bot, group, user: { id: userId }});
+        return;
+      }
+      // await bot.setupWebHook();
+      // await bot.ensureWebHook();
+      // await bot.getUser(userId);
+      // await bot.sendMessage(group.id, { text: 'Hi!' });
+      await botActions.sendHelpCard(bot, group);
     }
-    if (text === 'authorize') {
-      await botActions.handleAuthorize({ bot, group, user: { id: userId }});
-      return;
-    }
-    // await bot.setupWebHook();
-    // await bot.ensureWebHook();
-    // await bot.getUser(userId);
-    // await bot.sendMessage(group.id, { text: 'Hi!' });
-    await botActions.sendHelpCard(bot, group);
+  } catch (e) {
+    console.error(e);
   }
 }
 
