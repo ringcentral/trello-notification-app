@@ -28,7 +28,7 @@ describe('Bot', () => {
     const rcWebhookScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes('/restapi/v1.0/subscription'))
       .reply(200, {});
-    const res = await request(server).get('/bot/oauth?code=xxxxxx&client_id=xxxxxx');
+    const res = await request(server).get('/bot/oauth?code=xxxxxx&client_id=xxxxxx&creator_account_id=xx&creator_extension_id=xxx');
     expect(res.status).toBe(200);
     const bot = await Bot.findByPk(botId);
     expect(bot.id).toEqual(botId);
@@ -36,7 +36,32 @@ describe('Bot', () => {
     rcTokenScope.done();
   });
 
-  it('should send help card when bot join a new group', async () => {
+  it('should not send help card when bot join a direct conversation', async () => {
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "54666613415546054",
+      "event": "/restapi/v1.0/glip/groups",
+      "timestamp": "2022-02-11T09:42:57.811Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": groupId,
+        "description": null,
+        "type": "PrivateChat",
+        "status": "Active",
+        "members": [
+          "170848004",
+          "713297005"
+        ],
+        "isPublic": false,
+        "creationTime": "2022-02-08T09:02:59.677Z",
+        "lastModifiedTime": "2022-02-11T09:42:57.471Z",
+        "eventType": "GroupJoined"
+      }
+    });
+    expect(res.status).toEqual(200);
+  });
+
+  it('should send help card when bot join a new team', async () => {
     const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
       .reply(200, {});

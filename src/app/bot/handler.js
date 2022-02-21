@@ -1,3 +1,4 @@
+const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 const botActions = require('./actions');
 
 async function botHandler({
@@ -9,8 +10,17 @@ async function botHandler({
   message // message object, check ringcentral api document for detail
 }) {
   try {
-    if (type === 'BotJoinGroup') {
-      await botActions.sendHelpCard(bot, group);
+    if (type === 'GroupJoined') {
+      if (message.body.type !== 'PrivateChat') {
+        const botId = message.ownerId;
+        const joinGroupBot = await Bot.findByPk(botId);
+        const joinedGroup = {
+          id: message.body.id,
+          type: message.body.type,
+          name: message.body.name,
+        };
+        await botActions.sendHelpCard(joinGroupBot, joinedGroup);
+      }
       return;
     }
     if (type === 'Message4Bot') {
