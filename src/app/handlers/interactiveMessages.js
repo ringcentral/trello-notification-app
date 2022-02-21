@@ -341,6 +341,7 @@ async function botInteractiveMessagesHandler(req, res) {
           filters: getFiltersFromSubmitData(body.data),
           labels,
         };
+        trelloWebhook.bot_id = bot.id;
         await trelloWebhook.save();
       } else {
         trelloWebhook = await TrelloWebhook.create({
