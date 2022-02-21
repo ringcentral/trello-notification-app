@@ -49,7 +49,7 @@ async function getTrelloData(trello, rcUser) {
     return null;
   }
   const trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
-  if (!trelloUser && !trelloUser.writeable_token) {
+  if (!trelloUser || !trelloUser.writeable_token) {
     return null;
   };
   trello.setToken(trelloUser.writeable_token);
