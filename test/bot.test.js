@@ -3,6 +3,9 @@ const nock = require('nock');
 const axios = require('axios');
 const { default: Bot } = require('ringcentral-chatbot-core/dist/models/Bot');
 
+const { TrelloUser } = require('../src/app/models/trello-user');
+const { RcUser } = require('../src/app/models/rc-user');
+
 axios.defaults.adapter = require('axios/lib/adapters/http');
 
 const { server } = require('../src/server');
@@ -279,6 +282,72 @@ describe('Bot', () => {
     rcMessageScope.done();
   });
 
+  it('should send authorized when bot get authorize command and user authorized', async () => {
+    const rcUserId = '170848004';
+    const trelloToken = 'test_trello_user_token';
+    const trelloUserRecord = await TrelloUser.create({
+      id: 'test_trello_user_id',
+      writeable_token: trelloToken,
+    });
+    const rcUserRecord = await RcUser.create({
+      id: `rcext-${rcUserId}`,
+      trello_user_id: trelloUserRecord.id,
+    });
+    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+      .reply(200, {});
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .reply(200, {
+        id: groupId,
+        members: [
+          "170848004",
+          "170853004",
+          "713297005"
+        ]
+      });
+    let messageRequestBody = null;
+    rcMessageScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      messageRequestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) authorize`,
+        "creatorId": rcUserId,
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(200);
+    expect(messageRequestBody.text).toContain('you have authorized Trello');
+    rcGroupScope.done();
+    rcMessageScope.done();
+    await rcUserRecord.destroy();
+    await trelloUserRecord.destroy();
+  });
+
   it('should send not authorized when bot get unauthorize command and user is authorized', async () => {
     const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
@@ -331,5 +400,146 @@ describe('Bot', () => {
     expect(messageRequestBody.text).toContain('you have not authorized Trello yet');
     rcMessageScope.done();
     rcGroupScope.done();
-  });  
+  });
+
+  it('should send unauthorized successfully when bot get unauthorize command and user has no subscriptions', async () => {
+    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+      .reply(200, {});
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .reply(200, {
+        id: groupId,
+        members: [
+          "170848004",
+          "170853004",
+          "713297005"
+        ]
+      });
+    let messageRequestBody = null;
+    rcMessageScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      messageRequestBody = JSON.parse(reqBody);
+    });
+    const trelloToken = 'test_trello_user_token';
+    const rcUserId = '170848004';
+    const trelloUserRecord = await TrelloUser.create({
+      id: 'test_trello_user_id',
+      writeable_token: trelloToken,
+    });
+    const rcUserRecord = await RcUser.create({
+      id: `rcext-${rcUserId}`,
+      trello_user_id: trelloUserRecord.id,
+      bot_subscriptions: null,
+    });
+    const trelloScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/tokens/${trelloToken}`))
+      .reply(200, {});
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) unauthorize`,
+        "creatorId": rcUserId,
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(200);
+    expect(messageRequestBody.text).toContain('you have unauthorized Trello successfully');
+    rcMessageScope.done();
+    rcGroupScope.done();
+    trelloScope.done();
+    await rcUserRecord.destroy();
+    await trelloUserRecord.destroy();
+  });
+
+  it('should send unauthorize warning card when bot get unauthorize command and user has subscriptions', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
+      .reply(200, {
+        id: 'auth_card_id',
+      });
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .reply(200, {
+        id: groupId,
+        members: [
+          "170848004",
+          "170853004",
+          "713297005"
+        ]
+      });
+    let cardRequestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      cardRequestBody = JSON.parse(reqBody);
+    });
+    const rcUserId = '170848005';
+    const trelloToken = 'test_trello_user_token';
+    const trelloUserRecord = await TrelloUser.create({
+      id: 'test_trello_user_id_1',
+      writeable_token: trelloToken,
+    });
+    const rcUserRecord = await RcUser.create({
+      id: `rcext-${rcUserId}`,
+      trello_user_id: trelloUserRecord.id,
+      bot_subscriptions: [{ id: 'test_scubscription_id' }],
+    });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) unauthorize`,
+        "creatorId": rcUserId,
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(200);
+    expect(cardRequestBody.type).toContain('AdaptiveCard');
+    expect(cardRequestBody.fallbackText).toContain('Unauthorize Trello');
+    rcCardScope.done();
+    rcGroupScope.done();
+    await rcUserRecord.destroy();
+    await trelloUserRecord.destroy();
+  });
 });
