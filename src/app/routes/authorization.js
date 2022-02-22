@@ -65,6 +65,12 @@ async function botSaveToken(req, res) {
       res.send('Fetch Trello data error.');
       return;
     }
+    const bot = await Bot.findByPk(botId);
+    if (!bot) {
+      res.status(404);
+      res.send('Bot not found.');
+      return;
+    }
     let trelloUser = await TrelloUser.findByPk(trelloUserInfo.id);
     if (trelloUser) {
       trelloUser.writeable_token = trelloToken;
@@ -87,7 +93,6 @@ async function botSaveToken(req, res) {
         trello_user_id: trelloUser.id,
       });
     }
-    const bot = await Bot.findByPk(botId);
     if (nextAction === 'subscribe') {
       const boards = await trello.getBoards();
       const group = await bot.getGroup(conversationId);
@@ -116,6 +121,9 @@ async function botSaveToken(req, res) {
       return;
     }
     console.error(e);
+    res.status(500);
+    res.send('Internal error');
+    return;
   }
   res.status(200);
   res.send('ok');
