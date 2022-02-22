@@ -115,24 +115,32 @@ async function notificationInteractiveMessagesHandler(req, res) {
     } else if (action === 'removeLabel') {
       await trello.removeCardLabel(body.data.cardId, body.data.removeLabel);
     }
+    res.status(200);
+    res.send('ok');
   } catch (e) {
     if (e.response) {
       if (e.response.status === 401) {
         trelloUser.writeable_token = '';
         await trelloUser.save();
         await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
+        res.status(200);
+        res.send('ok');
+        return;
       } else if (e.response.status === 403) {
         await sendTextMessage(
           trelloWebhook.rc_webhook_id,
           `Hi ${body.user.firstName}, your Trello account doesn't have permission to perform this action.`,
         );
+        res.status(200);
+        res.send('ok');
+        return;
       }
-    } else {
-      console.error(e);
     }
+    console.error(e);
+    res.status(500);
+    res.send('Internal error');
+    return;
   }
-  res.status(200);
-  res.send('ok');
 };
 
 function getFiltersFromSubmitData(data) {
@@ -174,7 +182,6 @@ async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
   const cardId = req.body.card.id;
-  console.log(body);
   try {
     const bot = await Bot.findByPk(botId);
     if (!bot) {
