@@ -159,6 +159,11 @@ async function saveToken(req, res) {
       token: jwtToken,
     });
   } catch (e) {
+    if (e.response && e.response.status === 401) {
+      res.status(403);
+      res.send('Token invalid.');
+      return;
+    }
     console.error(e);
     res.status(500);
     res.send('Internal error.');
