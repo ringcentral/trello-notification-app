@@ -182,8 +182,11 @@ async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
   const cardId = req.body.card.id;
+  let trelloUser;
+  let bot;
+  let trello;
   try {
-    const bot = await Bot.findByPk(botId);
+    bot = await Bot.findByPk(botId);
     if (!bot) {
       res.status(404);
       res.send('Params error');
@@ -204,11 +207,10 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
-    let trelloUser;
     if (rcUser) {
       trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
     }
-    const trello = new Trello({
+    trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
     });
@@ -220,7 +222,7 @@ async function botInteractiveMessagesHandler(req, res) {
           `Hi **${body.user.firstName} ${body.user.lastName}**, You have not authorized Trello yet.`
         );
       } else {
-        await trello.setToken(trelloUser.writeable_token);
+        trello.setToken(trelloUser.writeable_token);
         await trello.revokeToken();
         trelloUser.writeable_token = '';
         await trelloUser.save();
@@ -335,7 +337,6 @@ async function botInteractiveMessagesHandler(req, res) {
     if (action === 'subscribe') {
       const subscriptionId = body.data.subscriptionId;
       let trelloWebhook;
-      const labels = await trello.getLabels(body.data.boardId);
       if (subscriptionId) {
         trelloWebhook = await TrelloWebhook.findByPk(subscriptionId);
         if (!trelloWebhook) {
@@ -343,6 +344,7 @@ async function botInteractiveMessagesHandler(req, res) {
           res.send('Not found');
           return;
         }
+        const labels = await trello.getLabels(body.data.boardId);
         trelloWebhook.config = {
           boardId: body.data.boardId,
           filters: getFiltersFromSubmitData(body.data),
@@ -351,6 +353,7 @@ async function botInteractiveMessagesHandler(req, res) {
         trelloWebhook.bot_id = bot.id;
         await trelloWebhook.save();
       } else {
+        const labels = await trello.getLabels(body.data.boardId);
         trelloWebhook = await TrelloWebhook.create({
           id: generate(),
           bot_id: bot.id,
@@ -422,6 +425,25 @@ async function botInteractiveMessagesHandler(req, res) {
       user: body.user,
     });
   } catch (e) {
+    if (
+      e.response &&
+      e.response.status === 401 &&
+      trelloUser &&
+      trello &&
+      e.response.config.url.indexOf('api.trello.com') > -1
+    ) {
+      trelloUser.writeable_token = '';
+      await trelloUser.save();
+      res.status(200);
+      res.send('ok');
+      await botActions.sendAuthCardIntoDirectGroup({
+        bot,
+        user: { id: body.user.extId },
+        conversation: body.conversation,
+        trello,
+      });
+      return;
+    }
     console.error(e);
     res.status(500);
     res.send('Internal error');

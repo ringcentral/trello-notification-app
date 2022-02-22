@@ -297,9 +297,9 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
       botId,
       messageType: botId ? 'Bot' : 'Notification',
       cardId: trelloMessage.action.data.card.id,
-      defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id,
+      defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id || '',
       unselectedLabels: unselectedLabels,
-      defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id,
+      defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id || '',
       selectedLabels: formatLabels(trelloCard.labels),
     };
     card = getAdaptiveCardFromTemplate(cardTemplate, params);
