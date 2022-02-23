@@ -321,7 +321,11 @@ async function botInteractiveMessagesHandler(req, res) {
         await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
       }
       await removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
-      await trelloWebhook.destroy();
+      await TrelloWebhook.destroy({
+        where: {
+          id: trelloWebhook.id
+        },
+      });
       await botActions.sendSubscribeRemovedCard({
         bot,
         boardName: body.data.boardName,
