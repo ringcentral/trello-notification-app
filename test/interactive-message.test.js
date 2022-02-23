@@ -7,7 +7,7 @@ const { RCWebhook } = require('../src/app/models/rc-webhook');
 const { RcUser } = require('../src/app/models/rc-user');
 const { TrelloUser } = require('../src/app/models/trello-user');
 
-axios.defaults.adapter = require('axios/lib/adapters/http')
+axios.defaults.adapter = require('axios/lib/adapters/http');
 
 describe('Interactive Messages', () => {
   const rcWebhookId = '12121';
@@ -271,6 +271,188 @@ describe('Interactive Messages', () => {
     expect(requestBody.title).toContain('have authorized');
     scope.done();
     trelloScope.done();
+  });
+
+  it('should send joined message if user has joined', async() => {
+    const scope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { result: 'OK' });
+    const cardId = 'test-trello-card-id';
+    const trelloScope = nock('https://api.trello.com')
+      .get(uri => uri.includes(`/1/cards/${cardId}/members?`))
+      .reply(200, [{
+        id: 'test-trello-id'
+      }]);
+    let requestBody = null;
+    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'joinCard',
+        cardId,
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(requestBody.title).toContain('you had joined the card');
+    scope.done();
+    trelloScope.done();
+  });
+
+  it('should join successfully with trello api', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloMembersScope = nock('https://api.trello.com')
+      .get(uri => uri.includes(`/1/cards/${cardId}/members?`))
+      .reply(200, []);
+    const trelloJoinScope = nock('https://api.trello.com')
+      .post(uri => uri.includes(`/1/cards/${cardId}/idMembers?`))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'joinCard',
+        cardId,
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    trelloMembersScope.done();
+    trelloJoinScope.done();
+  });
+
+  it('should comment successfully with trello api', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloCommentScope = nock('https://api.trello.com')
+      .post(uri => uri.includes(`/1/cards/${cardId}/actions/comments?`))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'commentCard',
+        cardId,
+        comment: 'test comment'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    trelloCommentScope.done();
+  });
+
+  it('should set due date successfully with trello api', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloScope = nock('https://api.trello.com')
+      .put(uri => uri.includes(`/1/cards/${cardId}?`))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'setCardDueDate',
+        cardId,
+        dueDate: '2019-01-01'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    trelloScope.done();
+  });
+
+  it('should add label successfully with trello api', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloScope = nock('https://api.trello.com')
+      .post(uri => uri.includes(`/1/cards/${cardId}/idLabels?`))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'addLabel',
+        cardId,
+        addLabel: 'xxx'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    trelloScope.done();
+  });
+
+  it('should add label successfully with trello api', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/cards/${cardId}/idLabels/xxx?`))
+      .reply(200, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'removeLabel',
+        cardId,
+        removeLabel: 'xxx'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    trelloScope.done();
+  });
+
+  it('should warn permission message with trello 403', async() => {
+    const scope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { result: 'OK' });
+    const cardId = 'test-trello-card-id';
+    const trelloCommentScope = nock('https://api.trello.com')
+      .post(uri => uri.includes(`/1/cards/${cardId}/actions/comments?`))
+      .reply(403, {});
+    let requestBody = null;
+    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'commentCard',
+        cardId,
+        comment: 'test comment'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(requestBody.title).toContain('doesn\'t have permission');
+    scope.done();
+    trelloCommentScope.done();
+  });
+
+  it('should response 500 with trello return 500', async() => {
+    const cardId = 'test-trello-card-id';
+    const trelloCommentScope = nock('https://api.trello.com')
+      .post(uri => uri.includes(`/1/cards/${cardId}/actions/comments?`))
+      .reply(500, {});
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: trelloWebhook.id,
+        action: 'commentCard',
+        cardId,
+        comment: 'test comment'
+      },
+      user: {
+        id: 'test-user-id1'
+      },
+    });
+    expect(res.status).toEqual(500);
+    trelloCommentScope.done();
   });
 
   it('should send auth card when request trello 401', async() => {

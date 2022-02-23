@@ -6,7 +6,7 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { TrelloUser } = require('../src/app/models/trello-user');
 const { RCWebhook } = require('../src/app/models/rc-webhook');
 
-axios.defaults.adapter = require('axios/lib/adapters/http')
+axios.defaults.adapter = require('axios/lib/adapters/http');
 
 const createListData = require('../example-payloads/createList.json');
 const renameListData = require('../example-payloads/updateList-renamed.json');
@@ -45,7 +45,6 @@ describe('Notify', () => {
   const rcWebhookId = '12121';
   const rcWebhookUri = `http://test.com/webhook/${rcWebhookId}`;
   let trelloWebhook;
-  let trelloUser;
 
   beforeAll(async () => {
     const rcWebhookRecord = await await RCWebhook.create({
@@ -70,6 +69,11 @@ describe('Notify', () => {
   it('should get 404 with wrong webhook id', async () => {
     const res = await request(server).post('/trello-notify/1234');
     expect(res.status).toEqual(404);
+  });
+
+  it('should get 200 for head request', async () => {
+    const res = await request(server).head('/trello-notify/1234');
+    expect(res.status).toEqual(200);
   });
 
   it('should get 200 with createListData message', async () => {

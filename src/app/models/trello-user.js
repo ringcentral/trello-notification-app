@@ -18,5 +18,5 @@ exports.TrelloUser = sequelize.define('trello-users', {
   },
   writeable_token: {
     type: Sequelize.STRING
-  },
+  }
 });

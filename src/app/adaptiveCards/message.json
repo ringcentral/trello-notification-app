@@ -1,0 +1,48 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.3",
+    "fallbackText": "${message}",
+    "body": [
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": "${message}",
+                    "wrap": true
+                }
+            ]
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "14px",
+                    "items": [
+                        {
+                            "type": "Image",
+                            "url": "https://raw.githubusercontent.com/ringcentral/bugsnag-notification-app/main/icon/feedback.png",
+                            "height": "12px"
+                        }
+                    ],
+                    "verticalContentAlignment": "Center"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "[Feedback](https://github.com/ringcentral/bugsnag-notification-app/issues/new)",
+                            "wrap": true,
+                            "size": "Small"
+                        }
+                    ],
+                    "width": "stretch",
+                    "verticalContentAlignment": "Center"
+                }
+            ]
+        }
+    ]
+}

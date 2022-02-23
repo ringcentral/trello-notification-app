@@ -2,7 +2,9 @@
 
 [![Build Status](https://github.com/ringcentral/trello-notification-app/workflows/CI%20Pipeline/badge.svg?branch=main)](https://github.com/ringcentral/trello--notification-app/actions)
 
-[Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) for [RingCentral app](https://www.ringcentral.com/apps/rc-app).
+[![Coverage Status](https://coveralls.io/repos/github/ringcentral/trello-notification-app/badge.svg?branch=main)](https://coveralls.io/github/ringcentral/trello-notification-app?branch=main)
+
+[Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) and Bot for [RingCentral app](https://www.ringcentral.com/apps/rc-app).
 
 ## Development
 
@@ -28,7 +30,25 @@ $ npm run ngrok
 
 Keep this process active, and you will get a publish uri as `https://xxxxxxxxxx.ngrok.io` that connected with your local port `localhost:6066`.
 
-### 4. Start webpack server to compile and host static JS file.
+### 4. Create a free RingCentral add-in app
+
+Please follow [here](https://developers.ringcentral.com/guide/team-messaging/add-ins/creation) to create a RingCentral notification add-in app.
+
+In `App Features`, enable `Interactive Messages`, then input URI `https://xxxxxx.ngrok.io/interactive-messages`. Please replace with your ngrok domain.
+
+In `Integrated installation in RingCentral app` section, enable `This app can be installed via the web`, then input URI `https://xxxxxx.ngrok.io/webhooks/new`.
+
+### 5. Create a free RingCentral Bots app
+
+Please follow [here](https://developers.ringcentral.com/guide/team-messaging/add-ins/creation) to create a RingCentral Bots app.
+
+In `App Permissions` section, add `Read Accounts`, `Team Messaging` and `Webhook Subscriptions`.
+
+In `OAuth Redirect URI` section, input `https://xxxxxx.ngrok.io/bot/oauth`. Please replace with your ngrok domain.
+
+In `App Features`, enable `Interactive Messages`, then input URI `https://xxxxxx.ngrok.io/interactive-messages`. Please replace with your ngrok domain.
+
+### 6. Start webpack server to compile and host static JS file.
 
 In other console window:
 
@@ -36,7 +56,7 @@ In other console window:
 $ npm run webpack-server
 ```
 
-### 5. Create `.env` file
+### 7. Create `.env` file
 
 ```
 $ cp .env.sample .env
@@ -47,7 +67,7 @@ The `APP_SERVER` is publish uri that we get from ngrok.
 For `DATABASE_CONNECTION_URI`, we can just keep `sqlite://./db.sqlite`. We will use sqlite as local database.
 `TRELLO_APP_KEY` and `TRELLO_APP_SECRET` are from `https://trello.com/app-key`.
 
-### 6. Setup Database
+### 8. Setup Database
 
 We will use sqlite as local database. Please install sqlite3 in your machine firstly.
 
@@ -63,17 +83,9 @@ $ npm run initDB
 $ npm start
 ```
 
-### 8. Test with notification app developer tool
+### 9. Test at RingCentral sandbox
 
-Visit your publish uri `https://ringcentral.github.io/ringcentral-notification-app-developer-tool/`, and set `App Url` with ``https://xxxxxx.ngrok.io/webhooks/new`. Then set `Webhook Url` from RingCentral Incoming Webhook integration.
-
-### 9. Create a free RingCentral add-in app
-
-Please follow [here](https://developers.ringcentral.com/guide/team-messaging/add-ins/creation) to create a RingCentral notification add-in app.
-
-In `App Features`, enable `Interactive Messages`, then input URI `https://xxxxxx.ngrok.io/interactive-messages`. Please replace with your ngrok domain.
-
-In `Integrated installation in RingCentral app` section, enable `This app can be installed via the web`, then input URI `https://xxxxxx.ngrok.io/webhooks/new`. 
+Go to `https://app.devtest.ringcentral.com/apps/sandbox` with your sandbox account, you can get your apps in development here. Click Plus icon to add your notification app or bots to test.
 
 ## Deploy with serverless
 

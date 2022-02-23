@@ -1,0 +1,120 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.3",
+  "fallbackText": "Unauthorize Trello",
+  "body": [
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "width": "auto",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png",
+                  "height": "24px"
+                }
+              ],
+              "verticalContentAlignment": "Center"
+            },
+            {
+              "type": "Column",
+              "width": "stretch",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "id": "title",
+                  "text": "Disconnect with Trello",
+                  "wrap": true
+                }
+              ],
+              "verticalContentAlignment": "Center",
+              "spacing": "Small"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "Hi, are you sure to unauthorize your trello account from this bot? All notifications that setup with this account will be stopped.",
+          "wrap": true
+        }
+      ],
+      "separator": true,
+      "spacing": "Medium"
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "verticalContentAlignment": "Center"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "ActionSet",
+              "id": "submitActionSet",
+              "actions": [
+                {
+                  "type": "Action.Submit",
+                  "title": "Unauthorize",
+                  "style": "destructive",
+                  "data": {
+                    "action": "unauthorize",
+                    "messageType": "Bot",
+                    "botId": "${botId}"
+                  }
+                }
+              ]
+            }
+          ],
+          "width": "auto",
+          "verticalContentAlignment": "Center"
+        }
+      ],
+      "spacing": "Medium"
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "14px",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+              "height": "12px"
+            }
+          ],
+          "verticalContentAlignment": "Center"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+              "wrap": true,
+              "size": "Small"
+            }
+          ],
+          "width": "stretch",
+          "verticalContentAlignment": "Center"
+        }
+      ]
+    }
+  ]
+}

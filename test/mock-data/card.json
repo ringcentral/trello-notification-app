@@ -1,6 +1,13 @@
 {
+  "id": "48201838",
+  "creationTime": "2022-02-22T15:27:39.705Z",
+  "lastModifiedTime": "2022-02-22T15:27:39.750Z",
   "type": "AdaptiveCard",
-  "fallbackText": "${summary}",
+  "creator": {
+    "id": "714409005"
+  },
+  "chatIds": ["1100103686"],
+  "version": "1.3",
   "body": [
     {
       "type": "ColumnSet",
@@ -16,7 +23,7 @@
                   "items": [
                     {
                       "type": "Image",
-                      "url": "${avatarUrl}",
+                      "url": "https://trello-members.s3.amazonaws.com/6045949b752485785feab3b4/9ea68cff0afa47a220be9c82fd0dfbaa/50.png",
                       "height": "32px",
                       "style": "Person"
                     }
@@ -29,7 +36,7 @@
                   "items": [
                     {
                       "type": "TextBlock",
-                      "text": "[${username}](${userLink})",
+                      "text": "[embbnux.ji](https://trello.com/embbnuxji1)",
                       "wrap": true
                     }
                   ],
@@ -85,7 +92,7 @@
       "items": [
         {
           "type": "TextBlock",
-          "text": "${subject}",
+          "text": "Removed [embbnux.ji](https://trello.com/embbnuxji1) from [new card](https://trello.com/c/Jtb76QhQ)",
           "wrap": true
         },
         {
@@ -155,7 +162,7 @@
                 {
                   "id": "listLabel",
                   "type": "TextBlock",
-                  "text": "List",
+                  "text": "Card",
                   "wrap": true,
                   "size": "Small",
                   "weight": "Bolder"
@@ -174,7 +181,7 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "[${boardName}](${boardLink})",
+                  "text": "[TestBoard2](https://trello.com/b/pLDveLtK)",
                   "wrap": true
                 }
               ],
@@ -186,7 +193,7 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "${listName}",
+                  "text": "new card",
                   "wrap": true
                 }
               ],
@@ -223,10 +230,10 @@
                     "title": "Join",
                     "data": {
                       "action": "joinCard",
-                      "webhookId": "${webhookId}",
-                      "messageType": "${messageType}",
-                      "botId": "${botId}",
-                      "cardId": "${cardId}"
+                      "webhookId": "VKc4P8Fal",
+                      "messageType": "Bot",
+                      "botId": "714409005",
+                      "cardId": "621500a24593fd2ae54c6552"
                     }
                   }
                 ]
@@ -255,10 +262,10 @@
                     "title": "Comment",
                     "data": {
                       "action": "commentCard",
-                      "webhookId": "${webhookId}",
-                      "messageType": "${messageType}",
-                      "botId": "${botId}",
-                      "cardId": "${cardId}"
+                      "webhookId": "VKc4P8Fal",
+                      "messageType": "Bot",
+                      "botId": "714409005",
+                      "cardId": "621500a24593fd2ae54c6552"
                     }
                   }
                 ]
@@ -284,46 +291,8 @@
                   {
                     "type": "ColumnSet",
                     "id": "selectedLabels",
-                    "columns": [
-                      {
-                        "$data": "${selectedLabels}",
-                        "type": "Column",
-                        "width": "auto",
-                        "items": [
-                          {
-                            "type": "ColumnSet",
-                            "columns": [
-                              {
-                                "type": "Column",
-                                "width": "16px",
-                                "items": [
-                                  {
-                                    "type": "Image",
-                                    "url": "${colorImage}",
-                                    "height": "16px",
-                                    "style": "Person"
-                                  }
-                                ],
-                                "verticalContentAlignment": "Center",
-                                "spacing": "None"
-                              },
-                              {
-                                "type": "Column",
-                                "width": "stretch",
-                                "items": [
-                                  {
-                                    "type": "TextBlock",
-                                    "text": "${name}"
-                                  }
-                                ],
-                                "spacing": "Small",
-                                "verticalContentAlignment": "Center"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
+                    "columns": [],
+                    "isVisible": false
                   },
                   {
                     "type": "Container",
@@ -344,14 +313,11 @@
                               {
                                 "type": "Input.ChoiceSet",
                                 "id": "removeLabel",
-                                "value": "${defaultRemoveLabelValue}",
-                                "choices": [
-                                  {
-                                    "$data": "${selectedLabels}",
-                                    "title": "${name}",
-                                    "value": "${id}"
-                                  }
-                                ]
+                                "value": "6094fb83d41eeff1fa76129d",
+                                "choices": [{
+                                  "title": "green",
+                                  "value": "6094fb83d41eeff1fa76129d"
+                                }]
                               }
                             ]
                           },
@@ -366,10 +332,10 @@
                                     "title": "Remove",
                                     "data": {
                                       "action": "removeLabel",
-                                      "webhookId": "${webhookId}",
-                                      "messageType": "${messageType}",
-                                      "botId": "${botId}",
-                                      "cardId": "${cardId}"
+                                      "webhookId": "VKc4P8Fal",
+                                      "messageType": "Bot",
+                                      "botId": "714409005",
+                                      "cardId": "621500a24593fd2ae54c6552"
                                     }
                                   }
                                 ]
@@ -378,7 +344,8 @@
                           }
                         ]
                       }
-                    ]
+                    ],
+                    "isVisible": false
                   },
                   {
                     "type": "Container",
@@ -399,12 +366,39 @@
                               {
                                 "type": "Input.ChoiceSet",
                                 "id": "addLabel",
-                                "value": "${defaultAddLabelValue}",
+                                "value": "6094fb83d41eeff1fa7612a1",
                                 "choices": [
                                   {
-                                    "$data": "${unselectedLabels}",
-                                    "title": "${name}",
-                                    "value": "${id}"
+                                    "title": "yellow",
+                                    "value": "6094fb83d41eeff1fa7612a1"
+                                  },
+                                  {
+                                    "title": "red",
+                                    "value": "6094fb83d41eeff1fa7612a6"
+                                  },
+                                  {
+                                    "title": "test3",
+                                    "value": "6182506ef3a9e084fe172e9f"
+                                  },
+                                  {
+                                    "title": "no color",
+                                    "value": "61961c1d6cba172149cee06b"
+                                  },
+                                  {
+                                    "title": "new label",
+                                    "value": "619cb48076945e29828b4181"
+                                  },
+                                  {
+                                    "title": "purple",
+                                    "value": "6094fb83d41eeff1fa7612aa"
+                                  },
+                                  {
+                                    "title": "blue",
+                                    "value": "6094fb83d41eeff1fa7612ac"
+                                  },
+                                  {
+                                    "title": "orange",
+                                    "value": "6094fb83d41eeff1fa7612a3"
                                   }
                                 ]
                               }
@@ -421,10 +415,10 @@
                                     "title": "Add",
                                     "data": {
                                       "action": "addLabel",
-                                      "webhookId": "${webhookId}",
-                                      "messageType": "${messageType}",
-                                      "botId": "${botId}",
-                                      "cardId": "${cardId}"
+                                      "webhookId": "VKc4P8Fal",
+                                      "messageType": "Bot",
+                                      "botId": "714409005",
+                                      "cardId": "621500a24593fd2ae54c6552"
                                     }
                                   }
                                 ]
@@ -459,10 +453,10 @@
                     "title": "Set Due Date",
                     "data": {
                       "action": "setCardDueDate",
-                      "webhookId": "${webhookId}",
-                      "messageType": "${messageType}",
-                      "botId": "${botId}",
-                      "cardId": "${cardId}"
+                      "webhookId": "VKc4P8Fal",
+                      "messageType": "Bot",
+                      "botId": "714409005",
+                      "cardId": "621500a24593fd2ae54c6552"
                     }
                   }
                 ]
@@ -510,6 +504,5 @@
       ]
     }
   ],
-  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-  "version": "1.3"
+  "fallbackText": "embbnux.ji removed embbnux.ji from new card"
 }

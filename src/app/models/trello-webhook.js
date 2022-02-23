@@ -23,4 +23,10 @@ exports.TrelloWebhook = sequelize.define('trello-webhooks', {
     type: Sequelize.BOOLEAN,
     defaultValue: true
   },
+  bot_id: {
+    type: Sequelize.STRING,
+  },
+  conversation_id: {
+    type: Sequelize.STRING,
+  },
 });

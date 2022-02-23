@@ -1,0 +1,215 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.3",
+    "fallbackText": "${title}",
+    "body": [
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "items": [
+                                {
+                                    "type": "Image",
+                                    "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/trello.png",
+                                    "height": "24px"
+                                }
+                            ],
+                            "verticalContentAlignment": "Center"
+                        },
+                        {
+                            "type": "Column",
+                            "width": "stretch",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "${title}",
+                                    "wrap": true
+                                }
+                            ],
+                            "verticalContentAlignment": "Center",
+                            "spacing": "Small"
+                        }
+                    ]
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "botId",
+                    "value": "${botId}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "conversationId",
+                    "value": "${conversationId}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "conversationName",
+                    "value": "${conversationName}",
+                    "isVisible": false
+                },
+                {
+                    "type": "Input.Text",
+                    "id": "messageType",
+                    "value": "Bot",
+                    "isVisible": false
+                }
+            ]
+        },
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "wrap": true,
+                    "text": "Existing subscriptions:"
+                },
+                {
+                    "type": "Container",
+                    "$data": "${subscriptions}",
+                    "items": [
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "text": "**${boardName}**"
+                                        }
+                                    ],
+                                    "width": "stretch",
+                                    "verticalContentAlignment": "Center"
+                                },
+                                {
+                                    "type": "Column",
+                                    "width": "18px",
+                                    "items": [
+                                        {
+                                            "id": "downArrow-${id}",
+                                            "type": "Image",
+                                            "url": "https://user-images.githubusercontent.com/7036536/154206010-6455f907-9ea8-468b-b40c-d43a6e833dd8.png",
+                                            "height": "18px"
+                                        },
+                                        {
+                                            "id": "upArrow-${id}",
+                                            "type": "Image",
+                                            "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                                            "height": "18px",
+                                            "isVisible": false
+                                        }
+                                    ],
+                                    "verticalContentAlignment": "Center"
+                                }
+                            ],
+                            "selectAction": {
+                                "type": "Action.ToggleVisibility",
+                                "targetElements": [
+                                    "actions-${id}",
+                                    "downArrow-${id}",
+                                    "upArrow-${id}"
+                                ]
+                            }
+                        },
+                        {
+                            "type": "ActionSet",
+                            "id": "actions-${id}",
+                            "isVisible": false,
+                            "actions": [
+                                {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "subscriptionId": "${id}",
+                                        "boardName": "${boardName}",
+                                        "action": "removeSubscription"
+                                    },
+                                    "title": "Remove",
+                                    "style": "destructive"
+                                },
+                                {
+                                    "type": "Action.Submit",
+                                    "data": {
+                                        "subscriptionId": "${id}",
+                                        "action": "editSubscription"
+                                    },
+                                    "title": "Edit"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "separator": true
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "stretch",
+                    "verticalContentAlignment": "Center"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "ActionSet",
+                            "id": "submitActionSet",
+                            "actions": [
+                                {
+                                    "type": "Action.Submit",
+                                    "title": "Add new subscription",
+                                    "style": "positive",
+                                    "data": {
+                                        "action": "addSubscription"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "width": "auto",
+                    "verticalContentAlignment": "Center"
+                }
+            ],
+            "spacing": "Medium"
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "width": "14px",
+                    "items": [
+                        {
+                            "type": "Image",
+                            "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+                            "height": "12px"
+                        }
+                    ],
+                    "verticalContentAlignment": "Center"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+                            "wrap": true,
+                            "size": "Small"
+                        }
+                    ],
+                    "width": "stretch",
+                    "verticalContentAlignment": "Center"
+                }
+            ]
+        }
+    ]
+}
