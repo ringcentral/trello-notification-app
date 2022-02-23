@@ -21,6 +21,7 @@ html
           method: 'POST',
         }).then(function(response) {
           if (response.status === 200) {
+            container.innerText = "Authorized! Please close this page and go back to RingCentral team messaging.";
             window.close();
             return;
           }

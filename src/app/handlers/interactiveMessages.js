@@ -194,8 +194,6 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     const action = body.data.action;
     if (action === 'setup') {
-      res.status(200);
-      res.send('ok');
       await botActions.sendSetupCard({
         bot,
         group: body.conversation,
@@ -204,6 +202,8 @@ async function botInteractiveMessagesHandler(req, res) {
           name: `${body.user.firstName} ${body.user.lastName}`,
         },
       });
+      res.status(200);
+      res.send('ok');
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -256,11 +256,7 @@ async function botInteractiveMessagesHandler(req, res) {
           nextAction: 'subscribe',
           trello,
         });
-        res.status(200);
-        res.send('ok');
       } else {
-        res.status(200);
-        res.send('ok');
         await botActions.sendAuthCardIntoDirectGroup({
           bot,
           user: { id: body.user.extId },
@@ -268,6 +264,8 @@ async function botInteractiveMessagesHandler(req, res) {
           trello,
         });
       }
+      res.status(200);
+      res.send('ok');
       return;
     }
     trello.setToken(trelloUser.writeable_token);
@@ -366,8 +364,6 @@ async function botInteractiveMessagesHandler(req, res) {
           },
         });
       }
-      res.status(200);
-      res.send('ok');
       if (trelloWebhook.trello_webhook_id) {
         await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
         trelloWebhook.trello_webhook_id = '';
@@ -393,6 +389,8 @@ async function botInteractiveMessagesHandler(req, res) {
         },
         existingCardId: cardId,
       });
+      res.status(200);
+      res.send('ok');
       return;
     }
     if (action === 'joinCard') {
@@ -416,14 +414,14 @@ async function botInteractiveMessagesHandler(req, res) {
     } else if (action === 'removeLabel') {
       await trello.removeCardLabel(body.data.cardId, body.data.removeLabel);
     }
-    res.status(200);
-    res.send('ok');
     await botActions.addOperationLogIntoCard({
       bot,
       cardId,
       data: body.data,
       user: body.user,
     });
+    res.status(200);
+    res.send('ok');
   } catch (e) {
     if (
       e.response &&
@@ -434,14 +432,14 @@ async function botInteractiveMessagesHandler(req, res) {
     ) {
       trelloUser.writeable_token = '';
       await trelloUser.save();
-      res.status(200);
-      res.send('ok');
       await botActions.sendAuthCardIntoDirectGroup({
         bot,
         user: { id: body.user.extId },
         conversation: body.conversation,
         trello,
       });
+      res.status(200);
+      res.send('ok');
       return;
     }
     console.error(e);
