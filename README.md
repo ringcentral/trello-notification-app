@@ -1,7 +1,6 @@
 # Trello Notification Add-in
 
 [![Build Status](https://github.com/ringcentral/trello-notification-app/workflows/CI%20Pipeline/badge.svg?branch=main)](https://github.com/ringcentral/trello--notification-app/actions)
-
 [![Coverage Status](https://coveralls.io/repos/github/ringcentral/trello-notification-app/badge.svg?branch=main)](https://coveralls.io/github/ringcentral/trello-notification-app?branch=main)
 
 [Trello notification add-in](https://www.ringcentral.com/apps/trello-beta-for-ringcentral) and Bot for [RingCentral app](https://www.ringcentral.com/apps/rc-app).
