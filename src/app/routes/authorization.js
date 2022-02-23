@@ -115,7 +115,11 @@ async function botSaveToken(req, res) {
       });
     }
   } catch (e) {
-    if (e.response && e.response.status === 401) {
+    if (
+      e.response &&
+      e.response.status === 401 &&
+      e.response.config.url.indexOf('api.trello.com') > -1
+    ) {
       res.status(401);
       res.send('Token invalid.');
       return;
