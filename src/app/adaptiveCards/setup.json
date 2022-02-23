@@ -68,7 +68,7 @@
                 {
                   "id": "editBoard",
                   "type": "Image",
-                  "url": "https://user-images.githubusercontent.com/7036536/154206010-6455f907-9ea8-468b-b40c-d43a6e833dd8.png",
+                  "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/edit.png",
                   "height": "16px",
                   "isVisible": false,
                   "selectAction": {
@@ -165,14 +165,14 @@
                     {
                       "id": "downArrow0",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/down_arrow.png",
                       "height": "16px",
                       "isVisible": false
                     },
                     {
                       "id": "upArrow0",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/up_arrow.png",
                       "height": "16px"
                     }
                   ],
@@ -246,13 +246,13 @@
                     {
                       "id": "downArrow1",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/down_arrow.png",
                       "height": "16px"
                     },
                     {
                       "id": "upArrow1",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/up_arrow.png",
                       "height": "16px",
                       "isVisible": false
                     }
@@ -353,13 +353,13 @@
                     {
                       "id": "downArrow2",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154186659-4fbd8c61-655c-4d0c-90d9-e4a4b1dd1c1e.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/down_arrow.png",
                       "height": "16px"
                     },
                     {
                       "id": "upArrow2",
                       "type": "Image",
-                      "url": "https://user-images.githubusercontent.com/7036536/154200568-ba7f3791-6174-45be-bc2e-bc67f9446f45.png",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/up_arrow.png",
                       "height": "16px",
                       "isVisible": false
                     }
