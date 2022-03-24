@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useState,
+  useCallback,
 } from 'react';
 
 import {
@@ -209,7 +210,28 @@ export function App({ integrationHelper, client, analytics }) {
       integrationHelper.dispose();
     };
   }, [boardId, selectedFilters]);
-
+  const onAuthCallback = useCallback(async (e) => {
+    if (e.data && e.data.authCallback) {
+      window.removeEventListener('message', onAuthCallback);
+      if (e.data.authCallback.indexOf('error') > -1) {
+        setError('Authorization error')
+        setLoading(false);
+        analytics.track('Authorize Trello error');
+        return;
+      }
+      setLoading(true);
+      try {
+        await client.saveToken(e.data.authCallback);
+        setAuthorized(true);
+        setError('');
+        analytics.track('Authorize Trello success');
+      } catch (e) {
+        console.error(e);
+        setError('Authorization error please retry later.')
+      }
+      setLoading(false);
+    }
+  }, []);
   return (
     <RcThemeProvider theme={theme}>
       <RcLoading loading={loading}>
@@ -280,28 +302,7 @@ export function App({ integrationHelper, client, analytics }) {
               setLoading(true);
               integrationHelper.openWindow(client.authorizationUri);
               analytics.track('Authorize Trello');
-              async function onAuthCallback (e) {
-                if (e.data && e.data.authCallback) {
-                  window.removeEventListener('message', onAuthCallback);
-                  if (e.data.authCallback.indexOf('error') > -1) {
-                    setError('Authorization error')
-                    setLoading(false);
-                    analytics.track('Authorize Trello error');
-                    return;
-                  }
-                  setLoading(true);
-                  try {
-                    await client.saveToken(e.data.authCallback);
-                    setAuthorized(true);
-                    setError('');
-                    analytics.track('Authorize Trello success');
-                  } catch (e) {
-                    console.error(e);
-                    setError('Authorization error please retry later.')
-                  }
-                  setLoading(false);
-                }
-              }
+              window.removeEventListener('message', onAuthCallback);
               window.addEventListener('message', onAuthCallback);
               setTimeout(() => {
                 setLoading(false);
