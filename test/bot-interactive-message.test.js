@@ -220,8 +220,8 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(authCardRequestBody.fallbackText).toContain('have not authorized');
     rcAuthCardPutScope.done();
-    await trelloUserRecord.destroy();
-    await rcUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
   });
 
   it('should unauthorized successfully without bot_subscriptions', async () => {
@@ -266,11 +266,11 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(authCardRequestBody.fallbackText).toContain('unauthorized Trello successfully');
     trelloUserRecord = await TrelloUser.findByPk(trelloUserRecord.id);
-    expect(trelloUserRecord.writeable_token).toEqual('');
+    expect(!!trelloUserRecord.writeable_token).toEqual(false);
     rcAuthCardPutScope.done();
     trelloRevokeScope.done();
-    await trelloUserRecord.destroy();
-    await rcUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
   });
 
   it('should unauthorized successfully with bot_subscriptions', async () => {
@@ -331,15 +331,15 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(authCardRequestBody.fallbackText).toContain('unauthorized Trello successfully');
     trelloUserRecord = await TrelloUser.findByPk(trelloUserRecord.id);
-    expect(trelloUserRecord.writeable_token).toEqual('');
+    expect(!!trelloUserRecord.writeable_token).toEqual(false);
     rcUserRecord = await RcUser.findByPk(rcUserRecord.id);
-    expect(rcUserRecord.bot_subscriptions).toEqual(null);
+    expect(!!rcUserRecord.bot_subscriptions).toEqual(false);
     const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id');
-    expect(trelloWebhook).toEqual(null);
+    expect(!!trelloWebhook).toEqual(false);
     rcAuthCardPutScope.done();
     trelloRevokeScope.done();
-    await trelloUserRecord.destroy();
-    await rcUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
   });
 
   it('should send auth card when have not setup action and not authorized', async () => {
@@ -483,8 +483,8 @@ describe('Bot Notification', () => {
     expect(rcCardRequestBody.fallbackText).toContain('Trello setup');
     rcCardPutScope.done();
     trelloBoardsScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should respond 404 when have editSubscription with wrong subscription id', async () => {
@@ -519,8 +519,8 @@ describe('Bot Notification', () => {
       },
     });
     expect(res.status).toEqual(404)
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send setup card when have editSubscription actions', async () => {
@@ -588,9 +588,9 @@ describe('Bot Notification', () => {
     expect(rcCardRequestBody.fallbackText).toContain('Trello setup');
     rcCardPutScope.done();
     trelloBoardsScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
-    await trelloWebhook.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await TrelloWebhook.destroy({ where: { id: trelloWebhook.id }});
   });
 
   it('should respond 404 when have removeSubscription with wrong subscription id', async () => {
@@ -625,8 +625,8 @@ describe('Bot Notification', () => {
       },
     });
     expect(res.status).toEqual(404);
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should remove subscription successfully', async () => {
@@ -694,11 +694,11 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(JSON.stringify(rcCardRequestBody)).toContain('removed successfully');
     const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id');
-    expect(trelloWebhook).toEqual(null);
+    expect(!!trelloWebhook).toEqual(false);
     rcCardPutScope.done();
     trelloDeleteWebhooksScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   describe('subscription', () => {
@@ -720,8 +720,8 @@ describe('Bot Notification', () => {
     });
 
     afterAll(async () => {
-      await rcUserRecord.destroy();
-      await trelloUserRecord.destroy();
+      await RcUser.destroy({ where: { id: rcUserRecord.id }});
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     });
 
     it('should create subscription successfully', async () => {
@@ -908,8 +908,8 @@ describe('Bot Notification', () => {
     });
 
     afterAll(async () => {
-      await rcUserRecord.destroy();
-      await trelloUserRecord.destroy();
+      await RcUser.destroy({ where: { id: rcUserRecord.id }});
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     });
 
     it('should send joined message if user has joined', async() => {

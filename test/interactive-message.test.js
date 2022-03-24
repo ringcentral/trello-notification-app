@@ -37,9 +37,19 @@ describe('Interactive Messages', () => {
     expect(res1.status).toEqual(400);
   });
 
-  it('should get 404 with wrong webhookId', async () => {
+  it('should get 400 with empty webhookId', async () => {
     const res = await request(server).post('/interactive-messages').send({
       data: {},
+      user: {},
+    });
+    expect(res.status).toEqual(400);
+  });
+
+  it('should get 404 with wrong webhookId', async () => {
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        webhookId: '123',
+      },
       user: {},
     });
     expect(res.status).toEqual(404);
