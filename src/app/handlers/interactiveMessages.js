@@ -16,6 +16,11 @@ const {
 async function notificationInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const webhookId = body.data.webhookId;
+  if (!webhookId) {
+    res.status(400);
+    res.send('Params found');
+    return;
+  }
   const trelloWebhook = await TrelloWebhook.findByPk(webhookId);
   if (!trelloWebhook) {
     res.status(404);

@@ -88,7 +88,7 @@ describe('Trello Authorization', () => {
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
     expect(trelloUser.token).toEqual('xxxx');
-    await trelloUser.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUser.id }});
     trelloUserScope.done();
   });
 
@@ -110,7 +110,7 @@ describe('Trello Authorization', () => {
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
     expect(trelloUser.token).toEqual('new_token');
-    await trelloUser.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUser.id }});
     trelloUserScope.done();
   });
 
@@ -153,8 +153,8 @@ describe('Trello Authorization', () => {
     });
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-    expect(trelloUserRecord.token).toEqual('');
-    await trelloUserRecord.destroy();
+    expect(!!trelloUserRecord.token).toEqual(false);
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloRevokeScope.done();
   });
 
@@ -175,8 +175,8 @@ describe('Trello Authorization', () => {
     });
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-    expect(trelloUserRecord.token).toEqual('');
-    await trelloUserRecord.destroy();
+    expect(!!trelloUserRecord.token).toEqual(false);
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloRevokeScope.done();
   });
 
@@ -301,9 +301,9 @@ describe('Trello Authorization', () => {
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
       expect(trelloUser.writeable_token).toEqual('xxx');
-      await rcUser.destroy();
-      await trelloUser.destroy();
-      await bot.destroy();
+      await RcUser.destroy({ where: { id: rcUser.id } });
+      await TrelloUser.destroy({ where: { id: trelloUser.id }});
+      await Bot.destroy({ where: { id: bot.id }});
       trelloUserScope.done();
       rcAuthCardPutScope.done();
     });
@@ -354,9 +354,9 @@ describe('Trello Authorization', () => {
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(trelloUserRecord.writeable_token).toEqual('xxx');
-      await rcUserRecord.destroy();
-      await trelloUserRecord.destroy();
-      await bot.destroy();
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+      await Bot.destroy({ where: { id: bot.id }});
       trelloUserScope.done();
       rcAuthCardPutScope.done();
     });
@@ -427,9 +427,9 @@ describe('Trello Authorization', () => {
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
       expect(trelloUser.writeable_token).toEqual('xxx');
-      await rcUser.destroy();
-      await trelloUser.destroy();
-      await bot.destroy();
+      await RcUser.destroy({ where: { id: rcUser.id } });
+      await TrelloUser.destroy({ where: { id: trelloUser.id }});
+      await Bot.destroy({ where: { id: bot.id }});
       trelloUserScope.done();
       rcCardPutScope.done();
       trelloBoardScope.done();

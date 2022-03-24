@@ -65,7 +65,7 @@ describe('Notification Webhooks', () => {
     });
     const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
     expect(res.status).toEqual(401);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should get webhook info successfully with Trello user token', async () => {
@@ -98,7 +98,7 @@ describe('Notification Webhooks', () => {
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.boards.length).toEqual(2);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
     trelloUserScope.done();
   });
@@ -117,7 +117,7 @@ describe('Notification Webhooks', () => {
       .reply(401, {});
     const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
     expect(res.status).toEqual(401);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
   });
 
@@ -135,7 +135,7 @@ describe('Notification Webhooks', () => {
       .reply(500, {});
     const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
     expect(res.status).toEqual(500);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
   });
 
@@ -178,9 +178,9 @@ describe('Notification Webhooks', () => {
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual('test-board-id');
-    await trelloUserRecord.destroy();
-    await trelloWebhook.destroy();
-    await rcWebhookRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await TrelloWebhook.destroy({ where: { id: trelloWebhook.id }});
+    await RCWebhook.destroy({ where: { id: rcWebhookRecord.id }});;
     trelloBoardScope.done();
     trelloUserScope.done();
   });
@@ -215,8 +215,8 @@ describe('Notification Webhooks', () => {
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual(undefined);
-    await trelloUserRecord.destroy();
-    await rcWebhookRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+    await RCWebhook.destroy({ where: { id: rcWebhookRecord.id }});;
     trelloBoardScope.done();
     trelloUserScope.done();
   });
@@ -289,7 +289,7 @@ describe('Notification Webhooks', () => {
       filters: 'addChecklistToCard',
     });
     expect(res.status).toEqual(401);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should create webhook successfully at new subscription', async () => {
@@ -322,14 +322,14 @@ describe('Notification Webhooks', () => {
       filters: 'addChecklistToCard',
     });
     expect(res.status).toEqual(200);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookId);
     const trelloWebhookRecord = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
     expect(trelloWebhookRecord.trello_webhook_id).toEqual(trelloWebhookId);
     trelloLabelsScope.done();
     trelloWebhooksScope.done();
-    await rcWebhookRecord.destroy();
-    await trelloWebhookRecord.destroy();
+    await RCWebhook.destroy({ where: { id: rcWebhookRecord.id }});;
+    await TrelloWebhook.destroy({ where: { id: trelloWebhookRecord.id }});
   });
 
   it('should create webhook successfully with existing rcWebhook record', async () => {
@@ -369,9 +369,9 @@ describe('Notification Webhooks', () => {
     expect(trelloWebhookRecord.trello_webhook_id).toEqual(trelloWebhookId);
     trelloLabelsScope.done();
     trelloWebhooksScope.done();
-    await rcWebhookRecord.destroy();
-    await trelloWebhookRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RCWebhook.destroy({ where: { id: rcWebhookRecord.id }});;
+    await TrelloWebhook.destroy({ where: { id: trelloWebhookRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should create webhook successfully with existing trello webhook record', async () => {
@@ -429,9 +429,9 @@ describe('Notification Webhooks', () => {
     trelloLabelsScope.done();
     trelloWebhooksScope.done();
     trelloDeleteWebhooksScope.done();
-    await rcWebhookRecord.destroy();
-    await trelloWebhookRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RCWebhook.destroy({ where: { id: rcWebhookRecord.id }});;
+    await TrelloWebhook.destroy({ where: { id: trelloWebhookRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should response 401 when trello api return 401', async () => {
@@ -455,7 +455,7 @@ describe('Notification Webhooks', () => {
       filters: 'addChecklistToCard',
     });
     expect(res.status).toEqual(401);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloLabelsScope.done();
   });
 
@@ -480,7 +480,7 @@ describe('Notification Webhooks', () => {
       filters: 'addChecklistToCard',
     });
     expect(res.status).toEqual(500);
-    await trelloUserRecord.destroy();
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloLabelsScope.done();
   });
 });

@@ -403,8 +403,8 @@ describe('Bot', () => {
     expect(messageRequestBody.text).toContain('you have authorized Trello');
     rcGroupScope.done();
     rcMessageScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send not authorized when bot get unauthorize command and user is authorized', async () => {
@@ -528,8 +528,8 @@ describe('Bot', () => {
     rcMessageScope.done();
     rcGroupScope.done();
     trelloScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send unauthorize warning card when bot get unauthorize command and user has subscriptions', async () => {
@@ -598,8 +598,8 @@ describe('Bot', () => {
     expect(cardRequestBody.fallbackText).toContain('Unauthorize Trello');
     rcCardScope.done();
     rcGroupScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send setup card not support at group conversation', async () => {
@@ -838,8 +838,8 @@ describe('Bot', () => {
     rcDirectGroupScope.done();
     rcAuthCardPutScope.done();
     trelloScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send setup with authorize card when get setup command without trello token', async () => {
@@ -933,8 +933,8 @@ describe('Bot', () => {
     rcCardScope.done();
     rcDirectGroupScope.done();
     rcAuthCardPutScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send subscribe card when get setup command and trello authorized', async () => {
@@ -971,13 +971,13 @@ describe('Bot', () => {
       .get(uri => uri.includes(`/1/members/me/boards?`))
       .reply(200, [
         {
-         "name": "Greatest Product Roadmap",
-         "id": "5b6893f01cb3228998cf629e",
+          "name": "Greatest Product Roadmap",
+          "id": "5b6893f01cb3228998cf629e",
         },
         {
           "name": "Never ending Backlog",
           "id": "5b689b3228998cf3f01c629e",
-         },
+        },
       ]);
     let messageRequestBody = null;
     rcMessageScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
@@ -1036,8 +1036,8 @@ describe('Bot', () => {
     rcCardScope.done();
     rcDirectGroupScope.done();
     trelloScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send subscriptions card when get setup command and have subscriptions', async () => {
@@ -1144,8 +1144,8 @@ describe('Bot', () => {
     rcCardScope.done();
     rcDirectGroupScope.done();
     trelloScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 
   it('should send subscribe card when get setup command from direct conversation', async () => {
@@ -1237,7 +1237,7 @@ describe('Bot', () => {
     rcCardScope.done();
     rcDirectGroupScope.done();
     trelloScope.done();
-    await rcUserRecord.destroy();
-    await trelloUserRecord.destroy();
+    await RcUser.destroy({ where: { id: rcUserRecord.id }});
+    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
 });
