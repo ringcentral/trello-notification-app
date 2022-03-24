@@ -7,9 +7,8 @@ const outputPath = path.resolve(__dirname, 'public');
 
 const config = getBaseConfig();
 config.devServer = {
-  contentBase: buildPath,
+  static: buildPath,
   hot: true,
-  inline: true,
   port: 8081,
 };
 config.output = {
@@ -17,7 +16,6 @@ config.output = {
   filename: '[name].js',
 };
 config.plugins = [
-  new webpack.HotModuleReplacementPlugin(),
   new webpack.NoEmitOnErrorsPlugin(),
   new webpack.DefinePlugin({
     'process.env': {
