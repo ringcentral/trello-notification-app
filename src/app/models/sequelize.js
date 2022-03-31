@@ -1,4 +1,4 @@
-const Sequelize = require('dynamo-sequelize').default;
+const Sequelize = require('dynamo-sequelize');
 
 const config = {
   define: {

@@ -1,4 +1,4 @@
-const { generate } = require('shortid');
+const { nanoid } = require('nanoid');
 const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { TrelloWebhook } = require('../models/trello-webhook');
@@ -362,7 +362,7 @@ async function botInteractiveMessagesHandler(req, res) {
       } else {
         const labels = await trello.getLabels(body.data.boardId);
         trelloWebhook = await TrelloWebhook.create({
-          id: generate(),
+          id: nanoid(15),
           bot_id: bot.id,
           trello_user_id: trelloUser.id,
           conversation_id: body.data.conversationId,

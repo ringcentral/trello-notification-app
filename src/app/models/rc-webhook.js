@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const { generate } = require('shortid');
+const { nanoid } = require('nanoid');
 const { sequelize } = require('./sequelize');
 
 // Model for RingCentral Webhook config data
@@ -10,7 +10,7 @@ exports.RCWebhook = sequelize.define('rcWebhooks', {
   },
   trello_webhook_id: {
     type: Sequelize.STRING, // identity for trello webhook model id
-    defaultValue: generate,
+    defaultValue: () => nanoid(15),
   },
   enabled: {
     type: Sequelize.BOOLEAN,
