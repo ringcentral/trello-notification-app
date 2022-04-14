@@ -1,0 +1,21 @@
+@startuml
+title Trello Bot
+
+control "RingCentral" as RC
+control "AWS Lambda" as Lambda
+control "Dynamo DB" as DB
+control "Trello" as Trello
+
+group setup
+RC -> Lambda: Bot events to Bot server
+Lambda -> DB: Get data from DB
+Lambda -> Trello: Access Trello
+end
+
+group trello event
+Trello -> Lambda: Trello events to Bot server
+Lambda -> DB: Get data from DB
+Lambda -> RC: Send message to RingCentral user
+end
+
+@enduml

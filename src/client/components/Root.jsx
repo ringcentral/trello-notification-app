@@ -325,7 +325,7 @@ export function App({ integrationHelper, client, analytics }) {
           />
         </Container>
         <FloatingLink
-          href="https://github.com/ringcentral/trello-notification-app/issues/new"
+          href="https://forms.gle/NavQjjv8SF2uyydc8"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => {
