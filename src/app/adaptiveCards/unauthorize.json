@@ -106,7 +106,7 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "[Feedback](https://github.com/ringcentral/trello-notification-app/issues)",
+              "text": "[Feedback](https://forms.gle/NavQjjv8SF2uyydc8)",
               "wrap": true,
               "size": "Small"
             }
