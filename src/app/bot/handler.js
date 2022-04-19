@@ -7,7 +7,7 @@ async function botHandler({
   text, // the text message user posted in chatgroup
   group, // the group object, can get chat group id from group.id
   userId, // message creator's id
-  message // message object, check ringcentral api document for detail
+  message, // message object, check ringcentral api document for detail
 }) {
   try {
     if (type === 'GroupJoined') {
@@ -41,6 +41,10 @@ async function botHandler({
       // await bot.getUser(userId);
       // await bot.sendMessage(group.id, { text: 'Hi!' });
       await botActions.sendHelpCard(bot, group);
+    }
+    if (type === 'Create') {
+      const newBot = await Bot.findByPk(message.body.extensionId);
+      await botActions.sendWelcomeCard(newBot);
     }
   } catch (e) {
     console.error(e);

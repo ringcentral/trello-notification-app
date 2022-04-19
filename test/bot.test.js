@@ -32,8 +32,47 @@ describe('Bot', () => {
     expect(res.status).toBe(200);
     const bot = await Bot.findByPk(botId);
     expect(bot.id).toEqual(botId);
+    expect(bot.token.creator_extension_id).toEqual('xxx');
     rcWebhookScope.done();
     rcTokenScope.done();
+  });
+
+  it('should send welcome card when bot install successfully', async () => {
+    const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
+      .reply(200, {
+        id: groupId,
+        members: [
+          botId,
+          "xxx"
+        ]
+      });
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
+      .reply(200, {});
+    let requestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "adt-pod01-39-8363489-438938469",
+      "event": "/restapi/v1.0/account/256825004/extension/311556004",
+      "timestamp": "2022-04-19T07:49:27.879Z",
+      "subscriptionId": "fdc10486-87ed-4047-aeec-a641c5b4de20",
+      "ownerId": botId,
+      "body": {
+        "extensionId": botId,
+        "eventType": "Create",
+        "hints": [
+          "ExtensionInfo"
+        ]
+      }
+    });
+    expect(res.status).toEqual(200);
+    expect(requestBody.type).toContain('AdaptiveCard');
+    expect(requestBody.fallbackText).toContain('I am Trello Bot');
+    rcDirectGroupScope.done();
+    rcCardScope.done();
   });
 
   it('should not send help card when bot join a direct conversation', async () => {

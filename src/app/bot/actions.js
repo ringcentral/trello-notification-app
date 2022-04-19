@@ -7,6 +7,7 @@ const {
 } = require('../lib/filter');
 
 const helpTemplate = require('../adaptiveCards/help.json');
+const welcomeTemplate = require('../adaptiveCards/welcome.json');
 const messageTemplate = require('../adaptiveCards/message.json');
 const authTemplate = require('../adaptiveCards/authInCard.json');
 const authSuccessTemplate = require('../adaptiveCards/authSuccess.json');
@@ -42,6 +43,11 @@ async function createDirectGroup(bot, user) {
     members: [{ id: user.id }, { id: bot.id }],
   });
   return directGroupRep.data;
+}
+
+async function sendWelcomeCard(bot) {
+  const group = await createDirectGroup(bot, { id: bot.token.creator_extension_id });
+  await bot.sendAdaptiveCard(group.id, welcomeTemplate);
 }
 
 async function getTrelloData(trello, rcUser) {
@@ -422,3 +428,4 @@ exports.sendAuthCardIntoDirectGroup = sendAuthCardIntoDirectGroup;
 exports.addOperationLogIntoCard = addOperationLogIntoCard;
 exports.handleUnauthorize = handleUnauthorize;
 exports.handleAuthorize = handleAuthorize;
+exports.sendWelcomeCard = sendWelcomeCard;
