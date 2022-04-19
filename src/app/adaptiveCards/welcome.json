@@ -1,0 +1,61 @@
+{
+  "type": "AdaptiveCard",
+  "fallbackText": "Hi, I am Trello Bot.",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Hi! I am **Trello Bot**.",
+      "wrap": true
+    },
+    {
+      "type": "TextBlock",
+      "text": "To connect Trello with team messaging, please invite me into the team conversation that you want to receive Trello activity.",
+      "wrap": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "width": "14px",
+                  "items": [
+                    {
+                      "type": "Image",
+                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/feedback.png",
+                      "height": "12px"
+                    }
+                  ],
+                  "verticalContentAlignment": "Center"
+                },
+                {
+                  "type": "Column",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "[Feedback](https://forms.gle/NavQjjv8SF2uyydc8)",
+                      "wrap": true,
+                      "size": "Small"
+                    }
+                  ],
+                  "width": "stretch",
+                  "verticalContentAlignment": "Center"
+                }
+              ]
+            }
+          ],
+          "verticalContentAlignment": "Bottom"
+        }
+      ],
+      "horizontalAlignment": "Center"
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.3"
+}
