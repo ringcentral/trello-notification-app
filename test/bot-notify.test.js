@@ -20,7 +20,7 @@ describe('Bot Notify', () => {
   const conversationId = '123123';
   let trelloWebhook;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await Bot.create({
       id: botId,
       token: {
@@ -38,6 +38,7 @@ describe('Bot Notify', () => {
       bot_id: botId,
       conversation_id: conversationId,
       trello_user_id: trelloUser.id,
+      trello_webhook_id: 'test-trello-webhook-id',
       config: {
         boardId: 'test-board-id',
         filters: String(filters),
@@ -47,6 +48,12 @@ describe('Bot Notify', () => {
         ],
       },
     });
+  });
+
+  afterEach(async () => {
+    await TrelloWebhook.destroy({ where: { id: trelloWebhook.id } });
+    await Bot.destroy({ where: { id: botId } });
+    await TrelloUser.destroy({ where: { id: 'test-trello-user-id' } });
   });
 
   it('should get 404 with wrong webhook id', async () => {
@@ -140,12 +147,37 @@ describe('Bot Notify', () => {
     trelloBoardLabelsScope.done();
   });
 
-  it('should get 404 when bot id is not found', async () => {
+  it('should get 200 and unsubscribe trello when bot id is not found at no card request', async () => {
     trelloWebhook.bot_id = 'xxx';
     await trelloWebhook.save();
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
     const res = await request(server)
       .post(`/trello-notify/${trelloWebhook.id}`)
       .send(createListData);
-    expect(res.status).toEqual(404);
+    expect(res.status).toEqual(200);
+    trelloDeleteWebhookScope.done();
+  });
+
+  it('should get 200 and unsubscribe trello when bot id is not found at card request', async () => {
+    trelloWebhook.bot_id = 'xxx';
+    await trelloWebhook.save();
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    trelloDeleteWebhookScope.done();
+    trelloCardScope.done();
   });
 });

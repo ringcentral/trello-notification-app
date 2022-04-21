@@ -46,12 +46,13 @@ describe('Notify', () => {
   const rcWebhookUri = `http://test.com/webhook/${rcWebhookId}`;
   let trelloWebhook;
   let rcWebhookRecord;
-  beforeAll(async () => {
+  let trelloUser;
+  beforeEach(async () => {
     rcWebhookRecord = await await RCWebhook.create({
       id: rcWebhookId,
     });
     const filters = "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem,createCard,changeCardDescription,moveCard,changeCardDueDate,renameCard,commentCard,archiveUnarchiveCard,addAttachmentToCard,addLabelToCard,removeLabelFromCard,addMemberToCard,removeMemberFromCard,createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard";
-    const trelloUser = await TrelloUser.create({
+    trelloUser = await TrelloUser.create({
       id: 'test-trello-user-id',
       token: 'test-token',
     });
@@ -63,7 +64,23 @@ describe('Notify', () => {
       config: {
         boardId: 'test-board-id',
         filters: String(filters),
+        labels: [{
+          id: 'test-label-id',
+          name: 'test-label-name',
+        }],
       },
+    });
+  });
+
+  afterEach(async () => {
+    await TrelloWebhook.destroy({
+      where: { id: trelloWebhook. id },
+    });
+    await RCWebhook.destroy({
+      where: { id: rcWebhookRecord.id },
+    });
+    await TrelloUser.destroy({
+      where: { id: trelloUser.id },
     });
   });
 
@@ -189,7 +206,36 @@ describe('Notify', () => {
     scope.done();
   });
 
-  it('should get 200 with createCardData message', async () => {
+  it('should get 200 with createCardData message with labels in config', async () => {
+    const scope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { result: 'OK' });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestBody = null;
+    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    expect(requestBody.attachments[0].type).toContain('AdaptiveCard');
+    scope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with createCardData message without labels in config', async () => {
+    trelloWebhook.config = {
+      ...trelloWebhook.config,
+      labels: undefined,
+    };
+    await trelloWebhook.save();
     const scope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { result: 'OK' });
@@ -628,7 +674,7 @@ describe('Notify', () => {
     expect(res.status).toEqual(200);
   });
 
-  it('should remove trello webhook when rc webhook return not found', async () => {
+  it('should remove trello webhook when rc webhook return not found at no card request', async () => {
     const rcWebhookScope = nock('http://test.com')
       .post('/webhook/12121')
       .reply(200, { error: `Webhook not found! rcWebhookId` });
@@ -645,5 +691,32 @@ describe('Notify', () => {
     expect(!!newRcWebhook).toEqual(false);
     rcWebhookScope.done();
     trelloDeleteWebhookScope.done();
+  });
+
+  it('should remove trello webhook when rc webhook return not found at card request', async () => {
+    const rcWebhookScope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { error: `Webhook not found! rcWebhookId` });
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    const newTrelloWebhook = await TrelloWebhook.findByPk(trelloWebhook.id);
+    expect(!!newTrelloWebhook).toEqual(false);
+    const newRcWebhook = await RCWebhook.findByPk(rcWebhookId);
+    expect(!!newRcWebhook).toEqual(false);
+    rcWebhookScope.done();
+    trelloDeleteWebhookScope.done();
+    trelloCardScope.done();
   });
 });

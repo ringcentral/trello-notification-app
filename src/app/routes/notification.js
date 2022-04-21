@@ -38,11 +38,23 @@ function shouldFetchCard(actionType) {
   return CARD_TYPES.indexOf(actionType) > -1;
 }
 
-async function onRcWebhookRemoved(trello, trelloWebhook) {
+async function onRcWebhookRemoved(trello, trelloWebhook, trelloUser) {
+  if (!trelloUser) {
+    trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+  }
+  trello.setToken(trelloUser.token);
   await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
   await trelloWebhook.destroy();
   const rcWebhookId = getRCWebhookId(trelloWebhook.rc_webhook_id);
   await RCWebhook.destroy({ where: { id: rcWebhookId } });
+}
+
+async function onBotRemoved(trello, trelloWebhook, trelloUser) {
+  if (!trelloUser) {
+    trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
+  }
+  trello.setToken(trelloUser.writeable_token);
+  await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
 }
 
 async function notification(req, res) {
@@ -96,16 +108,16 @@ async function notification(req, res) {
       });
       if (isBotNotification) {
         const bot = await Bot.findByPk(trelloWebhook.bot_id);
-        if (!bot) {
-          res.status(404);
-          res.send('Not found');
-          return;
+        if (bot) {
+          await bot.sendAdaptiveCard(trelloWebhook.conversation_id, adaptiveCard);
+        } else {
+          // Bot Removed
+          await onBotRemoved(trello, trelloWebhook, trelloUser);
         }
-        await bot.sendAdaptiveCard(trelloWebhook.conversation_id, adaptiveCard);
       } else {
         const response = await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
         if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
-          await onRcWebhookRemoved(trello, trelloWebhook);
+          await onRcWebhookRemoved(trello, trelloWebhook, trelloUser);
         }
       }
     }
