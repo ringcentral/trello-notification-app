@@ -506,6 +506,22 @@
           ],
           "width": "stretch",
           "verticalContentAlignment": "Center"
+        },
+        {
+          "type": "Column",
+          "id": "migrationWarning",
+          "isVisible": false,
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Warning: migration [guide](https://github.com/ringcentral/trello-notification-app/issues/35)",
+              "wrap": true,
+              "size": "Small",
+              "color": "Warning",
+              "horizontalAlignment": "Right"
+            }
+          ],
+          "verticalContentAlignment": "Center"
         }
       ]
     }
