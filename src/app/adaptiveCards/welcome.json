@@ -9,7 +9,7 @@
     },
     {
       "type": "TextBlock",
-      "text": "To connect Trello with team messaging, please invite me into the team conversation that you want to receive Trello activity.",
+      "text": "To connect Trello with team messaging, please **invite** me into the team conversation that you want to receive Trello activity.",
       "wrap": true
     },
     {
