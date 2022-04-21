@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { TrelloWebhook } = require('../models/trello-webhook');
+const { RCWebhook } = require('../models/rc-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { getFilterId } = require('../lib/filter');
 const { Trello } = require('../lib/Trello');
@@ -9,6 +10,7 @@ const {
   getAdaptiveCardFromTrelloMessage,
   CARD_TYPES,
 } = require('../lib/formatAdaptiveCardMessage');
+const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
 const {
   notificationInteractiveMessagesHandler,
@@ -34,6 +36,13 @@ function shouldUpdateBoardLabels(actionType) {
 
 function shouldFetchCard(actionType) {
   return CARD_TYPES.indexOf(actionType) > -1;
+}
+
+async function onRcWebhookRemoved(trello, trelloWebhook) {
+  await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
+  await trelloWebhook.destroy();
+  const rcWebhookId = getRCWebhookId(trelloWebhook.rc_webhook_id);
+  await RCWebhook.destroy({ where: { id: rcWebhookId } });
 }
 
 async function notification(req, res) {
@@ -94,7 +103,10 @@ async function notification(req, res) {
         }
         await bot.sendAdaptiveCard(trelloWebhook.conversation_id, adaptiveCard);
       } else {
-        await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
+        const response = await sendAdaptiveCardMessage(trelloWebhook.rc_webhook_id, adaptiveCard);
+        if (response.data.error && response.data.error.indexOf('Webhook not found') >= -1) {
+          await onRcWebhookRemoved(trello, trelloWebhook);
+        }
       }
     }
   } catch (e) {
