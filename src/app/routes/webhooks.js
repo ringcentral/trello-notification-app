@@ -4,6 +4,7 @@ const { decodeToken } = require('../lib/jwt');
 const { RCWebhook } = require('../models/rc-webhook');
 const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
+const { getRCWebhookId } = require('../lib/getRCWebhookId');
 
 async function newWebhook(req, res) {
   const rcWebhookUri = req.query.webhook;
@@ -27,21 +28,6 @@ async function newWebhook(req, res) {
       segmentKey: process.env.SEGMENT_KEY,
     },
   });
-}
-
-function getRCWebhookId(rcWebhookUri) {
-  if (
-    !rcWebhookUri ||
-    (
-      rcWebhookUri.indexOf('https://') !== 0 &&
-      rcWebhookUri.indexOf('http://') !== 0
-    )) {
-    return null;
-  }
-  const uriWithoutQuery = rcWebhookUri.split('?')[0];
-  const uriWithoutHash = uriWithoutQuery.split('#')[0];
-  const paths = uriWithoutHash.split('/');
-  return paths[paths.length - 1];
 }
 
 async function webhookInfo(req, res) {

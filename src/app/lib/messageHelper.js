@@ -32,7 +32,7 @@ async function sendAdaptiveCardMessage(webhookUri, card) {
     message.title = 'New event';
   }
   message.activity = 'Trello Add-in (Legacy)';
-  await sendMessageToRCWebhook(webhookUri, message);
+  return sendMessageToRCWebhook(webhookUri, message);
 }
 
 async function sendAuthorizeRequestCard(webhookUri, webhookId) {

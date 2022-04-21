@@ -45,9 +45,9 @@ describe('Notify', () => {
   const rcWebhookId = '12121';
   const rcWebhookUri = `http://test.com/webhook/${rcWebhookId}`;
   let trelloWebhook;
-
+  let rcWebhookRecord;
   beforeAll(async () => {
-    const rcWebhookRecord = await await RCWebhook.create({
+    rcWebhookRecord = await await RCWebhook.create({
       id: rcWebhookId,
     });
     const filters = "addChecklistToCard,updateCheckItemStateOnCard,createCheckItem,createCard,changeCardDescription,moveCard,changeCardDueDate,renameCard,commentCard,archiveUnarchiveCard,addAttachmentToCard,addLabelToCard,removeLabelFromCard,addMemberToCard,removeMemberFromCard,createList,archiveUnarchiveList,renameList,renameBoard,moveListFromBoard,addMemberToBoard";
@@ -59,6 +59,7 @@ describe('Notify', () => {
       id: rcWebhookRecord.trello_webhook_id,
       rc_webhook_id: rcWebhookUri,
       trello_user_id: trelloUser.id,
+      trello_webhook_id: 'test-trello-webhook-id',
       config: {
         boardId: 'test-board-id',
         filters: String(filters),
@@ -620,18 +621,29 @@ describe('Notify', () => {
   });
 
   it('should get 200 with deleteCheckItemData message', async () => {
-    const scope = nock('http://test.com')
-      .post('/webhook/12121')
-      .reply(200, { result: 'OK' });
-    let requestBody = null;
-    scope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
-      requestBody = JSON.parse(reqBody);
-    });
+    // deleteCheckItemData not in filter now
     const res = await request(server)
       .post(`/trello-notify/${trelloWebhook.id}`)
       .send(deleteCheckItemData);
     expect(res.status).toEqual(200);
-    expect(requestBody).toEqual(null);
-    nock.restore();
+  });
+
+  it('should remove trello webhook when rc webhook return not found', async () => {
+    const rcWebhookScope = nock('http://test.com')
+      .post('/webhook/12121')
+      .reply(200, { error: `Webhook not found! rcWebhookId` });
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(incompleteCheckItemData);
+    expect(res.status).toEqual(200);
+    const newTrelloWebhook = await TrelloWebhook.findByPk(trelloWebhook.id);
+    expect(!!newTrelloWebhook).toEqual(false);
+    const newRcWebhook = await RCWebhook.findByPk(rcWebhookId);
+    expect(!!newRcWebhook).toEqual(false);
+    rcWebhookScope.done();
+    trelloDeleteWebhookScope.done();
   });
 });
