@@ -327,6 +327,10 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
         listLabel.text = 'Card';
       }
     }
+    if (!botId) {
+      const migrationWarning = findItemInAdaptiveCard(card, 'migrationWarning');
+      delete migrationWarning.isVisible;
+    }
   } else if (CHECKLIST_TYPES.indexOf(action.type) > -1) {
     const subject = getChecklistMessageSubject(action);
     card = getAdaptiveCardFromTemplate(checklistTemplate, {
