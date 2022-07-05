@@ -29,7 +29,7 @@ function formatLabels(labels) {
   return labels.map((label) => {
     let name = label.name;
     if (!name) {
-      name = label.color;
+      name = label.color || 'No color';
     }
     const colorImage = label.color ? `${COLOR_IMAGE_URL_BASE}${label.color}.png` : `${COLOR_IMAGE_URL_BASE}nocolor.png`;
     return {
@@ -252,6 +252,13 @@ function getAvatarUrl(action) {
   }
 }
 
+function truncateText(text, length) {
+  if (text.length > length) {
+    return text.substring(0, length) + '...';
+  }
+  return text;
+}
+
 function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', boardLabels, trelloCard, botId = '' }) {
   const action = trelloMessage.action;
   let card;
@@ -282,6 +289,8 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
   } else if (CARD_TYPES.indexOf(action.type) > -1) {
     const subject = getCardMessageSubject(action);
     const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels))
+    const isDescriptionUpdated = action.display.translationKey === 'action_changed_description_of_card';
+    const isCommentAdded = action.type === 'commentCard';
     const params = {
       summary,
       avatarUrl: getAvatarUrl(action),
@@ -291,8 +300,8 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
       boardName: trelloMessage.model.name,
       boardLink: trelloMessage.model.shortUrl,
       listName: trelloMessage.action.data.list ? trelloMessage.action.data.list.name : trelloMessage.action.data.card.name,
-      comment: trelloMessage.action.data.text,
-      description: trelloMessage.action.data.card.desc,
+      comment: isCommentAdded ? truncateText(trelloMessage.action.data.text, 600) : '',
+      description: isDescriptionUpdated ? truncateText(trelloMessage.action.data.card.desc, 800) : '',
       webhookId,
       botId,
       messageType: botId ? 'Bot' : 'Notification',
@@ -313,11 +322,11 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
       const selectedLabels = findItemInAdaptiveCard(card, 'selectedLabels');
       selectedLabels.isVisible = false;
     }
-    if (action.type === 'commentCard') {
+    if (isCommentAdded) {
       const commentArea = findItemInAdaptiveCard(card, 'commentArea');
       delete commentArea.isVisible;
     }
-    if (action.display.translationKey === 'action_changed_description_of_card') {
+    if (isDescriptionUpdated) {
       const descriptionArea = findItemInAdaptiveCard(card, 'descriptionArea');
       delete descriptionArea.isVisible;
     }

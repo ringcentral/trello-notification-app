@@ -14,6 +14,8 @@ const addMemberToBoardData = require('../example-payloads/addMemberToBoard.json'
 const createCardData = require('../example-payloads/createCard.json');
 const addChecklistToCardData = require('../example-payloads/addChecklistToCard.json');
 const createLabelData = require('../example-payloads/createLabel.json');
+const updateCardDescriptionData = require('../example-payloads/updateCard-description.json');
+const commentCardData = require('../example-payloads/commentCard.json');
 
 describe('Bot Notify', () => {
   const botId = '12121';
@@ -178,6 +180,113 @@ describe('Bot Notify', () => {
       .send(createCardData);
     expect(res.status).toEqual(200);
     trelloDeleteWebhookScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should send card successfully when label color and name is null', async () => {
+    trelloWebhook.config = {
+      ...trelloWebhook.config,
+      labels: [
+        ...trelloWebhook.config.labels,
+        { "id":"6094fb83d41eeff1fa7612a1", "color": null }
+      ],
+    };
+    await trelloWebhook.save();
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestRawBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestRawBody = reqBody;
+    });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    expect(requestRawBody).toContain('No color');
+    rcCardScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with updateCardDescriptionData message and truncateText the text', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestRawBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestRawBody = reqBody;
+    });
+    const trelloMessage = {
+      ...updateCardDescriptionData,
+      action: {
+        ...updateCardDescriptionData.action,
+        data: {
+          ...updateCardDescriptionData.action.data,
+          card: {
+            ...updateCardDescriptionData.action.data.card,
+            desc: 'a'.repeat(1000),
+          }
+        }
+      }
+    };
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(trelloMessage);
+    expect(res.status).toEqual(200);
+    expect(requestRawBody).toContain('...');
+    rcCardScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with commentCardData message and truncateText the text', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [{
+          id: 'test-label-id',
+          name: 'test-label-name',
+          color: 'blue',
+        }],
+      });
+    let requestRawBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestRawBody = reqBody;
+    });
+    const trelloMessage = {
+      ...commentCardData,
+      action: {
+        ...commentCardData.action,
+        data: {
+          ...commentCardData.action.data,
+          text: 'a'.repeat(1000),
+        }
+      }
+    };
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(trelloMessage);
+    expect(res.status).toEqual(200);
+    expect(requestRawBody).toContain('...');
+    rcCardScope.done();
     trelloCardScope.done();
   });
 });
