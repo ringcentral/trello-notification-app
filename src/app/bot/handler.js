@@ -25,7 +25,11 @@ async function botHandler({
     }
     if (type === 'Message4Bot') {
       if (text === 'setup') {
-        await botActions.sendSetupCard({ bot, group, user: { id: userId }});
+        await botActions.sendSetupCard({
+          bot,
+          groupId: group.id,
+          conversation: group,
+        });
         return;
       }
       if (text === 'unauthorize') {

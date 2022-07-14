@@ -94,16 +94,12 @@ async function botSaveToken(req, res) {
       });
     }
     if (nextAction === 'subscribe') {
-      const boards = await trello.getBoards();
       const group = await bot.getGroup(conversationId);
-      await botActions.sendSubscribeCard({
+      await botActions.sendSetupCard({
         bot,
         conversation: {
           id: conversationId,
           name: group.name || '',
-        },
-        trelloData: {
-          boards,
         },
         existingCardId: cardId,
       });

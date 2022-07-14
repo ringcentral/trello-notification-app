@@ -54,19 +54,4 @@ function getCategoryFiltersFromFilters(filtersValue, category) {
   return categoryFilters.join(',');
 }
 
-function getListFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 0);
-}
-
-function getCardFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 1);
-}
-
-function getChecklistFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 2);
-}
-
 exports.getFilterId = getFilterId;
-exports.getListFiltersFromFilters = getListFiltersFromFilters;
-exports.getCardFiltersFromFilters = getCardFiltersFromFilters;
-exports.getChecklistFiltersFromFilters = getChecklistFiltersFromFilters;

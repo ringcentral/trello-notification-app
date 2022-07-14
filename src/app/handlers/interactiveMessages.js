@@ -185,6 +185,23 @@ async function removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
 
 const SETUP_ACTIONS = ['setup', 'addSubscription', 'editSubscription', 'removeSubscription', 'subscribe'];
 
+function getSetupDialog(botId, body) {
+  const botToken = generateToken({
+    uId: body.user.extId,
+    bId: botId,
+    gId: body.data.conversationId || body.conversation.id,
+  }, '12h');
+  return {
+    type: 'dialog',
+    dialog: {
+      title: `Trello setup for ${body.data.conversationName}`,
+      size: 'medium',
+      iconUrl: DIALOG_ICON_URL,
+      iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}`,
+    }
+  };
+}
+
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
@@ -200,30 +217,29 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     const action = body.data.action;
-    if (action === 'setup') {
-      // await botActions.sendSetupCard({
-      //   bot,
-      //   group: body.conversation,
-      //   user: {
-      //     id: body.user.extId,
-      //     name: `${body.user.firstName} ${body.user.lastName}`,
-      //   },
-      // });
-      const botToken = generateToken({
-        uId: body.user.extId,
-        bId: botId,
-        gId: body.data.conversationId || body.conversation.id,
-      }, '12h');
+    if (
+      action === 'setup' ||
+      action === 'addSubscription' ||
+      action === 'editSubscription' ||
+      action === 'removeSubscription'
+    ) {
+      // show dialog for action from old card
       res.status(200);
-      res.json({
-        type: 'dialog',
-        dialog: {
-          title: `Trello setup for ${body.data.conversationName}`,
-          size: 'medium',
-          iconUrl: DIALOG_ICON_URL,
-          iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}`,
-        }
+      res.json(getSetupDialog(botId, body));
+      return;
+    }
+    if (action === 'subscribe') {
+      // update old setup card to new setup card
+      await botActions.sendSetupCard({
+        bot,
+        conversation: {
+          id: body.data.conversationId,
+          name: body.data.conversationName,
+        },
+        existingCardId: cardId,
       });
+      res.status(200);
+      res.send('ok');
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -289,134 +305,6 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     trello.setToken(trelloUser.writeable_token);
-    if (action === 'addSubscription') {
-      const boards = await trello.getBoards();
-      await botActions.sendSubscribeCard({
-        bot,
-        conversation: {
-          id: body.data.conversationId,
-          name: body.data.conversationName,
-        },
-        trelloData: {
-          boards,
-        },
-        existingCardId: cardId,
-      });
-      res.status(200);
-      res.send('ok');
-      return;
-    }
-    if (action === 'editSubscription') {
-      const trelloWebhook = await TrelloWebhook.findByPk(body.data.subscriptionId);
-      if (!trelloWebhook) {
-        res.status(404);
-        res.send('Not found');
-        return;
-      }
-      const boards = await trello.getBoards();
-      await botActions.sendSubscribeCard({
-        bot,
-        conversation: {
-          id: trelloWebhook.conversation_id,
-          name: body.data.conversationName,
-        },
-        trelloData: {
-          boards,
-        },
-        existingCardId: cardId,
-        subscription: trelloWebhook,
-      });
-      res.status(200);
-      res.send('ok');
-      return;
-    }
-    if (action === 'removeSubscription') {
-      const trelloWebhook = await TrelloWebhook.findByPk(body.data.subscriptionId);
-      if (!trelloWebhook) {
-        res.status(404);
-        res.send('Not found');
-        return;
-      }
-      if (trelloWebhook.trello_webhook_id) {
-        await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
-      }
-      await removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
-      await TrelloWebhook.destroy({
-        where: {
-          id: trelloWebhook.id
-        },
-      });
-      await botActions.sendSubscribeRemovedCard({
-        bot,
-        boardName: body.data.boardName,
-        existingCardId: cardId,
-        conversationName: body.data.conversationName,
-      });
-      res.status(200);
-      res.send('ok');
-      return;
-    }
-    if (action === 'subscribe') {
-      const subscriptionId = body.data.subscriptionId;
-      let trelloWebhook;
-      if (subscriptionId) {
-        trelloWebhook = await TrelloWebhook.findByPk(subscriptionId);
-        if (!trelloWebhook) {
-          res.status(404);
-          res.send('Not found');
-          return;
-        }
-        const labels = await trello.getLabels(body.data.boardId);
-        trelloWebhook.config = {
-          boardId: body.data.boardId,
-          filters: getFiltersFromSubmitData(body.data),
-          labels,
-        };
-        trelloWebhook.bot_id = bot.id;
-        await trelloWebhook.save();
-      } else {
-        const labels = await trello.getLabels(body.data.boardId);
-        trelloWebhook = await TrelloWebhook.create({
-          id: nanoid(15),
-          bot_id: bot.id,
-          trello_user_id: trelloUser.id,
-          conversation_id: body.data.conversationId,
-          config: {
-            boardId: body.data.boardId,
-            filters: getFiltersFromSubmitData(body.data),
-            labels,
-          },
-        });
-      }
-      if (trelloWebhook.trello_webhook_id) {
-        await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
-        trelloWebhook.trello_webhook_id = '';
-        await trelloWebhook.save();
-      }
-      const webhook = await trello.createWebhook({
-        description: 'RingCentral Bot Notifications',
-        callbackURL: `${process.env.APP_SERVER}/trello-notify/${trelloWebhook.id}`,
-        idModel: body.data.boardId,
-        active: true,
-      });
-      trelloWebhook.trello_webhook_id = webhook.id;
-      await trelloWebhook.save();
-      await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
-      const boards = await trello.getBoards();
-      await botActions.sendSubscriptionsCard({
-        bot,
-        botSubscriptions: rcUser.bot_subscriptions.filter(sub => sub.conversation_id === body.data.conversationId),
-        boards,
-        conversation: {
-          id: body.data.conversationId,
-          name: body.data.conversationName,
-        },
-        existingCardId: cardId,
-      });
-      res.status(200);
-      res.send('ok');
-      return;
-    }
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
       if (members.find(member => member.id === trelloUser.id)) {
