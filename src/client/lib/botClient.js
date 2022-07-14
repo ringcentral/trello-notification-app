@@ -33,16 +33,16 @@ export class Client {
     }
   }
 
-  async saveSubscription({ boardId, filters, subscriptionId }) {
+  async saveSubscription({ boardId, filters, subscriptionId, boardName }) {
     const params = {
       token: this._token,
       filters,
     };
-    if (boardId) {
-      params.boardId = boardId;
-    }
     if (subscriptionId) {
       params.subscriptionId = subscriptionId;
+    } else {
+      params.boardId = boardId;
+      params.boardName = boardName;
     }
     const response = await fetch(this._config.subscriptionUri, {
       method: 'POST',
@@ -72,10 +72,11 @@ export class Client {
     return data;
   }
 
-  async removeSubscription(id) {
+  async removeSubscription(id, boardName) {
     const params = {
       token: this._token,
       id,
+      boardName,
     };
     const response = await fetch(this._config.subscriptionUri, {
       method: 'DELETE',

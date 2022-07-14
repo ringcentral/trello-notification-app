@@ -83,7 +83,7 @@ function SubscriptionItem({
           </RcButton>
           <RcButton onClick={() => {
             setDeleteModalOpened(false);
-            onDelete(subscription.id);
+            onDelete(subscription.id, name);
           }}>Confirm</RcButton>
         </RcDialogActions>
       </RcDialog>

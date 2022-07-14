@@ -314,15 +314,51 @@ export function BotSetup({ client, analytics }) {
               setSubscriptionId(null);
               setActiveStep(2);
             }}
-            onDeleteSubscription={async (id) => {
+            onSaveSubscription={async () => {
+              setLoading(true);
+              let boardName = '';
+              if (!subscriptionId) {
+                const board = boards.find(b => b.id === boardId);
+                boardName = board && board.name;
+              }
+              try {
+                await client.saveSubscription({
+                  subscriptionId,
+                  filters: selectedFilters,
+                  boardId,
+                  boardName,
+                });
+                if (boardId) {
+                  const info = await client.getInfo();
+                  setBoards(info.boards);
+                  setSubscriptions(info.subscriptions);
+                }
+                setLoading(false);
+                let messageText = 'Subscription saved successfully.';
+                if (boardId) {
+                  messageText = 'Subscription created successfully.';
+                }
+                setMessage({ message: messageText, type: 'success' });
+                setBoardId(null);
+                setSubscriptionId(null);
+                setActiveStep(1);
+              } catch (e) {
+                console.error(e);
+                setLoading(false);
+                setMessage({ message: e.message, type: 'error' });
+              }
+              analytics.track('Save Trello subscription');
+            }}
+            onDeleteSubscription={async (id, name) => {
               try {
                 setLoading(true);
-                await client.removeSubscription(id);
+                await client.removeSubscription(id, name);
                 setSubscriptionId(null);
                 const info = await client.getInfo();
                 setBoards(info.boards);
                 setSubscriptions(info.subscriptions);
                 setLoading(false);
+                setMessage({ message: 'Subscription is removed successfully', type: 'success' });
               } catch (e) {
                 console.error(e);
                 setLoading(false);
@@ -351,35 +387,6 @@ export function BotSetup({ client, analytics }) {
                 setMessage({ message: 'Logout error please retry later.', type: 'error' });
               }
               analytics.track('Unauthorize Trello');
-            }}
-            onSaveSubscription={async () => {
-              setLoading(true);
-              try {
-                await client.saveSubscription({
-                  subscriptionId,
-                  filters: selectedFilters,
-                  boardId,
-                });
-                if (boardId) {
-                  const info = await client.getInfo();
-                  setBoards(info.boards);
-                  setSubscriptions(info.subscriptions);
-                }
-                setLoading(false);
-                let messageText = 'Subscription saved successfully.';
-                if (boardId) {
-                  messageText = 'Subscription created successfully.';
-                }
-                setMessage({ message: messageText, type: 'success' });
-                setBoardId(null);
-                setSubscriptionId(null);
-                setActiveStep(1);
-              } catch (e) {
-                console.error(e);
-                setLoading(false);
-                setMessage({ message: e.message, type: 'error' });
-              }
-              analytics.track('Save Trello subscription');
             }}
             analytics={analytics}
           />

@@ -197,6 +197,11 @@ async function saveSubscription(req, res) {
     trelloWebhook.trello_webhook_id = webhook.id;
     await trelloWebhook.save();
     await saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook);
+    if (!subscriptionId) {
+      await bot.sendMessage(conversationId, {
+        text: `Trello subscription of ${req.body.boardName} is created successfully.`,
+      });
+    }
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
@@ -280,6 +285,9 @@ async function removeSubscription(req, res) {
   }
   const rcUserId = decodedToken.uId;
   const subscriptionId = req.body.id;
+  const conversationId = decodedToken.gId;
+  const boardName = req.body.boardName;
+  const botId = decodedToken.bId;
   let trelloUser;
   let trello;
   try {
@@ -315,6 +323,12 @@ async function removeSubscription(req, res) {
         id: trelloWebhook.id
       },
     });
+    const bot = await Bot.findByPk(botId);
+    if (bot) {
+      await bot.sendMessage(conversationId, {
+        text: `Trello subscription of ${boardName} is removed.`,
+      });
+    }
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
