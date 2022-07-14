@@ -43,37 +43,6 @@ async function sendWelcomeCard(bot) {
   await bot.sendAdaptiveCard(group.id, welcomeTemplate);
 }
 
-async function getTrelloData(trello, rcUser) {
-  if (!rcUser) {
-    return null;
-  }
-  const trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
-  if (!trelloUser || !trelloUser.writeable_token) {
-    return null;
-  };
-  trello.setToken(trelloUser.writeable_token);
-  try {
-    const boards = await trello.getBoards();
-    return {
-      boards,
-    };
-  } catch (e) {
-    if (e.response && e.response.status === 401) {
-      trelloUser.writeable_token = '';
-      await trelloUser.save();
-      return null;
-    }
-  }
-}
-
-async function getSetupGroup(bot, group) {
-  if (group.members) {
-    return group;
-  }
-  const rcGroup = await bot.getGroup(group.id);
-  return rcGroup;
-}
-
 async function sendAuthCard({
   bot,
   user,

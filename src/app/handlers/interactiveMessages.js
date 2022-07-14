@@ -1,4 +1,3 @@
-const { nanoid } = require('nanoid');
 const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { TrelloWebhook } = require('../models/trello-webhook');
@@ -150,39 +149,6 @@ async function notificationInteractiveMessagesHandler(req, res) {
   }
 };
 
-function getFiltersFromSubmitData(data) {
-  const filters = [];
-  if (data.listFilters) {
-    filters.push(data.listFilters);
-  }
-  if (data.cardFilters) {
-    filters.push(data.cardFilters);
-  }
-  if (data.checklistFilters) {
-    filters.push(data.checklistFilters);
-  }
-  return filters.join(',');
-}
-
-async function saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
-  const existingSubscriptions = rcUser.bot_subscriptions || [];
-  const subscriptions = existingSubscriptions.filter(sub => sub.id !== trelloWebhook.id);
-  subscriptions.push({
-    id: trelloWebhook.id,
-    conversation_id: trelloWebhook.conversation_id,
-    boardId: trelloWebhook.config.boardId,
-  });
-  rcUser.bot_subscriptions = subscriptions;
-  await rcUser.save();
-}
-
-async function removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
-  const existingSubscriptions = rcUser.bot_subscriptions || [];
-  const subscriptions = existingSubscriptions.filter(sub => sub.id !== trelloWebhook.id);
-  rcUser.bot_subscriptions = subscriptions;
-  await rcUser.save();
-}
-
 const SETUP_ACTIONS = ['setup', 'addSubscription', 'editSubscription', 'removeSubscription', 'subscribe'];
 
 function getSetupDialog(botId, body) {
@@ -282,24 +248,12 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-      if (SETUP_ACTIONS.indexOf(action) > -1) {
-        await botActions.sendAuthCard({
-          bot,
-          user: { id: body.user.extId },
-          conversationId: body.data.conversationId,
-          existingCardId: cardId,
-          title: `Trello notification setup for "${body.data.conversationName || 'this conversation'}"`,
-          nextAction: 'subscribe',
-          trello,
-        });
-      } else {
-        await botActions.sendAuthCardIntoDirectGroup({
-          bot,
-          user: { id: body.user.extId },
-          conversation: body.conversation,
-          trello,
-        });
-      }
+      await botActions.sendAuthCardIntoDirectGroup({
+        bot,
+        user: { id: body.user.extId },
+        conversation: body.conversation,
+        trello,
+      });
       res.status(200);
       res.send('ok');
       return;
