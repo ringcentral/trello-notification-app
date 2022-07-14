@@ -241,6 +241,8 @@ export function BotSetup({ client, analytics }) {
       authorized = info.trelloAuthorized
       setAuthorized(info.trelloAuthorized);
       setUserInfo(info.trelloUser);
+      setBoards(info.boards);
+      setSubscriptions(info.subscriptions);
     } catch (e) {
       console.error(e);
       setMessage({ message: e.message, type: 'error' });

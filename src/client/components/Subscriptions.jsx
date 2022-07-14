@@ -58,11 +58,15 @@ function SubscriptionItem({
           size="small"
           symbol={Delete}
           onClick={() => setDeleteModalOpened(true)}
+          title="Remove subscription"
+          useRcTooltip
         />
         <RcIconButton
           aria-label="Edit"
           size="small"
           symbol={Edit}
+          title="Edit subscription"
+          useRcTooltip
           onClick={() => onEdit(subscription.id)}
         />
       </RcListItemSecondaryAction>

@@ -217,18 +217,18 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     const action = body.data.action;
-    if (
-      action === 'setup' ||
-      action === 'addSubscription' ||
-      action === 'editSubscription' ||
-      action === 'removeSubscription'
-    ) {
+    if (action === 'setup') {
       // show dialog for action from old card
       res.status(200);
       res.json(getSetupDialog(botId, body));
       return;
     }
-    if (action === 'subscribe') {
+    if (
+      action === 'subscribe' ||
+      action === 'addSubscription' ||
+      action === 'editSubscription' ||
+      action === 'removeSubscription'
+    ) {
       // update old setup card to new setup card
       await botActions.sendSetupCard({
         bot,
