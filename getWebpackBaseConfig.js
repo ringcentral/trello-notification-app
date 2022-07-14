@@ -3,6 +3,7 @@ module.exports = function getBaseConfig() {
   return {
     entry: {
       app: './src/client/app.js',
+      ['bot-setup']: './src/client/bot-setup.js',
     },
     resolve: {
       extensions: ['.js', '.jsx'],

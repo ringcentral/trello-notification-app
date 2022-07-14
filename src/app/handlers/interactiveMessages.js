@@ -5,6 +5,8 @@ const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 const { Trello } = require('../lib/Trello');
+const { generateToken } = require('../lib/jwt');
+const { DIALOG_ICON_URL } = require('../lib/constants');
 
 const botActions = require('../bot/actions');
 
@@ -199,16 +201,29 @@ async function botInteractiveMessagesHandler(req, res) {
     }
     const action = body.data.action;
     if (action === 'setup') {
-      await botActions.sendSetupCard({
-        bot,
-        group: body.conversation,
-        user: {
-          id: body.user.extId,
-          name: `${body.user.firstName} ${body.user.lastName}`,
-        },
-      });
+      // await botActions.sendSetupCard({
+      //   bot,
+      //   group: body.conversation,
+      //   user: {
+      //     id: body.user.extId,
+      //     name: `${body.user.firstName} ${body.user.lastName}`,
+      //   },
+      // });
+      const botToken = generateToken({
+        uId: body.user.extId,
+        bId: botId,
+        gId: body.data.conversationId || body.conversation.id,
+      }, '12h');
       res.status(200);
-      res.send('ok');
+      res.json({
+        type: 'dialog',
+        dialog: {
+          title: `Trello setup for ${body.data.conversationName}`,
+          size: 'medium',
+          iconUrl: DIALOG_ICON_URL,
+          iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}`,
+        }
+      });
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
