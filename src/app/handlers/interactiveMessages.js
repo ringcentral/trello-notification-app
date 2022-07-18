@@ -149,8 +149,6 @@ async function notificationInteractiveMessagesHandler(req, res) {
   }
 };
 
-const SETUP_ACTIONS = ['setup', 'addSubscription', 'editSubscription', 'removeSubscription', 'subscribe'];
-
 function getSetupDialog(botId, body) {
   const botToken = generateToken({
     uId: body.user.extId,
@@ -160,9 +158,9 @@ function getSetupDialog(botId, body) {
   return {
     type: 'dialog',
     dialog: {
-      title: `Trello setup for ${body.data.conversationName}`,
+      title: `Trello setup for ${body.data.conversationName || 'this conversation'}`,
       size: 'medium',
-      iconUrl: DIALOG_ICON_URL,
+      iconURL: DIALOG_ICON_URL,
       iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}`,
     }
   };

@@ -179,7 +179,7 @@ async function sendSetupCard({
     botId: bot.id,
     title: `Trello setup for **${conversation.name || 'this conversation'}**`,
     conversationId: conversation.id,
-    conversationName: conversation.name,
+    conversationName: conversation.name || '',
   });
   if (existingCardId) {
     await bot.updateAdaptiveCard(existingCardId, setupCard);
