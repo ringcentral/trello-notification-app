@@ -361,7 +361,47 @@ describe('Trello Authorization', () => {
       rcAuthCardPutScope.done();
     });
 
-    it('should save token successfully for new user and send subscribe card', async () => {
+    it('should save token successfully for existing user and not update card without cardId', async () => {
+      const rcUserId = 'test_rc_user_id';
+      const botId = 'test_bot_id';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: 'conversationId',
+      });
+      const bot = await Bot.create({
+        id: botId,
+        token: {
+          access_token: 'xxx',
+          owner_id: 'xxxxx',
+        },
+      });
+      let trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id',
+        writeable_token: 'aaa',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserRecord.id,
+      });
+      const trelloUserId = 'test_trello_user_id';
+      const trelloUserScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/members/me?`))
+        .reply(200, {
+          id: trelloUserId,
+          fullName: 'test name',
+        });
+      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      expect(res.status).toEqual(200);
+      trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
+      expect(trelloUserRecord.writeable_token).toEqual('xxx');
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+      await Bot.destroy({ where: { id: bot.id }});
+      trelloUserScope.done();
+    });
+
+    it('should save token successfully for new user and send setup card', async () => {
       const rcUserId = 'test_rc_user_id';
       const botId = 'test_bot_id';
       const cardId = 'test_card_id';
@@ -392,24 +432,12 @@ describe('Trello Authorization', () => {
         .reply(200, {
           id: 'auth_card_id',
         });
-      const trelloBoardScope = nock('https://api.trello.com')
-        .get(uri => uri.includes(`/1/members/me/boards?`))
-        .reply(200, [
-          {
-           "name": "Greatest Product Roadmap",
-           "id": "5b6893f01cb3228998cf629e",
-          },
-          {
-            "name": "Never ending Backlog",
-            "id": "5b689b3228998cf3f01c629e",
-           },
-        ]);
       const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
         .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
         .reply(200, {
           id: groupId,
           type: 'Team',
-          name: 'test group',
+          name: 'test team',
           members: [
             "170848004",
             "170853004",
@@ -422,7 +450,7 @@ describe('Trello Authorization', () => {
       });
       const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
       expect(res.status).toEqual(200);
-      expect(requestBody.fallbackText).toContain('Trello setup');
+      expect(requestBody.fallbackText).toContain('Trello setup for **test team**');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
@@ -432,7 +460,6 @@ describe('Trello Authorization', () => {
       await Bot.destroy({ where: { id: bot.id }});
       trelloUserScope.done();
       rcCardPutScope.done();
-      trelloBoardScope.done();
       rcGroupScope.done();
     });
   });

@@ -6,6 +6,7 @@ const { server } = require('../src/server');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { RcUser } = require('../src/app/models/rc-user');
 const { TrelloUser } = require('../src/app/models/trello-user');
+const { decodeToken } = require('../src/app/lib/jwt');
 
 const { getRequestBody } = require('./utils');
 
@@ -86,48 +87,13 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(404);
   });
 
-  it('should send setup card successfully with setup action', async () => {
-    const directGroupId = 'test_direct_group_id';
-    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
-      .reply(200, {
-        id: groupId,
-        type: 'Team',
-        members: [
-          "170848004",
-          "170853004",
-          "713297005"
-        ]
-      });
-    const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
-      .reply(200, {
-        id: directGroupId,
-        members: [
-          "170848004",
-          "713297005"
-        ],
-      });
-    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${directGroupId}/adaptive-cards`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/auth_card_id`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
-      .reply(200, {});
-    const authCardRequestBodyPromise = getRequestBody(rcAuthCardPutScope);
-    const messageRequestBodyPromise = getRequestBody(rcMessageScope);
+  it('should send setup dialog successfully with setup action', async () => {
     const res = await request(server).post('/interactive-messages').send({
       data: {
         messageType: 'Bot',
         botId: botId,
         action: 'setup',
+        conversationName: 'Team name',
       },
       user: {
         firstName: 'Test',
@@ -140,15 +106,182 @@ describe('Bot Notification', () => {
       },
     });
     expect(res.status).toEqual(200);
-    const authCardRequestBody = await authCardRequestBodyPromise;
-    const messageRequestBody = await messageRequestBodyPromise;
-    expect(authCardRequestBody.fallbackText).toContain('Trello setup');
-    expect(messageRequestBody.text).toContain('I just sent you a **Private** message');
-    rcGroupScope.done();
-    rcDirectGroupScope.done();
-    rcCardScope.done();
-    rcAuthCardPutScope.done();
-    rcMessageScope.done();
+    expect(res.body.type).toEqual('dialog');
+    expect(res.body.dialog.title).toEqual('Trello setup for Team name');
+    const iframeURL = res.body.dialog.iframeURL;
+    expect(iframeURL).toContain('?token=');
+    const tokenStr = iframeURL.split('?token=')[1];
+    const token = decodeToken(tokenStr);
+    expect(token.bId).toEqual(botId);
+    expect(token.uId).toEqual('test_ext_id');
+    expect(token.gId).toEqual(groupId);
+  });
+
+  it('should send setup dialog successfully with setup action and conversationId', async () => {
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'setup',
+        conversationId: 'test_conversation_id',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {},
+      conversation: {
+        id: groupId,
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(res.body.type).toEqual('dialog');
+    expect(res.body.dialog.title).toEqual('Trello setup for this conversation');
+    const iframeURL = res.body.dialog.iframeURL;
+    expect(iframeURL).toContain('?token=');
+    const tokenStr = iframeURL.split('?token=')[1];
+    const token = decodeToken(tokenStr);
+    expect(token.bId).toEqual(botId);
+    expect(token.uId).toEqual('test_ext_id');
+    expect(token.gId).toEqual('test_conversation_id');
+  });
+
+
+  it('should update old card to setup card when have subscribe actions', async () => {
+    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
+      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/setup_card_id`))
+      .reply(200, {
+        id: 'auth_card_id',
+      });
+    const updateCardRequestBodyPromise = getRequestBody(rcCardPutScope);
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'subscribe',
+        conversationName: 'Team name',
+        conversationId: 'conversationId',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {
+        id: 'setup_card_id',
+      },
+      conversation: {
+        id: groupId,
+      },
+    });
+    const newCardRequestBody = await updateCardRequestBodyPromise;
+    expect(res.status).toEqual(200);
+    rcCardPutScope.done();
+    expect(newCardRequestBody.fallbackText).toContain('Trello setup for **Team name**');
+    expect(JSON.stringify(newCardRequestBody)).toContain('Please click following button to finish Trello setup');
+  });
+
+  it('should update old card to setup card when have addSubscription actions', async () => {
+    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
+      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/setup_card_id`))
+      .reply(200, {
+        id: 'auth_card_id',
+      });
+    const updateCardRequestBodyPromise = getRequestBody(rcCardPutScope);
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'addSubscription',
+        conversationName: 'Team name',
+        conversationId: 'conversationId',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {
+        id: 'setup_card_id',
+      },
+      conversation: {
+        id: groupId,
+      },
+    });
+    const newCardRequestBody = await updateCardRequestBodyPromise;
+    expect(res.status).toEqual(200);
+    rcCardPutScope.done();
+    expect(newCardRequestBody.fallbackText).toContain('Trello setup for **Team name**');
+    expect(JSON.stringify(newCardRequestBody)).toContain('Please click following button to finish Trello setup');
+  });
+
+  it('should update old card to setup card when have editSubscription actions', async () => {
+    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
+      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/setup_card_id`))
+      .reply(200, {
+        id: 'auth_card_id',
+      });
+    const updateCardRequestBodyPromise = getRequestBody(rcCardPutScope);
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'editSubscription',
+        conversationName: 'Team name',
+        conversationId: 'conversationId',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {
+        id: 'setup_card_id',
+      },
+      conversation: {
+        id: groupId,
+      },
+    });
+    const newCardRequestBody = await updateCardRequestBodyPromise;
+    expect(res.status).toEqual(200);
+    rcCardPutScope.done();
+    expect(newCardRequestBody.fallbackText).toContain('Trello setup for **Team name**');
+    expect(JSON.stringify(newCardRequestBody)).toContain('Please click following button to finish Trello setup');
+  });
+
+  it('should update old card to setup card when have removeSubscription actions', async () => {
+    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
+      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/setup_card_id`))
+      .reply(200, {
+        id: 'auth_card_id',
+      });
+    const updateCardRequestBodyPromise = getRequestBody(rcCardPutScope);
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'removeSubscription',
+        conversationName: 'Team name',
+        conversationId: 'conversationId',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {
+        id: 'setup_card_id',
+      },
+      conversation: {
+        id: groupId,
+      },
+    });
+    const newCardRequestBody = await updateCardRequestBodyPromise;
+    expect(res.status).toEqual(200);
+    rcCardPutScope.done();
+    expect(newCardRequestBody.fallbackText).toContain('Trello setup for **Team name**');
+    expect(JSON.stringify(newCardRequestBody)).toContain('Please click following button to finish Trello setup');
   });
 
   it('should send not authorized yet when unauthorize but not authorized', async () => {
@@ -396,498 +529,6 @@ describe('Bot Notification', () => {
     rcDirectGroupScope.done();
     rcCardScope.done();
     rcMessageScope.done();
-  });
-
-  it('should send auth card when have setup actions and not authorized', async () => {
-    const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/setup_card_id`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const authCardRequestBodyPromise = getRequestBody(rcAuthCardPutScope);
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'subscribe',
-        cardId: 'trello_card_id',
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: 'test_ext_id',
-      },
-      card: {
-        id: 'setup_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    const authCardRequestBody = await authCardRequestBodyPromise;
-    expect(res.status).toEqual(200)
-    expect(authCardRequestBody.fallbackText).toContain('Trello notification setup');
-    rcAuthCardPutScope.done();
-  });
-
-  it('should send setup card when have addSubscription actions', async () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let trelloUserRecord = await TrelloUser.create({
-      id: 'test_trello_user_id',
-      writeable_token: trelloToken,
-    });
-    let rcUserRecord = await RcUser.create({
-      id: `rcext-${rcUserId}`,
-      trello_user_id: trelloUserRecord.id,
-      bot_subscriptions: [],
-    });
-    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
-      .reply(200, {
-        id: 'rc_card_id',
-      });
-    const trelloBoardsScope = nock('https://api.trello.com')
-      .get(uri => uri.includes('/1/members/me/boards?'))
-      .reply(200, [
-        {
-          "name": "Greatest Product Roadmap",
-          "id": "5b6893f01cb3228998cf629e",
-        },
-        {
-          "name": "Never ending Backlog",
-          "id": "5b689b3228998cf3f01c629e",
-        },
-      ]);
-    const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'addSubscription',
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: rcUserId,
-      },
-      card: {
-        id: 'rc_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    const rcCardRequestBody = await rcCardRequestBodyPromise;
-    expect(res.status).toEqual(200)
-    expect(rcCardRequestBody.fallbackText).toContain('Trello setup');
-    rcCardPutScope.done();
-    trelloBoardsScope.done();
-    await RcUser.destroy({ where: { id: rcUserRecord.id }});
-    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-  });
-
-  it('should respond 404 when have editSubscription with wrong subscription id', async () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let trelloUserRecord = await TrelloUser.create({
-      id: 'test_trello_user_id',
-      writeable_token: trelloToken,
-    });
-    let rcUserRecord = await RcUser.create({
-      id: `rcext-${rcUserId}`,
-      trello_user_id: trelloUserRecord.id,
-      bot_subscriptions: [],
-    });
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'editSubscription',
-        subscriptionId: 'xxx'
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: rcUserId,
-      },
-      card: {
-        id: 'rc_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    expect(res.status).toEqual(404)
-    await RcUser.destroy({ where: { id: rcUserRecord.id }});
-    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-  });
-
-  it('should send setup card when have editSubscription actions', async () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let trelloUserRecord = await TrelloUser.create({
-      id: 'test_trello_user_id',
-      writeable_token: trelloToken,
-    });
-    let rcUserRecord = await RcUser.create({
-      id: `rcext-${rcUserId}`,
-      trello_user_id: trelloUserRecord.id,
-      bot_subscriptions: [],
-    });
-    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
-      .reply(200, {
-        id: 'rc_card_id',
-      });
-    const trelloWebhook = await TrelloWebhook.create({
-      id: 'test_subscription_id',
-      bot_id: botId,
-      conversation_id: groupId,
-      trello_user_id: trelloUserRecord.id,
-      config: {
-        boardId: 'test-board-id',
-        filters: '',
-        labels: [],
-      },
-    });
-    const trelloBoardsScope = nock('https://api.trello.com')
-      .get(uri => uri.includes('/1/members/me/boards?'))
-      .reply(200, [
-        {
-          "name": "Greatest Product Roadmap",
-          "id": "5b6893f01cb3228998cf629e",
-        },
-        {
-          "name": "Never ending Backlog",
-          "id": "5b689b3228998cf3f01c629e",
-        },
-      ]);
-    const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'editSubscription',
-        subscriptionId: 'test_subscription_id',
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: rcUserId,
-      },
-      card: {
-        id: 'rc_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    const rcCardRequestBody = await rcCardRequestBodyPromise;
-    expect(res.status).toEqual(200)
-    expect(rcCardRequestBody.fallbackText).toContain('Trello setup');
-    rcCardPutScope.done();
-    trelloBoardsScope.done();
-    await RcUser.destroy({ where: { id: rcUserRecord.id }});
-    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-    await TrelloWebhook.destroy({ where: { id: trelloWebhook.id }});
-  });
-
-  it('should respond 404 when have removeSubscription with wrong subscription id', async () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let trelloUserRecord = await TrelloUser.create({
-      id: 'test_trello_user_id',
-      writeable_token: trelloToken,
-    });
-    let rcUserRecord = await RcUser.create({
-      id: `rcext-${rcUserId}`,
-      trello_user_id: trelloUserRecord.id,
-      bot_subscriptions: [],
-    });
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'removeSubscription',
-        subscriptionId: 'xxx'
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: rcUserId,
-      },
-      card: {
-        id: 'rc_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    expect(res.status).toEqual(404);
-    await RcUser.destroy({ where: { id: rcUserRecord.id }});
-    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-  });
-
-  it('should remove subscription successfully', async () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let trelloUserRecord = await TrelloUser.create({
-      id: 'test_trello_user_id',
-      writeable_token: trelloToken,
-    });
-    let rcUserRecord = await RcUser.create({
-      id: `rcext-${rcUserId}`,
-      trello_user_id: trelloUserRecord.id,
-      bot_subscriptions: [{
-        id: 'test_subscription_id',
-        conversation_id: groupId,
-        boardId: 'test_board_id',
-      }, {
-        id: 'test_subscription_id_1',
-        conversation_id: groupId,
-        boardId: 'test_board_id',
-      }],
-    });
-    const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
-      .reply(200, {
-        id: 'rc_card_id',
-      });
-    await TrelloWebhook.create({
-      id: 'test_subscription_id',
-      bot_id: botId,
-      conversation_id: groupId,
-      trello_user_id: trelloUserRecord.id,
-      trello_webhook_id: 'test_webhook_id',
-      config: {
-        boardId: 'test-board-id',
-        filters: '',
-        labels: [],
-      },
-    });
-    const trelloDeleteWebhooksScope = nock('https://api.trello.com')
-      .delete(uri => uri.includes(`/1/webhooks/test_webhook_id?`))
-      .reply(200, {});
-    const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
-    const res = await request(server).post('/interactive-messages').send({
-      data: {
-        messageType: 'Bot',
-        botId: botId,
-        action: 'removeSubscription',
-        subscriptionId: 'test_subscription_id',
-        boardName: 'TestBoard',
-      },
-      user: {
-        firstName: 'Test',
-        lastName: 'Test1',
-        extId: rcUserId,
-      },
-      card: {
-        id: 'rc_card_id',
-      },
-      conversation: {
-        id: groupId,
-      },
-    });
-    const rcCardRequestBody = await rcCardRequestBodyPromise;
-    expect(res.status).toEqual(200)
-    expect(JSON.stringify(rcCardRequestBody)).toContain('removed successfully');
-    const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id');
-    expect(!!trelloWebhook).toEqual(false);
-    rcCardPutScope.done();
-    trelloDeleteWebhooksScope.done();
-    await RcUser.destroy({ where: { id: rcUserRecord.id }});
-    await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-  });
-
-  describe('subscription', () => {
-    const rcUserId = '170848010';
-    const trelloToken = 'test_trello_user_token';
-    let rcUserRecord;
-    let trelloUserRecord
-
-    beforeAll(async () => {
-      trelloUserRecord = await TrelloUser.create({
-        id: 'test_trello_user_id',
-        writeable_token: trelloToken,
-      });
-      rcUserRecord = await RcUser.create({
-        id: `rcext-${rcUserId}`,
-        trello_user_id: trelloUserRecord.id,
-        bot_subscriptions: [],
-      });
-    });
-
-    afterAll(async () => {
-      await RcUser.destroy({ where: { id: rcUserRecord.id }});
-      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
-    });
-
-    it('should create subscription successfully', async () => {
-      const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-        .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
-        .reply(200, {
-          id: 'rc_card_id',
-        });
-      const trelloBoardsScope = nock('https://api.trello.com')
-        .get(uri => uri.includes('/1/members/me/boards?'))
-        .reply(200, [
-          {
-            "name": "Greatest Product Roadmap",
-            "id": "5b6893f01cb3228998cf629e",
-          },
-          {
-            "name": "Never ending Backlog",
-            "id": "5b689b3228998cf3f01c629e",
-          },
-        ]);
-      const trelloLabelsScope = nock('https://api.trello.com')
-        .get(uri => uri.includes(`/1/boards/5b6893f01cb3228998cf629e/labels?`))
-        .reply(200, [
-          { "id":"6094fb83d41eeff1fa76129d", "name":"", "color":"green" },
-          { "id":"6094fb83d41eeff1fa7612a1", "name":"", "color":"yellow" },
-        ]);
-      const trelloWebhooksScope = nock('https://api.trello.com')
-        .post(uri => uri.includes('/1/webhooks?'))
-        .reply(200, {
-          id: 'test_trello_webhook_id',
-        });
-      const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
-      const res = await request(server).post('/interactive-messages').send({
-        data: {
-          messageType: 'Bot',
-          botId: botId,
-          action: 'subscribe',
-          boardId: '5b6893f01cb3228998cf629e',
-          conversationName: 'TestTeam',
-          listFilters: 'createList',
-          cardFilters: 'createCard',
-          checklistFilters: '',
-        },
-        user: {
-          firstName: 'Test',
-          lastName: 'Test1',
-          extId: rcUserId,
-        },
-        card: {
-          id: 'rc_card_id',
-        },
-        conversation: {
-          id: groupId,
-        },
-      });
-      const rcCardRequestBody = await rcCardRequestBodyPromise;
-      expect(res.status).toEqual(200)
-      expect(JSON.stringify(rcCardRequestBody)).toContain('Existing subscriptions');
-      rcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
-      expect(rcUserRecord.bot_subscriptions.length).toEqual(1);
-      const trelloWebhook = await TrelloWebhook.findByPk(rcUserRecord.bot_subscriptions[0].id);
-      expect(trelloWebhook.trello_webhook_id).toEqual('test_trello_webhook_id');
-      rcCardPutScope.done();
-      trelloBoardsScope.done();
-      trelloLabelsScope.done();
-      trelloWebhooksScope.done();
-    });
-
-    it('should respond 404 with wrong subscription id', async () => {
-      const res = await request(server).post('/interactive-messages').send({
-        data: {
-          messageType: 'Bot',
-          botId: botId,
-          action: 'subscribe',
-          boardId: '5b6893f01cb3228998cf629e',
-          conversationName: 'TestTeam',
-          subscriptionId: 'xxxx',
-          listFilters: '',
-          cardFilters: '',
-          checklistFilters: 'addChecklistToCard',
-        },
-        user: {
-          firstName: 'Test',
-          lastName: 'Test1',
-          extId: rcUserId,
-        },
-        card: {
-          id: 'rc_card_id',
-        },
-        conversation: {
-          id: groupId,
-        },
-      });
-      expect(res.status).toEqual(404)
-    });
-  
-    it('should update subscription successfully', async () => {
-      const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-        .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
-        .reply(200, {
-          id: 'rc_card_id',
-        });
-      const trelloBoardsScope = nock('https://api.trello.com')
-        .get(uri => uri.includes('/1/members/me/boards?'))
-        .reply(200, [
-          {
-            "name": "Greatest Product Roadmap",
-            "id": "5b6893f01cb3228998cf629e",
-          },
-          {
-            "name": "Never ending Backlog",
-            "id": "5b689b3228998cf3f01c629e",
-          },
-        ]);
-      const trelloLabelsScope = nock('https://api.trello.com')
-        .get(uri => uri.includes(`/1/boards/5b6893f01cb3228998cf629e/labels?`))
-        .reply(200, [
-          { "id":"6094fb83d41eeff1fa76129d", "name":"", "color":"green" },
-          { "id":"6094fb83d41eeff1fa7612a1", "name":"", "color":"yellow" },
-        ]);
-      const trelloWebhooksScope = nock('https://api.trello.com')
-        .post(uri => uri.includes('/1/webhooks?'))
-        .reply(200, {
-          id: 'new_test_trello_webhook_id',
-        });
-      const trelloDeleteWebhooksScope = nock('https://api.trello.com')
-        .delete(uri => uri.includes(`/1/webhooks/test_trello_webhook_id?`))
-        .reply(200, {});
-      const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
-      const res = await request(server).post('/interactive-messages').send({
-        data: {
-          messageType: 'Bot',
-          botId: botId,
-          action: 'subscribe',
-          boardId: '5b6893f01cb3228998cf629e',
-          conversationName: 'TestTeam',
-          subscriptionId: rcUserRecord.bot_subscriptions[0].id,
-          listFilters: '',
-          cardFilters: '',
-          checklistFilters: 'addChecklistToCard',
-        },
-        user: {
-          firstName: 'Test',
-          lastName: 'Test1',
-          extId: rcUserId,
-        },
-        card: {
-          id: 'rc_card_id',
-        },
-        conversation: {
-          id: groupId,
-        },
-      });
-      const rcCardRequestBody = await rcCardRequestBodyPromise;
-      expect(res.status).toEqual(200)
-      expect(JSON.stringify(rcCardRequestBody)).toContain('Existing subscriptions');
-      rcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
-      expect(rcUserRecord.bot_subscriptions.length).toEqual(1);
-      const trelloWebhook = await TrelloWebhook.findByPk(rcUserRecord.bot_subscriptions[0].id);
-      expect(trelloWebhook.trello_webhook_id).toEqual('new_test_trello_webhook_id');
-      rcCardPutScope.done();
-      trelloBoardsScope.done();
-      trelloLabelsScope.done();
-      trelloWebhooksScope.done();
-      trelloDeleteWebhooksScope.done();
-    });
   });
 
   describe('card actions', () => {
