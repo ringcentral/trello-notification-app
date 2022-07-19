@@ -11,7 +11,7 @@
     "ngrok": "ngrok http 6066",
     "server": "node ./src/run-server.js",
     "start": "npm run server",
-    "test": "jest test/authorization.test.js",
+    "test": "jest",
     "test-coverage": "jest --coverage",
     "dynamo-local": "node ./scripts/dynamo-local.js",
     "initDB": "node ./scripts/init-db",
