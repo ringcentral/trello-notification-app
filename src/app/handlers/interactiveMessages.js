@@ -154,7 +154,7 @@ function getSetupDialog(botId, body) {
     uId: body.user.extId,
     bId: botId,
     gId: body.data.conversationId || body.conversation.id,
-  }, '12h');
+  }, '24h');
   return {
     type: 'dialog',
     dialog: {
