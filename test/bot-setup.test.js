@@ -495,7 +495,7 @@ describe('Bot Setup', () => {
         trello_webhook_id: 'test_trello_webhook_id_xxx',
         config: {
           boardId,
-          filter: 'test',
+          filters: 'test',
           labels: [],
         },
       });
@@ -592,7 +592,7 @@ describe('Bot Setup', () => {
         trello_webhook_id: 'test_trello_webhook_id_xxx',
         config: {
           boardId,
-          filter: 'test',
+          filters: 'test',
           labels: [],
         },
       });
@@ -668,7 +668,7 @@ describe('Bot Setup', () => {
         trello_webhook_id: 'test_trello_webhook_id_xxx',
         config: {
           boardId,
-          filter: 'test',
+          filters: 'test',
           labels: [],
         },
       });
@@ -724,6 +724,126 @@ describe('Bot Setup', () => {
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
       trelloLabelsScope.done();
+    });
+  });
+
+  describe('Get Subscription', () => {
+    it('should get 403 without token', async () => {
+      const res = await request(server).get('/bot-subscription');
+      expect(res.status).toEqual(403);
+    });
+
+    it('should get 403 without subscription id', async () => {
+      const res = await request(server).get('/bot-subscription?token=123');
+      expect(res.status).toEqual(403);
+    });
+
+    it('should get 401 with invalid token', async () => {
+      const res = await request(server).get('/bot-subscription?token=123&id=xxx');
+      expect(res.status).toEqual(401);
+    });
+
+    it('should get 401 with expired token', async () => {
+      const token = jwt.generateToken({
+        uId: '123',
+        bId: '123',
+        gId: '111',
+      }, '-10s');
+      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      expect(res.status).toEqual(401);
+    });
+
+    it('should get 401 with rc user not found', async () => {
+      const token = jwt.generateToken({
+        uId: '123',
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      expect(res.status).toEqual(401);
+    });
+
+    it('should get 404 when subscription id is not found', async () => {
+      const rcUserId = 'test_rc_user_id_123';
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      expect(res.status).toEqual(404);
+      await rcUserRecord.destroy();
+    });
+
+    it('should get 404 when subscription id not belongs to user', async () => {
+      const rcUserId = 'test_rc_user_id_123';
+      const groupId = '713297119';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const trelloWebhookRecord = await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: 'xxxx',
+        conversation_id: groupId,
+        trello_user_id: 'xxx',
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+        },
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).get(`/bot-subscription?token=${token}&id=${subscriptionId}`);
+      expect(res.status).toEqual(404);
+      await rcUserRecord.destroy();
+      await trelloWebhookRecord.destroy();
+    });
+
+    it('should get subscription successfully', async () => {
+      const rcUserId = 'test_rc_user_id_123';
+      const groupId = '713297119';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const trelloWebhookRecord = await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: 'xxxx',
+        conversation_id: groupId,
+        trello_user_id: trelloUserId,
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test,test1',
+          labels: [],
+        },
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).get(`/bot-subscription?token=${token}&id=${subscriptionId}`);
+      expect(res.status).toEqual(200);
+      expect(res.body.id).toEqual(subscriptionId);
+      expect(res.body.config.filters).toEqual('test,test1');
+      await rcUserRecord.destroy();
+      await trelloWebhookRecord.destroy();
     });
   });
 });
