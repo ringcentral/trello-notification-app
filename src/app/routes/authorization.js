@@ -266,17 +266,6 @@ async function botRevokeToken(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    if (
-      e.response &&
-      e.response.status === 401 &&
-      trelloUser
-    ) {
-      trelloUser.writeable_token = '';
-      await trelloUser.save();
-      res.status(200);
-      res.json({ result: 'ok' });
-      return;
-    }
     console.error(e);
     res.status(500);
     res.send('internal error');
