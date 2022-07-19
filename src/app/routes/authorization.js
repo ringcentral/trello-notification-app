@@ -6,6 +6,7 @@ const botActions = require('../bot/actions');
 
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
+const { TrelloWebhook } = require('../models/trello-webhook');
 
 // authorize Trello with only read permission
 async function authorize(req, res) {

@@ -8,7 +8,7 @@ export class Client {
   async getInfo() {
     const response = await fetch(`${this._config.infoUri}?token=${this._token}&random=${Date.now()}`);
     if (response.status === 401) {
-      throw new Error('Session expired! Please reopen the dialog');
+      throw new Error('Session expired! Please reopen the dialog.');
     }
     if (response.status !== 200) {
       throw new Error('Fetch data error please retry later')
@@ -28,8 +28,11 @@ export class Client {
         token: this._token,
       }),
     });
+    if (resp.status === 401) {
+      throw new Error('Session expired! Please reopen the dialog.');
+    }
     if (resp.status !== 200) {
-      throw new Error('unauthorize error');
+      throw new Error('Unauthorize error');
     }
   }
 
@@ -52,8 +55,7 @@ export class Client {
       body: JSON.stringify(params),
     });
     if (response.status === 401) {
-      this.cleanToken();
-      throw new Error('Unauthorized');
+      throw new Error('Session expired! Please reopen the dialog.');
     }
     if (response.status !== 200) {
       throw new Error('Save subscription error please retry later')
@@ -63,7 +65,7 @@ export class Client {
   async getSubscription(id) {
     const response = await fetch(`${this._config.subscriptionUri}?token=${this._token}&id=${id}&random=${Date.now()}`);
     if (response.status === 401) {
-      throw new Error('Session expired! Please reopen the dialog');
+      throw new Error('Session expired! Please reopen the dialog.');
     }
     if (response.status !== 200) {
       throw new Error('Fetch data error please retry later or reopen the dialog')
@@ -86,8 +88,7 @@ export class Client {
       body: JSON.stringify(params),
     });
     if (response.status === 401) {
-      this.cleanToken();
-      throw new Error('Unauthorized');
+      throw new Error('Session expired! Please reopen the dialog.');
     }
     if (response.status !== 200) {
       throw new Error('Remove subscription error please retry later')

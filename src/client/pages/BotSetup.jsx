@@ -384,7 +384,7 @@ export function BotSetup({ client, analytics }) {
               } catch (e) {
                 console.error(e);
                 setLoading(false);
-                setMessage({ message: 'Logout error please retry later.', type: 'error' });
+                setMessage({ message: e.message, type: 'error' });
               }
               analytics.track('Unauthorize Trello');
             }}
