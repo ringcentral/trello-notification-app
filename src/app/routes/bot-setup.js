@@ -273,7 +273,8 @@ async function removeBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
 
 async function removeSubscription(req, res) {
   const jwtToken = req.body.token;
-  if (!jwtToken) {
+  const subscriptionId = req.body.id;
+  if (!jwtToken || !subscriptionId) {
     res.status(403);
     res.send('Error params');
     return;
@@ -285,7 +286,6 @@ async function removeSubscription(req, res) {
     return;
   }
   const rcUserId = decodedToken.uId;
-  const subscriptionId = req.body.id;
   const conversationId = decodedToken.gId;
   const boardName = req.body.boardName;
   const botId = decodedToken.bId;
