@@ -12,7 +12,7 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 axios.defaults.adapter = require('axios/lib/adapters/http');
 
 describe('Bot Setup', () => {
-  it('should get 200 without webhook uri', async () => {
+  it('should get 200 at setup page request', async () => {
     const res = await request(server).get('/bot-setup?token=new_token');
     expect(res.status).toEqual(200);
     expect(res.text).toContain('new_token');
@@ -247,7 +247,7 @@ describe('Bot Setup', () => {
 
   describe('Save subscription', () => {
     const botId = '266262009';
-    const groupId = '713297009';
+
     beforeAll(async () => {
       await Bot.create({
         id: botId,
@@ -264,7 +264,7 @@ describe('Bot Setup', () => {
           id: botId,
         },
       });
-    })
+    });
 
     it('should get 403 without token', async () => {
       const res = await request(server).post('/bot-subscription');
@@ -844,6 +844,352 @@ describe('Bot Setup', () => {
       expect(res.body.config.filters).toEqual('test,test1');
       await rcUserRecord.destroy();
       await trelloWebhookRecord.destroy();
+    });
+  });
+
+  describe('Remove subscription', () => {
+    const botId = '266262009';
+
+    beforeAll(async () => {
+      await Bot.create({
+        id: botId,
+        token: {
+          access_token: 'xxx',
+          owner_id: 'xxxxx',
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await Bot.destroy({
+        where: {
+          id: botId,
+        },
+      });
+    });
+
+
+    it('should get 403 without token', async () => {
+      const res = await request(server).delete('/bot-subscription');
+      expect(res.status).toEqual(403);
+    });
+
+    it('should get 403 without subscription id', async () => {
+      const res = await request(server).delete('/bot-subscription').send({
+        token: 'xxx',
+      });
+      expect(res.status).toEqual(403);
+    });
+
+    it('should get 401 with invalid token', async () => {
+      const res = await request(server).delete('/bot-subscription').send({
+        token: 'xxx',
+        id: 'xxxx',
+      });;
+      expect(res.status).toEqual(401);
+    });
+
+    it('should get 401 with rc user not found', async () => {
+      const token = jwt.generateToken({
+        uId: '123',
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });;
+      expect(res.status).toEqual(401);
+    });
+
+    it('should get 401 without trello user id', async () => {
+      const rcUserId = '1234444';
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });
+      expect(res.status).toEqual(401);
+      await rcUserRecord.destroy();
+    });
+
+    it('should get 401 with trello user not found', async () => {
+      const rcUserId = '1234444';
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'trello-user-123',
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });
+      expect(res.status).toEqual(401);
+      await rcUserRecord.destroy();
+    });
+
+    it('should get 401 with trello user does not have token', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: '',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });;
+      expect(res.status).toEqual(401);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+    });
+
+    it('should get 404 with subscription id is not found', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });;
+      expect(res.status).toEqual(404);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+    });
+
+    it('should get 404 with subscription id does not belongs to the user', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const groupId = '713297119';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const trelloWebhookRecord = await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: 'xxxx',
+        conversation_id: groupId,
+        trello_user_id: 'xxx',
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+        },
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: '123',
+        gId: '111',
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: 'xxxx',
+      });;
+      expect(res.status).toEqual(404);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      await trelloWebhookRecord.destroy();
+    });
+
+    it('should remove successfully with trello webhook id', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const groupId = '713297119';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+        bot_subscriptions: [{
+          id: subscriptionId,
+          boardId,
+          conversation_id: groupId,
+        }],
+      });
+      await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: botId,
+        conversation_id: groupId,
+        trello_user_id: trelloUserId,
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+        },
+      });
+      const trelloDeleteWebhooksScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/webhooks/test_trello_webhook_id_xxx?`))
+        .reply(200, {});
+      const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+        .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+        .reply(200, {});
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: groupId,
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: subscriptionId,
+      });;
+      expect(res.status).toEqual(200);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
+      const newTrelloWebhookRecord = await TrelloWebhook.findByPk(subscriptionId);
+      expect(!!newTrelloWebhookRecord).toEqual(false);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      trelloDeleteWebhooksScope.done();
+      rcMessageScope.done();
+    });
+
+    it('should remove successfully without trello webhook id', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const groupId = '713297119';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+        bot_subscriptions: [{
+          id: subscriptionId,
+          boardId,
+          conversation_id: groupId,
+        }],
+      });
+      await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: botId,
+        conversation_id: groupId,
+        trello_user_id: trelloUserId,
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+        },
+      });
+      const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+        .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+        .reply(200, {});
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: groupId,
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: subscriptionId,
+      });;
+      expect(res.status).toEqual(200);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
+      const newTrelloWebhookRecord = await TrelloWebhook.findByPk(subscriptionId);
+      expect(!!newTrelloWebhookRecord).toEqual(false);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      rcMessageScope.done();
+    });
+
+    it('should remove successfully without bot id', async () => {
+      const rcUserId = '1234444';
+      const trelloUserId = 'trello-user-123456';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const subscriptionId = 'test_subscription_id';
+      const groupId = '713297119';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+        bot_subscriptions: [{
+          id: subscriptionId,
+          boardId,
+          conversation_id: groupId,
+        }],
+      });
+      await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: 'xxx',
+        conversation_id: groupId,
+        trello_user_id: trelloUserId,
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+        },
+      });
+      const trelloDeleteWebhooksScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/webhooks/test_trello_webhook_id_xxx?`))
+        .reply(200, {});
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'xxx',
+        gId: groupId,
+      }, '24h');
+      const res = await request(server).delete('/bot-subscription').send({
+        token: token,
+        id: subscriptionId,
+      });;
+      expect(res.status).toEqual(200);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
+      const newTrelloWebhookRecord = await TrelloWebhook.findByPk(subscriptionId);
+      expect(!!newTrelloWebhookRecord).toEqual(false);
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      trelloDeleteWebhooksScope.done();
     });
   });
 });
