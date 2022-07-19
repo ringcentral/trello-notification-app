@@ -226,7 +226,8 @@ async function saveSubscription(req, res) {
 
 async function getSubscription(req, res) {
   const jwtToken = req.query.token;
-  if (!jwtToken) {
+  const subscriptionId = req.query.id;
+  if (!jwtToken || !subscriptionId) {
     res.status(403);
     res.send('Error params');
     return;
@@ -238,7 +239,6 @@ async function getSubscription(req, res) {
     return;
   }
   const rcUserId = decodedToken.uId;
-  const subscriptionId = req.query.id;
   try {
     const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
     if (!rcUser) {
