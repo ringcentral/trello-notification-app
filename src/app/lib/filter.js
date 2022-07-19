@@ -39,19 +39,4 @@ function getFilterId(message, filterIdsString) {
   return filterId;
 }
 
-function getCategoryFiltersFromFilters(filtersValue, category) {
-  const filterGroup = filtersGroupByCategory[category];
-  if (!filtersValue) {
-    return filterGroup.items.map(item => item.id).join(',');
-  }
-  const filters = filtersValue.split(',');
-  const categoryFilters = [];
-  filters.forEach((filter) => {
-    if (filterGroup.items.find(item => item.id === filter)) {
-      categoryFilters.push(filter);
-    }
-  });
-  return categoryFilters.join(',');
-}
-
 exports.getFilterId = getFilterId;
