@@ -290,10 +290,9 @@ async function removeSubscription(req, res) {
   const boardName = req.body.boardName;
   const botId = decodedToken.bId;
   let trelloUser;
-  let trello;
   try {
     const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
-    if (!rcUser) {
+    if (!rcUser || !rcUser.trello_user_id) {
       res.status(401);
       res.send('Authorization required');
       return;
@@ -311,7 +310,7 @@ async function removeSubscription(req, res) {
       return;
     }
     if (trelloWebhook.trello_webhook_id) {
-      trello = new Trello({
+      const trello = new Trello({
         appKey: process.env.TRELLO_APP_KEY,
         redirectUrl: '',
         token: trelloUser.writeable_token,
@@ -333,18 +332,6 @@ async function removeSubscription(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    if (
-      e.response &&
-      e.response.status === 401 &&
-      trelloUser &&
-      trello
-    ) {
-      trelloUser.writeable_token = '';
-      await trelloUser.save();
-      res.status(401);
-      res.send('Trello authorization required');
-      return;
-    }
     console.error(e);
     res.status(500);
     res.json('Internal server error');
