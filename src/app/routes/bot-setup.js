@@ -112,7 +112,10 @@ async function saveBotSubscriptionsAtRcUser(rcUser, trelloWebhook) {
 
 async function saveSubscription(req, res) {
   const jwtToken = req.body.token;
-  if (!jwtToken) {
+  const subscriptionId = req.body.subscriptionId;
+  const boardId = req.body.boardId;
+  const filters = req.body.filters;
+  if (!jwtToken || !filters || (!subscriptionId && !boardId)) {
     res.status(403);
     res.send('Error params');
     return;
@@ -126,7 +129,6 @@ async function saveSubscription(req, res) {
   const rcUserId = decodedToken.uId;
   const conversationId = decodedToken.gId;
   const botId = decodedToken.bId;
-  const subscriptionId = req.body.subscriptionId;
   let trelloUser;
   let bot;
   try {
@@ -137,7 +139,7 @@ async function saveSubscription(req, res) {
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
-    if (!rcUser) {
+    if (!rcUser || !rcUser.trello_user_id) {
       res.status(401);
       res.send('Authorization required');
       return;
@@ -164,21 +166,21 @@ async function saveSubscription(req, res) {
       const labels = await trello.getLabels(trelloWebhook.config.boardId);
       trelloWebhook.config = {
         boardId: trelloWebhook.config.boardId,
-        filters: String(req.body.filters),
+        filters: String(filters),
         labels,
       };
       trelloWebhook.bot_id = bot.id;
       await trelloWebhook.save();
     } else {
-      const labels = await trello.getLabels(req.body.boardId);
+      const labels = await trello.getLabels(boardId);
       trelloWebhook = await TrelloWebhook.create({
         id: nanoid(15),
         bot_id: bot.id,
         trello_user_id: trelloUser.id,
         conversation_id: conversationId,
         config: {
-          boardId: req.body.boardId,
-          filters: String(req.body.filters),
+          boardId,
+          filters: String(filters),
           labels,
         },
       });
@@ -208,8 +210,7 @@ async function saveSubscription(req, res) {
     if (
       e.response &&
       e.response.status === 401 &&
-      trelloUser &&
-      trello
+      trelloUser
     ) {
       trelloUser.writeable_token = '';
       await trelloUser.save();
