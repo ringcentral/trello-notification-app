@@ -12,6 +12,7 @@
     "server": "node ./src/run-server.js",
     "start": "npm run server",
     "test": "jest",
+    "test-dynamodb": "DB=dynamodb jest --runInBand --forceExit",
     "test-coverage": "jest --coverage",
     "dynamo-local": "node ./scripts/dynamo-local.js",
     "initDB": "node ./scripts/init-db",

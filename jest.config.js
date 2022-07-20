@@ -1,5 +1,9 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '.env.test') });
+let envFile = '.env.test';
+if (process.env.DB === 'dynamodb') {
+  envFile = '.env.dynamo.test';
+}
+require('dotenv').config({ path: path.resolve(__dirname, envFile) });
 
 module.exports = {
   testMatch: [
