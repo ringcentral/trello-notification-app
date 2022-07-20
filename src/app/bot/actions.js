@@ -10,7 +10,6 @@ const unauthorizeTemplate = require('../adaptiveCards/unauthorize.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
 
 const { Trello } = require('../lib/Trello');
-const { generateToken } = require('../lib/jwt');
 
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
