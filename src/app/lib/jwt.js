@@ -1,7 +1,7 @@
 const { sign, verify } = require('jsonwebtoken');
 
-function generateToken(data) {
-  return sign(data, process.env.APP_SERVER_SECRET_KEY, { expiresIn: '120y' })
+function generateToken(data, expiresIn = '120y') {
+  return sign(data, process.env.APP_SERVER_SECRET_KEY, { expiresIn: expiresIn })
 }
 
 function decodeToken(token) {

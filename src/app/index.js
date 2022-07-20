@@ -4,6 +4,8 @@ const { extendApp: extendBotApp } = require('ringcentral-chatbot-core');
 const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
 const notificationRoute = require('./routes/notification');
+const botSetupRoute = require('./routes/bot-setup');
+
 const { botHandler } = require('./bot/handler');
 const { botConfig } = require('./bot/config');
 
@@ -34,6 +36,12 @@ exports.appExtend = (app) => {
   app.post('/interactive-messages', notificationRoute.interactiveMessage);
 
   // bots:
+  app.get('/bot-setup', botSetupRoute.setup);
+  app.get('/bot-info', botSetupRoute.info);
+  app.get('/bot-subscription', botSetupRoute.getSubscription);
+  app.post('/bot-subscription', botSetupRoute.saveSubscription);
+  app.delete('/bot-subscription', botSetupRoute.removeSubscription);
+  app.post('/trello/bot-revoke', authorizationRoute.botRevokeToken);
   extendBotApp(app, [], botHandler, botConfig);
   app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
   app.post('/trello/bot-oauth-callback/:botToken', authorizationRoute.botSaveToken);

@@ -8,6 +8,7 @@ const jwt = require('../src/app/lib/jwt');
 
 const { TrelloUser } = require('../src/app/models/trello-user');
 const { RcUser } = require('../src/app/models/rc-user');
+const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 
 axios.defaults.adapter = require('axios/lib/adapters/http');
 
@@ -361,7 +362,47 @@ describe('Trello Authorization', () => {
       rcAuthCardPutScope.done();
     });
 
-    it('should save token successfully for new user and send subscribe card', async () => {
+    it('should save token successfully for existing user and not update card without cardId', async () => {
+      const rcUserId = 'test_rc_user_id';
+      const botId = 'test_bot_id';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: 'conversationId',
+      });
+      const bot = await Bot.create({
+        id: botId,
+        token: {
+          access_token: 'xxx',
+          owner_id: 'xxxxx',
+        },
+      });
+      let trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id',
+        writeable_token: 'aaa',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserRecord.id,
+      });
+      const trelloUserId = 'test_trello_user_id';
+      const trelloUserScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/members/me?`))
+        .reply(200, {
+          id: trelloUserId,
+          fullName: 'test name',
+        });
+      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      expect(res.status).toEqual(200);
+      trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
+      expect(trelloUserRecord.writeable_token).toEqual('xxx');
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
+      await Bot.destroy({ where: { id: bot.id }});
+      trelloUserScope.done();
+    });
+
+    it('should save token successfully for new user and send setup card', async () => {
       const rcUserId = 'test_rc_user_id';
       const botId = 'test_bot_id';
       const cardId = 'test_card_id';
@@ -392,24 +433,12 @@ describe('Trello Authorization', () => {
         .reply(200, {
           id: 'auth_card_id',
         });
-      const trelloBoardScope = nock('https://api.trello.com')
-        .get(uri => uri.includes(`/1/members/me/boards?`))
-        .reply(200, [
-          {
-           "name": "Greatest Product Roadmap",
-           "id": "5b6893f01cb3228998cf629e",
-          },
-          {
-            "name": "Never ending Backlog",
-            "id": "5b689b3228998cf3f01c629e",
-           },
-        ]);
       const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
         .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
         .reply(200, {
           id: groupId,
           type: 'Team',
-          name: 'test group',
+          name: 'test team',
           members: [
             "170848004",
             "170853004",
@@ -422,7 +451,7 @@ describe('Trello Authorization', () => {
       });
       const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
       expect(res.status).toEqual(200);
-      expect(requestBody.fallbackText).toContain('Trello setup');
+      expect(requestBody.fallbackText).toContain('Trello setup for **test team**');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
@@ -432,8 +461,183 @@ describe('Trello Authorization', () => {
       await Bot.destroy({ where: { id: bot.id }});
       trelloUserScope.done();
       rcCardPutScope.done();
-      trelloBoardScope.done();
       rcGroupScope.done();
+    });
+  });
+
+  describe('Bot Revoke Token', () => {
+    it('should response 403 when revoke bot token without token', async () => {
+      const res = await request(server).post('/trello/bot-revoke');
+      expect(res.status).toEqual(403);
+    });
+  
+    it('should response 401 when revoke bot token with invalid trello token', async () => {
+      const botToken = 'xxxx';
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(401);
+    });
+
+    it('should response 200 when rc user is not found', async () => {
+      const botToken = jwt.generateToken({
+        uId: 'rcUserIdxxx',
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+    });
+
+    it('should response 200 when rc user does not have trello user connected', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+      });
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+    });
+
+    it('should response 200 when trello user not found', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'xxx',
+      });
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+    });
+
+    it('should response 200 when trello user does not have token', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'test_trello_user_id_xxx',
+      });
+      const trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id_xxx',
+        writeable_token: '',
+      });
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
+    });
+
+    it('should response 200 when trello user has token', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'test_trello_user_id_xxx',
+      });
+      const trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id_xxx',
+        writeable_token: 'xxxxx',
+      });
+      const trelloRevokeScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .reply(200, {});
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
+      expect(newTrelloUserRecord.writeable_token).toEqual('');
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
+      trelloRevokeScope.done();
+    });
+
+    it('should response 200 and remove bot subscriptions', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'test_trello_user_id_xxx',
+        bot_subscriptions: [{
+          id: 'test_subscription_id_xxx',
+          conversation_id: 'xxxx',
+          boardId: 'test_board_id',
+        }],
+      });
+      const trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id_xxx',
+        writeable_token: 'xxxxx',
+      });
+      await TrelloWebhook.create({
+        id: 'test_subscription_id_xxx',
+        bot_id: 'botId',
+        conversation_id: 'xxx',
+        trello_user_id: trelloUserRecord.id,
+        config: {
+          boardId: 'test-board-id',
+          filters: '',
+          labels: [],
+        },
+      });
+      const trelloRevokeScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .reply(200, {});
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id_xxx');
+      expect(!!trelloWebhook).toEqual(false);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions).toEqual(null);
+      const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
+      expect(newTrelloUserRecord.writeable_token).toEqual('');
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
+      trelloRevokeScope.done();
+    });
+
+    it('should response 200 when trello revoke return 401', async () => {
+      const rcUserId = 'rcUserId-xxx';
+      const botToken = jwt.generateToken({
+        uId: rcUserId,
+        bId: 'botId',
+        gId: 'conversationId',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: 'test_trello_user_id_xxx',
+      });
+      const trelloUserRecord = await TrelloUser.create({
+        id: 'test_trello_user_id_xxx',
+        writeable_token: 'xxxxx',
+      });
+      const trelloRevokeScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .reply(401, {});
+      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      expect(res.status).toEqual(200);
+      const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
+      expect(newTrelloUserRecord.writeable_token).toEqual('');
+      await RcUser.destroy({ where: { id: rcUserRecord.id } });
+      await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
+      trelloRevokeScope.done();
     });
   });
 });

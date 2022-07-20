@@ -122,7 +122,7 @@ async function notification(req, res) {
       }
     }
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
   res.status(200);
   res.json({

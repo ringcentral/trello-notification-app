@@ -95,25 +95,25 @@ class Trello {
     return response.data;
   }
 
-  async updateWebhook({
-    id,
-    description,
-    callbackURL,
-    idModel,
-    active,
-  }) {
-    const query = obj2uri({
-      key: this._appKey,
-      token: this._token,
-      callbackURL,
-      idModel,
-      description,
-      active,
-    })
-    const uri = `${this._appServer}/1/webhooks/${id}?${query}`;
-    const response = await axios.put(uri);
-    return response.data;
-  }
+  // async updateWebhook({
+  //   id,
+  //   description,
+  //   callbackURL,
+  //   idModel,
+  //   active,
+  // }) {
+  //   const query = obj2uri({
+  //     key: this._appKey,
+  //     token: this._token,
+  //     callbackURL,
+  //     idModel,
+  //     description,
+  //     active,
+  //   })
+  //   const uri = `${this._appServer}/1/webhooks/${id}?${query}`;
+  //   const response = await axios.put(uri);
+  //   return response.data;
+  // }
 
   async deleteWebhook({
     id,

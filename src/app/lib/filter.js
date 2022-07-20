@@ -39,34 +39,4 @@ function getFilterId(message, filterIdsString) {
   return filterId;
 }
 
-function getCategoryFiltersFromFilters(filtersValue, category) {
-  const filterGroup = filtersGroupByCategory[category];
-  if (!filtersValue) {
-    return filterGroup.items.map(item => item.id).join(',');
-  }
-  const filters = filtersValue.split(',');
-  const categoryFilters = [];
-  filters.forEach((filter) => {
-    if (filterGroup.items.find(item => item.id === filter)) {
-      categoryFilters.push(filter);
-    }
-  });
-  return categoryFilters.join(',');
-}
-
-function getListFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 0);
-}
-
-function getCardFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 1);
-}
-
-function getChecklistFiltersFromFilters(filtersValue) {
-  return getCategoryFiltersFromFilters(filtersValue, 2);
-}
-
 exports.getFilterId = getFilterId;
-exports.getListFiltersFromFilters = getListFiltersFromFilters;
-exports.getCardFiltersFromFilters = getCardFiltersFromFilters;
-exports.getChecklistFiltersFromFilters = getChecklistFiltersFromFilters;

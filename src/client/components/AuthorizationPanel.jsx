@@ -48,7 +48,7 @@ function UserCenter({
     <Fragment>
       <LoginInfo>
         <RcText variant="subheading1" color="textPrimary">
-          Authenticated as &nbsp;
+          Trello connected as &nbsp;
         </RcText>
         <RcText variant="subheading2">
           {userInfo.fullName}

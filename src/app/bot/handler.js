@@ -11,7 +11,7 @@ async function botHandler({
 }) {
   try {
     if (type === 'GroupJoined') {
-      if (message.body.type !== 'PrivateChat') {
+      if (message.body.type === 'Team') {
         const botId = message.ownerId;
         const joinGroupBot = await Bot.findByPk(botId);
         const joinedGroup = {
@@ -25,7 +25,17 @@ async function botHandler({
     }
     if (type === 'Message4Bot') {
       if (text === 'setup') {
-        await botActions.sendSetupCard({ bot, group, user: { id: userId }});
+        if (group.type === 'Group') {
+          await bot.sendMessage(group.id, {
+            text: `Hi ![:Person](${userId}), we only support to connect Trello for **Team** conversation now.`,
+          });
+          return;
+        }
+        await botActions.sendSetupCard({
+          bot,
+          groupId: group.id,
+          conversation: group,
+        });
         return;
       }
       if (text === 'unauthorize') {
@@ -40,7 +50,14 @@ async function botHandler({
       // await bot.ensureWebHook();
       // await bot.getUser(userId);
       // await bot.sendMessage(group.id, { text: 'Hi!' });
-      await botActions.sendHelpCard(bot, group);
+      if (group.type === 'Group') {
+        await bot.sendMessage(group.id, {
+          text: `Hi ![:Person](${userId}), we only support to connect Trello for **Team** conversation now.`,
+        });
+      } else {
+        await botActions.sendHelpCard(bot, group);
+      }
+      return;
     }
     if (type === 'Create') {
       const newBot = await Bot.findByPk(message.body.extensionId);

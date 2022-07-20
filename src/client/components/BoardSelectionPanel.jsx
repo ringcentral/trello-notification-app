@@ -1,6 +1,7 @@
 import React from 'react';
-import { RcSelect, RcListItem, RcButton, RcGrid } from '@ringcentral/juno';
+import { RcButton } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
+import { BoardSelection } from './BoardSelection';
 
 const ButtonGroup = styled.div`
   display: flex;
@@ -24,25 +25,14 @@ export function BoardSelectionPanel({
   gotoUpperStep,
   gotoNextStep,
 }) {
-  const items = boards.map((board) => {
-    return (
-      <RcListItem value={board.id} key={board.id}>
-        {board.name}
-      </RcListItem>
-    )
-  });
   return (
     <div>
       <SelectionWrapper>
-        <RcSelect
+        <BoardSelection
+          boards={boards}
           value={value}
-          onChange={(event) => {
-            const { value } = event.target;
-            onChange(value);
-          }}
-        >
-          {items}
-        </RcSelect>
+          onChange={onChange}
+        />
       </SelectionWrapper>
       <ButtonGroup>
         <RcButton

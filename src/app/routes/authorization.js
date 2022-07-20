@@ -6,6 +6,7 @@ const botActions = require('../bot/actions');
 
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
+const { TrelloWebhook } = require('../models/trello-webhook');
 
 // authorize Trello with only read permission
 async function authorize(req, res) {
@@ -94,20 +95,16 @@ async function botSaveToken(req, res) {
       });
     }
     if (nextAction === 'subscribe') {
-      const boards = await trello.getBoards();
       const group = await bot.getGroup(conversationId);
-      await botActions.sendSubscribeCard({
+      await botActions.sendSetupCard({
         bot,
         conversation: {
           id: conversationId,
           name: group.name || '',
         },
-        trelloData: {
-          boards,
-        },
         existingCardId: cardId,
       });
-    } else {
+    } else if (cardId) {
       await botActions.sendAuthSuccessCard({
         bot,
         authCardId: cardId,
@@ -220,6 +217,61 @@ async function revokeToken(req, res) {
   }
 }
 
+async function botRevokeToken(req, res) {
+  const jwtToken = req.body.token;
+  if (!jwtToken) {
+    res.status(403);
+    res.send('Error params');
+    return;
+  }
+  const decodedToken = decodeToken(jwtToken);
+  if (!decodedToken) {
+    res.status(401);
+    res.send('Token invalid.');
+    return;
+  }
+  const rcUserId = decodedToken.uId;
+  let rcUser;
+  let trelloUser;
+  try {
+    rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
+    if (!rcUser || !rcUser.trello_user_id) {
+      res.status(200);
+      res.json({ result: 'ok' });
+      return;
+    }
+    trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
+    if (!trelloUser || !trelloUser.writeable_token) {
+      res.status(200);
+      res.json({ result: 'ok' });
+      return;
+    }
+    const trello = new Trello({
+      appKey: process.env.TRELLO_APP_KEY,
+      redirectUrl: '',
+    });
+    trello.setToken(trelloUser.writeable_token);
+    await trello.revokeToken();
+    trelloUser.writeable_token = '';
+    await trelloUser.save();
+    if (rcUser.bot_subscriptions && rcUser.bot_subscriptions.length > 0) {
+      await TrelloWebhook.destroy({
+        where: {
+          id: rcUser.bot_subscriptions.map(sub => sub.id),
+        }
+      });
+      rcUser.bot_subscriptions = null;
+      await rcUser.save();
+    }
+    res.status(200);
+    res.json({ result: 'ok' });
+  } catch (e) {
+    console.error(e);
+    res.status(500);
+    res.send('internal error');
+  }
+}
+
 exports.authorize = authorize;
 exports.fullAuthorize = fullAuthorize;
 exports.revokeToken = revokeToken;
@@ -227,3 +279,4 @@ exports.oauthCallback = oauthCallback;
 exports.saveToken = saveToken;
 exports.botOauthCallback = botOauthCallback;
 exports.botSaveToken = botSaveToken;
+exports.botRevokeToken = botRevokeToken;

@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { RingCentralNotificationIntegrationHelper } from 'ringcentral-notification-integration-helper'
 
-import { App } from './components/Root';
+import { NotificationSetup } from './pages/NotificationSetup';
 import { Client } from './lib/client';
 import { Analytics } from './lib/analytics';
 
@@ -15,6 +15,6 @@ const analytics = new Analytics({
 window.client = client;
 
 ReactDOM.render(
-  <App integrationHelper={integrationHelper} client={client} analytics={analytics} />,
+  <NotificationSetup integrationHelper={integrationHelper} client={client} analytics={analytics} />,
   document.querySelector('div#viewport'),
 );

@@ -3,8 +3,9 @@ import Segment from './segment';
 export class Analytics {
   _ready = false;
 
-  constructor({ segmentKey } = {}) {
+  constructor({ segmentKey, appName = 'Trello Notifications' }) {
     this._analytics = Segment();
+    this._appName = appName;
     if (segmentKey) {
       analytics.load(segmentKey, {
         integrations: {
@@ -21,9 +22,9 @@ export class Analytics {
       return;
     }
     const trackProps = {
-      appName: 'Trello Notifications',
+      appName: this._appName,
       ...properties,
-    }
+    };
     analytics.track(event, trackProps, {
       integrations: {
         All: true,
