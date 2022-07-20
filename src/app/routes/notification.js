@@ -60,19 +60,20 @@ async function onBotRemoved(trello, trelloWebhook, trelloUser) {
 async function notification(req, res) {
   const trelloWebhookId = req.params.id;
   // console.log(JSON.stringify(req.body, null, 2));
+  const trello = new Trello({
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
+  });
+  let trelloUser;
+  let trelloWebhook;
   try {
-    const trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
+    trelloWebhook = await TrelloWebhook.findByPk(trelloWebhookId);
     if (!trelloWebhook) {
       res.status(404);
       res.send('Not found');
       return;
     }
     const isBotNotification = !!trelloWebhook.bot_id;
-    const trello = new Trello({
-      appKey: process.env.TRELLO_APP_KEY,
-      redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
-    });
-    let trelloUser
     if (shouldUpdateBoardLabels(req.body.action.type)) {
       trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
       if (isBotNotification) {
@@ -123,6 +124,14 @@ async function notification(req, res) {
     }
   } catch (e) {
     console.error(e);
+    if (
+      e.response &&
+      (e.response.status === 403 || e.response.status === 404) &&
+      e.response.config.url.indexOf('glip/chats') > -1
+    ) {
+      // stop subscription when glip chat is deleted or archived
+      await onBotRemoved(trello, trelloWebhook, trelloUser);
+    }
   }
   res.status(200);
   res.json({

@@ -149,7 +149,7 @@ describe('Bot Notify', () => {
     trelloBoardLabelsScope.done();
   });
 
-  it('should get 200 and unsubscribe trello when bot id is not found at no card request', async () => {
+  it('should get 200 and unsubscribe trello when bot id is not found at list event request', async () => {
     trelloWebhook.bot_id = 'xxx';
     await trelloWebhook.save();
     const trelloDeleteWebhookScope = nock('https://api.trello.com')
@@ -162,7 +162,7 @@ describe('Bot Notify', () => {
     trelloDeleteWebhookScope.done();
   });
 
-  it('should get 200 and unsubscribe trello when bot id is not found at card request', async () => {
+  it('should get 200 and unsubscribe trello when bot id is not found at card event request', async () => {
     trelloWebhook.bot_id = 'xxx';
     await trelloWebhook.save();
     const trelloDeleteWebhookScope = nock('https://api.trello.com')
@@ -181,6 +181,74 @@ describe('Bot Notify', () => {
     expect(res.status).toEqual(200);
     trelloDeleteWebhookScope.done();
     trelloCardScope.done();
+  });
+
+  it('should get 200 and unsubscribe trello when bot is removed from conversation', async () => {
+    await trelloWebhook.save();
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(404, {});
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    trelloDeleteWebhookScope.done();
+    trelloCardScope.done();
+    rcCardScope.done();
+  });
+
+  it('should get 200 and unsubscribe trello when the conversation is archived', async () => {
+    await trelloWebhook.save();
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(403, {});
+    const trelloDeleteWebhookScope = nock('https://api.trello.com')
+      .delete(uri => uri.includes(`/1/webhooks/${trelloWebhook.trello_webhook_id}?`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    trelloDeleteWebhookScope.done();
+    trelloCardScope.done();
+    rcCardScope.done();
+  });
+
+  it('should get 200  when bot send card with 502', async () => {
+    await trelloWebhook.save();
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(502, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    trelloCardScope.done();
+    rcCardScope.done();
   });
 
   it('should send card successfully when label color and name is null', async () => {
