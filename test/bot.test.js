@@ -308,14 +308,9 @@ describe('Bot', () => {
     rcGroupScope.done();
   });
 
-  it('should send authorize card to direct message when bot get authorize command at direct conversation', async () => {
+  it('should send authorize card to conversation when bot get authorize command', async () => {
     const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/auth_card_id`))
       .reply(200, {
         id: 'auth_card_id',
       });
@@ -323,22 +318,14 @@ describe('Bot', () => {
       .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
       .reply(200, {
         id: groupId,
-        members: [
-          "170848004",
-          "713297005"
-        ]
-      });
-    const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
-      .reply(200, {
-        id: groupId,
+        type: 'PrivateChat',
         members: [
           "170848004",
           "713297005"
         ]
       });
     let requestBody = null;
-    rcAuthCardPutScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       requestBody = JSON.parse(reqBody);
     });
     const res = await request(server).post('/bot/webhook').send({
@@ -374,32 +361,15 @@ describe('Bot', () => {
     expect(res.status).toEqual(200);
     expect(requestBody.type).toContain('AdaptiveCard');
     expect(requestBody.fallbackText).toContain('Connect with Trello');
+    expect(JSON.stringify(requestBody)).toContain('Please click following button for authorization');
+    expect(JSON.stringify(requestBody)).toContain(botId);
     rcCardScope.done();
     rcGroupScope.done();
-    rcDirectGroupScope.done();
   });
 
-  it('should send authorize card to direct message when bot get authorize command at team conversation', async () => {
-    const directGroupId = 'direct_group_id';
-    const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
-      .reply(200, {
-        id: directGroupId,
-        members: [
-          "170848004",
-          "713297005"
-        ]
-      });
+  it('should send authorize card to the conversation when bot get authorize command at team conversation', async () => {
     const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${directGroupId}/adaptive-cards`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
-      .reply(200, {});
-    const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/auth_card_id`))
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${groupId}/adaptive-cards`))
       .reply(200, {
         id: 'auth_card_id',
       });
@@ -407,6 +377,7 @@ describe('Bot', () => {
       .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
       .reply(200, {
         id: groupId,
+        type: 'Team',
         members: [
           "170848004",
           "170853004",
@@ -414,12 +385,8 @@ describe('Bot', () => {
         ]
       });
     let cardRequestBody = null;
-    rcAuthCardPutScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
       cardRequestBody = JSON.parse(reqBody);
-    });
-    let messageRequestBody = null;
-    rcMessageScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
-      messageRequestBody = JSON.parse(reqBody);
     });
     const res = await request(server).post('/bot/webhook').send({
       "uuid": "5794186355105264737",
@@ -454,11 +421,10 @@ describe('Bot', () => {
     expect(res.status).toEqual(200);
     expect(cardRequestBody.type).toContain('AdaptiveCard');
     expect(cardRequestBody.fallbackText).toContain('Connect with Trello');
-    expect(messageRequestBody.text).toContain('I just sent you a **Private** message');
+    expect(JSON.stringify(cardRequestBody)).toContain('Please click following button for authorization');
+    expect(JSON.stringify(cardRequestBody)).toContain(botId);
     rcCardScope.done();
     rcGroupScope.done();
-    rcDirectGroupScope.done();
-    rcMessageScope.done();
   });
 
   it('should send authorized when bot get authorize command and user authorized', async () => {
