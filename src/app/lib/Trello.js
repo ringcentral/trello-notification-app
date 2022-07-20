@@ -34,13 +34,13 @@ class Trello {
     this._token = token;
   }
 
-  setName(name) {
-    this._name = name;
-  }
+  // setName(name) {
+  //   this._name = name;
+  // }
 
-  setRedirectUrl(redirectUrl) {
-    this._redirectUrl = redirectUrl;
-  }
+  // setRedirectUrl(redirectUrl) {
+  //   this._redirectUrl = redirectUrl;
+  // }
 
   authorizationUrl({ scope = 'read' } = {}) {
     const query = obj2uri({
