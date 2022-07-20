@@ -479,7 +479,7 @@ describe('Notification Webhooks', () => {
       boardId,
       filters: 'addChecklistToCard',
     });
-    expect(res.status).toEqual(501);
+    expect(res.status).toEqual(500);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloLabelsScope.done();
   });
