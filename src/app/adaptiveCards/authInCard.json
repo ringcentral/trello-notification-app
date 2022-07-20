@@ -45,32 +45,24 @@
         "items": [
           {
             "type": "TextBlock",
-            "text": "Authorize",
-            "wrap": true,
-            "weight": "Bolder"
-          },
-          {
-            "type": "TextBlock",
-            "text": "Please click following button to authorize:",
+            "text": "Please click following button for authorization:",
             "wrap": true
-          },
-          {
-            "type": "TextBlock",
-            "id": "authButtonGenerating",
-            "text": "Authorization button generating..",
-            "color": "Accent"
           },
           {
             "type": "ActionSet",
             "id": "authActionSet",
             "actions": [
               {
-                "type": "Action.OpenUrl",
-                "title": "Authorize Trello",
-                "url": "${authorizeUrl}"
+                "type": "Action.Submit",
+                "title": "Authorization",
+                "data": {
+                  "messageType": "Bot",
+                  "action": "authorize",
+                  "botId": "${botId}"
+                },
+                "style": "positive"
               }
-            ],
-            "isVisible": false
+            ]
           }
         ],
         "separator": true,

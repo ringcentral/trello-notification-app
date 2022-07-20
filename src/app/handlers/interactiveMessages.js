@@ -166,6 +166,23 @@ function getSetupDialog(botId, body) {
   };
 }
 
+function getAuthDialog(botId, body) {
+  const botToken = generateToken({
+    uId: body.user.extId,
+    bId: botId,
+    gId: body.conversation.id,
+  }, '24h');
+  return {
+    type: 'dialog',
+    dialog: {
+      title: `Trello authorization`,
+      size: 'small',
+      iconURL: DIALOG_ICON_URL,
+      iframeURL: `${process.env.APP_SERVER}/bot-auth-setup?token=${botToken}`,
+    }
+  };
+}
+
 async function botInteractiveMessagesHandler(req, res) {
   const body = req.body;
   const botId = body.data.botId;
@@ -204,6 +221,12 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       res.status(200);
       res.send('ok');
+      return;
+    }
+    if (action === 'authorize') {
+      // show dialog for authorization
+      res.status(200);
+      res.json(getAuthDialog(botId, body));
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -246,14 +269,8 @@ async function botInteractiveMessagesHandler(req, res) {
       return;
     }
     if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
-      await botActions.sendAuthCardIntoDirectGroup({
-        bot,
-        user: { id: body.user.extId },
-        conversation: body.conversation,
-        trello,
-      });
       res.status(200);
-      res.send('ok');
+      res.json(getAuthDialog(botId, body));
       return;
     }
     trello.setToken(trelloUser.writeable_token);
@@ -296,14 +313,8 @@ async function botInteractiveMessagesHandler(req, res) {
     ) {
       trelloUser.writeable_token = '';
       await trelloUser.save();
-      await botActions.sendAuthCardIntoDirectGroup({
-        bot,
-        user: { id: body.user.extId },
-        conversation: body.conversation,
-        trello,
-      });
       res.status(200);
-      res.send('ok');
+      res.json(getAuthDialog(botId, body));
       return;
     }
     console.error(e);

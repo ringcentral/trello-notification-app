@@ -35,6 +35,25 @@ function botOauthCallback(req, res) {
   res.render('bot-oauth-callback');
 }
 
+async function botAuthSetup(req, res) {
+  const token = req.query.token;
+  const trello = new Trello({
+    appKey: process.env.TRELLO_APP_KEY,
+    redirectUrl: `${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${token}`,
+    name: 'RingCentral Bot',
+  });
+  res.render('auth-setup', {
+    assetsPath: process.env.ASSETS_PATH,
+    data: {
+      token,
+      infoUri: `${process.env.APP_SERVER}/bot-info`,
+      authorizationUri: trello.authorizationUrl({ scope: 'read,write' }),
+      authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
+      segmentKey: process.env.SEGMENT_KEY,
+    },
+  });
+}
+
 async function botSaveToken(req, res) {
   const botToken = req.params.botToken;
   const decodedToken = decodeToken(botToken);
@@ -280,3 +299,4 @@ exports.saveToken = saveToken;
 exports.botOauthCallback = botOauthCallback;
 exports.botSaveToken = botSaveToken;
 exports.botRevokeToken = botRevokeToken;
+exports.botAuthSetup = botAuthSetup;
