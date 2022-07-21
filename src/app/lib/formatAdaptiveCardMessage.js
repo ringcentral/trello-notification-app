@@ -290,6 +290,7 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
     const subject = getCardMessageSubject(action);
     const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels))
     const isDescriptionUpdated = action.display.translationKey === 'action_changed_description_of_card';
+    const isArchivedCard = action.display.translationKey === 'action_archived_card';
     const isCommentAdded = action.type === 'commentCard';
     const params = {
       summary,
@@ -335,6 +336,12 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
       if (listLabel) {
         listLabel.text = 'Card';
       }
+    }
+    if (isArchivedCard) {
+      const actionContainer1 = findItemInAdaptiveCard(card, 'actionContainer1');
+      actionContainer1.isVisible = false;
+      const actionContainer2 = findItemInAdaptiveCard(card, 'actionContainer2');
+      actionContainer2.isVisible = false;
     }
     if (!botId) {
       const migrationWarning = findItemInAdaptiveCard(card, 'migrationWarning');

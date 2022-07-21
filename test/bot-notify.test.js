@@ -16,6 +16,7 @@ const addChecklistToCardData = require('../example-payloads/addChecklistToCard.j
 const createLabelData = require('../example-payloads/createLabel.json');
 const updateCardDescriptionData = require('../example-payloads/updateCard-description.json');
 const commentCardData = require('../example-payloads/commentCard.json');
+const archiveCardData = require('../example-payloads/updateCard-archived.json');
 
 describe('Bot Notify', () => {
   const botId = '12121';
@@ -115,6 +116,30 @@ describe('Bot Notify', () => {
       .send(createCardData);
     expect(res.status).toEqual(200);
     expect(requestBody.fallbackText).toContain('New card created');
+    rcCardScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with archiveCardData message', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(archiveCardData);
+    expect(res.status).toEqual(200);
+    expect(requestBody.fallbackText).toContain('archived');
     rcCardScope.done();
     trelloCardScope.done();
   });
