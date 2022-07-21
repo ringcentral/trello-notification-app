@@ -109,7 +109,7 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello setup for Team name');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('?token=');
+    expect(iframeURL).toContain('/bot-setup?token=');
     const tokenStr = iframeURL.split('?token=')[1];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
@@ -139,7 +139,7 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello setup for this conversation');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('?token=');
+    expect(iframeURL).toContain('/bot-setup?token=');
     const tokenStr = iframeURL.split('?token=')[1];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
@@ -282,6 +282,35 @@ describe('Bot Notification', () => {
     rcCardPutScope.done();
     expect(newCardRequestBody.fallbackText).toContain('Trello setup for **Team name**');
     expect(JSON.stringify(newCardRequestBody)).toContain('Please click following button to finish Trello setup');
+  });
+
+  it('should send auth dialog successfully with authorize action', async () => {
+    const res = await request(server).post('/interactive-messages').send({
+      data: {
+        messageType: 'Bot',
+        botId: botId,
+        action: 'authorize',
+      },
+      user: {
+        firstName: 'Test',
+        lastName: 'Test1',
+        extId: 'test_ext_id',
+      },
+      card: {},
+      conversation: {
+        id: groupId,
+      },
+    });
+    expect(res.status).toEqual(200);
+    expect(res.body.type).toEqual('dialog');
+    expect(res.body.dialog.title).toEqual('Trello authorization');
+    const iframeURL = res.body.dialog.iframeURL;
+    expect(iframeURL).toContain('/bot-auth-setup?token=');
+    const tokenStr = iframeURL.split('?token=')[1];
+    const token = decodeToken(tokenStr);
+    expect(token.bId).toEqual(botId);
+    expect(token.uId).toEqual('test_ext_id');
+    expect(token.gId).toEqual(groupId);
   });
 
   it('should send not authorized yet when unauthorize but not authorized', async () => {
@@ -475,32 +504,7 @@ describe('Bot Notification', () => {
     await RcUser.destroy({ where: { id: rcUserRecord.id }});
   });
 
-  it('should send auth card when have not setup action and not authorized', async () => {
-    const directGroupId = 'test_direct_group_id';
-    const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
-      .reply(200, {
-        id: directGroupId,
-        members: [
-          "170848004",
-          "713297005"
-        ],
-      });
-    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${directGroupId}/adaptive-cards`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-      .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/auth_card_id`))
-      .reply(200, {
-        id: 'auth_card_id',
-      });
-    const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
-      .reply(200, {});
-    const authCardRequestBodyPromise = getRequestBody(rcAuthCardPutScope);
-    const messageRequestBodyPromise = getRequestBody(rcMessageScope);
+  it('should send auth dialog when have interactive actions and not authorized', async () => {
     const res = await request(server).post('/interactive-messages').send({
       data: {
         messageType: 'Bot',
@@ -520,15 +524,16 @@ describe('Bot Notification', () => {
         id: groupId,
       },
     });
-    const authCardRequestBody = await authCardRequestBodyPromise;
-    const messageRequestBody = await messageRequestBodyPromise;
-    expect(res.status).toEqual(200)
-    expect(authCardRequestBody.fallbackText).toContain('Connect with Trello');
-    expect(messageRequestBody.text).toContain('I just sent you a **Private** message');
-    rcAuthCardPutScope.done();
-    rcDirectGroupScope.done();
-    rcCardScope.done();
-    rcMessageScope.done();
+    expect(res.status).toEqual(200);
+    expect(res.body.type).toEqual('dialog');
+    expect(res.body.dialog.title).toEqual('Trello authorization');
+    const iframeURL = res.body.dialog.iframeURL;
+    expect(iframeURL).toContain('bot-auth-setup?token=');
+    const tokenStr = iframeURL.split('?token=')[1];
+    const token = decodeToken(tokenStr);
+    expect(token.bId).toEqual(botId);
+    expect(token.uId).toEqual('test_ext_id');
+    expect(token.gId).toEqual(groupId);
   });
 
   describe('card actions', () => {
@@ -834,36 +839,11 @@ describe('Bot Notification', () => {
       trelloCommentScope.done();
     });
 
-    it('should send auth card when trello response 401', async() => {
-      const directGroupId = 'test_direct_group_id';
-      const rcDirectGroupScope = nock(process.env.RINGCENTRAL_SERVER)
-        .post(uri => uri.includes(`/restapi/v1.0/glip/conversations`))
-        .reply(200, {
-          id: directGroupId,
-          members: [
-            "170848004",
-            "713297005"
-          ],
-        });
-      const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
-        .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${directGroupId}/adaptive-cards`))
-        .reply(200, {
-          id: 'auth_card_id',
-        });
-      const rcAuthCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
-        .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/auth_card_id`))
-        .reply(200, {
-          id: 'auth_card_id',
-        });
-      const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
-        .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
-        .reply(200, {});
+    it('should send auth dialog when trello response 401', async() => {
       const trelloCardId = 'test-trello-card-id';
       const trelloCommentScope = nock('https://api.trello.com')
         .post(uri => uri.includes(`/1/cards/${trelloCardId}/actions/comments?`))
         .reply(401, {});
-      const rcAuthCardRequestBodyPromise = getRequestBody(rcAuthCardPutScope);
-      const messageRequestBodyPromise = getRequestBody(rcMessageScope);
       const res = await request(server).post('/interactive-messages').send({
         data: {
           messageType: 'Bot',
@@ -884,16 +864,17 @@ describe('Bot Notification', () => {
           id: groupId,
         },
       });
-      const authCardRequestBody = await rcAuthCardRequestBodyPromise;
-      const messageRequestBody = await messageRequestBodyPromise;
       expect(res.status).toEqual(200);
-      expect(authCardRequestBody.fallbackText).toContain('Connect with Trello');
-      expect(messageRequestBody.text).toContain('I just sent you a **Private** message');
+      expect(res.body.type).toEqual('dialog');
+      expect(res.body.dialog.title).toEqual('Trello authorization');
+      const iframeURL = res.body.dialog.iframeURL;
+      expect(iframeURL).toContain('/bot-auth-setup?token=');
+      const tokenStr = iframeURL.split('?token=')[1];
+      const token = decodeToken(tokenStr);
+      expect(token.bId).toEqual(botId);
+      expect(token.uId).toEqual(rcUserId);
+      expect(token.gId).toEqual(groupId);
       trelloCommentScope.done();
-      rcDirectGroupScope.done();
-      rcCardScope.done();
-      rcAuthCardPutScope.done();
-      rcMessageScope.done();
     });
   });
 });

@@ -37,6 +37,12 @@ describe('Trello Authorization', () => {
     expect(res.text).toContain('Wait a moment');
   });
 
+  it('should get 200 at auth setup page request', async () => {
+    const res = await request(server).get('/bot-auth-setup?token=new_token');
+    expect(res.status).toEqual(200);
+    expect(res.text).toContain('new_token');
+  });
+
   it('should response 403 when save token without token', async () => {
     const res = await request(server).post('/trello/token');
     expect(res.status).toEqual(403);

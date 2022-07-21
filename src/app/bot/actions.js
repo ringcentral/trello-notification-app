@@ -10,7 +10,6 @@ const unauthorizeTemplate = require('../adaptiveCards/unauthorize.json');
 const setupTemplate = require('../adaptiveCards/setup.json');
 
 const { Trello } = require('../lib/Trello');
-const { generateToken } = require('../lib/jwt');
 
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
@@ -45,57 +44,13 @@ async function sendWelcomeCard(bot) {
 
 async function sendAuthCard({
   bot,
-  user,
-  directGroup,
-  conversationId = '',
-  existingCardId,
-  title,
-  trello,
-  nextAction = '',
+  group,
 }) {
-  let cardId = existingCardId;
-  if (!cardId) {
-    const authCard = getAdaptiveCardFromTemplate(authTemplate, {
-      title,
-      authorizeUrl: '',
-    });
-    const rcCard = await bot.sendAdaptiveCard(directGroup.id, authCard);
-    cardId = rcCard.id;
-  }
-  const botToken = generateToken({
-    uId: user.id,
-    bId: bot.id,
-    cId: cardId,
-    gId: conversationId,
-    next: nextAction,
-  });
-  trello.setName('RingCentral Bot');
-  trello.setRedirectUrl(`${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${botToken}`);
-  const newAuthCard = getAdaptiveCardFromTemplate(authTemplate, {
-    title,
-    authorizeUrl: trello.authorizationUrl({ scope: 'read,write' }),
-  });
-  const authButtonGeneratingItem = findItemInAdaptiveCard(newAuthCard, 'authButtonGenerating');
-  authButtonGeneratingItem.isVisible = false;
-  const authActionSetItem = findItemInAdaptiveCard(newAuthCard, 'authActionSet');
-  delete authActionSetItem.isVisible;
-  await bot.updateAdaptiveCard(cardId, newAuthCard);
-}
-
-async function sendAuthCardIntoDirectGroup({ bot, user, trello, conversation }) {
-  const directGroup = await createDirectGroup(bot, user);
-  await sendAuthCard({
-    bot,
-    user,
-    directGroup,
+  const authCard = getAdaptiveCardFromTemplate(authTemplate, {
     title: 'Connect with Trello',
-    trello,
+    botId: bot.id,
   });
-  if (conversation.id !== directGroup.id) {
-    await bot.sendMessage(conversation.id, {
-      text: `Hi ![:Person](${user.id}), I just sent you a **Private** message, please follow that to connect your Trello account. After authorized, you can enable interactive button features.`,
-    });
-  }
+  await bot.sendAdaptiveCard(group.id, authCard);
 }
 
 async function sendAuthSuccessCard({
@@ -121,16 +76,7 @@ async function handleAuthorize({ bot, group, user }) {
     });
     return;
   }
-  const trello = new Trello({
-    appKey: process.env.TRELLO_APP_KEY,
-    redirectUrl: '',
-  });
-  await sendAuthCardIntoDirectGroup({
-    bot,
-    conversation: group,
-    user,
-    trello,
-  });
+  await sendAuthCard({ bot, group });
 }
 
 async function handleUnauthorize({
@@ -266,7 +212,6 @@ exports.sendSetupCard = sendSetupCard;
 exports.getAdaptiveCard = getAdaptiveCard;
 exports.sendAuthCard = sendAuthCard;
 exports.sendAuthSuccessCard = sendAuthSuccessCard;
-exports.sendAuthCardIntoDirectGroup = sendAuthCardIntoDirectGroup;
 exports.addOperationLogIntoCard = addOperationLogIntoCard;
 exports.handleUnauthorize = handleUnauthorize;
 exports.handleAuthorize = handleAuthorize;

@@ -19,6 +19,7 @@ const LoginInfo = styled.div`
 
 function LoginPanel({
   onLogin,
+  description = 'To begin, please connect your Trello account.',
 }) {
   return (
     <Fragment>
@@ -28,7 +29,7 @@ function LoginPanel({
         paragraph
         display="block"
       >
-        To begin, please connect your Trello account.
+        {description}
       </RcTypography>
       <br />
       <RcButton onClick={onLogin}>
@@ -63,16 +64,20 @@ function UserCenter({
         </RcButton>
         &nbsp;
         &nbsp;
-        <RcButton onClick={() => gotoNextStep()}>
-          Next Step
-        </RcButton>
+        {
+          gotoNextStep && (
+            <RcButton onClick={() => gotoNextStep()}>
+              Next Step
+            </RcButton>
+          )
+        }
       </ButtonGroup>
       <RcDialog
         open={confirmModalOpened}
         onClose={() => setConfirmModalOpened(false)}
       >
         <RcDialogContent>
-          <RcTypography>Are you sure to unauthorize? All notifications will be stopped after unauthorized.</RcTypography>
+          <RcTypography>Are you sure to unauthorize? All trello subscriptions that you created will be stopped after unauthorized.</RcTypography>
         </RcDialogContent>
         <RcDialogActions>
           <RcButton variant="outlined" onClick={() => setConfirmModalOpened(false)}>
@@ -94,6 +99,7 @@ export function AuthorizationPanel({
   userInfo,
   onLogout,
   gotoNextStep,
+  authDescription,
 }) {
   if (authorized) {
     return (
@@ -108,6 +114,7 @@ export function AuthorizationPanel({
   return (
     <LoginPanel
       onLogin={onLogin}
+      description={authDescription}
     />
   );
 }

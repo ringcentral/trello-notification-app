@@ -41,6 +41,7 @@ exports.appExtend = (app) => {
   app.get('/bot-subscription', botSetupRoute.getSubscription);
   app.post('/bot-subscription', botSetupRoute.saveSubscription);
   app.delete('/bot-subscription', botSetupRoute.removeSubscription);
+  app.get('/bot-auth-setup', authorizationRoute.botAuthSetup);
   app.post('/trello/bot-revoke', authorizationRoute.botRevokeToken);
   extendBotApp(app, [], botHandler, botConfig);
   app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
