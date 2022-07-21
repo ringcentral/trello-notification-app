@@ -201,6 +201,7 @@
     },
     {
       "type": "Container",
+      "id": "actionContainer1",
       "items": [
         {
           "type": "ActionSet",
@@ -270,6 +271,7 @@
     },
     {
       "type": "Container",
+      "id": "actionContainer2",
       "items": [
         {
           "type": "ActionSet",
