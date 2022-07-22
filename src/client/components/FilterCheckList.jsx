@@ -38,6 +38,8 @@ function getSelectedCountInCategory(category, selectedFilters) {
 }
 
 export function FilterCheckList({ selectedFilters, setSelectedFilters, analytics }) {
+  const windowSize = window.innerWidth;
+  const gridSize = windowSize < 460 ? 12 : 6;
   return (
     <Fragment>
       {
@@ -80,7 +82,7 @@ export function FilterCheckList({ selectedFilters, setSelectedFilters, analytics
                 <RcGrid container>
                   {
                     category.items.map((item) => (
-                      <RcGrid item xs={6} key={item.id}>
+                      <RcGrid item xs={gridSize} key={item.id}>
                         <RcCheckbox
                           formControlLabelProps={{
                             labelPlacement: 'end',
