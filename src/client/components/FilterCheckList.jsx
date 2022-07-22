@@ -38,7 +38,7 @@ function getSelectedCountInCategory(category, selectedFilters) {
 }
 
 export function FilterCheckList({ selectedFilters, setSelectedFilters, analytics }) {
-  const windowSize = window.innerWidth;
+  const windowSize = window.innerWidth || 500;
   const gridSize = windowSize < 460 ? 12 : 6;
   return (
     <Fragment>
