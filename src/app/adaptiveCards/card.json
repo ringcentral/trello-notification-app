@@ -9,122 +9,69 @@
           "type": "Column",
           "items": [
             {
-              "type": "ColumnSet",
-              "columns": [
-                {
-                  "type": "Column",
-                  "items": [
-                    {
-                      "type": "Image",
-                      "url": "${avatarUrl}",
-                      "height": "28px",
-                      "style": "Person"
-                    }
-                  ],
-                  "verticalContentAlignment": "Center",
-                  "width": "auto"
-                },
-                {
-                  "type": "Column",
-                  "items": [
-                    {
-                      "type": "TextBlock",
-                      "text": "[${username}](${userLink})",
-                      "wrap": true
-                    }
-                  ],
-                  "verticalContentAlignment": "Center",
-                  "width": "stretch"
-                }
-              ]
+              "type": "Image",
+              "url": "${avatarUrl}",
+              "height": "28px",
+              "style": "Person"
             }
           ],
+          "verticalContentAlignment": "Center",
+          "width": "auto"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "[${username}](${userLink}) ${subject}",
+              "wrap": true
+            }
+          ],
+          "verticalContentAlignment": "Center",
           "width": "stretch"
         },
         {
           "type": "Column",
-          "width": "stretch",
           "items": [
             {
-              "type": "ColumnSet",
-              "columns": [
-                {
-                  "type": "Column",
-                  "items": [
-                    {
-                      "type": "TextBlock",
-                      "text": "Card",
-                      "wrap": true,
-                      "isSubtle": true,
-                      "horizontalAlignment": "Right"
-                    }
-                  ],
-                  "verticalContentAlignment": "Center",
-                  "width": "stretch"
-                },
-                {
-                  "type": "Column",
-                  "items": [
-                    {
-                      "type": "Image",
-                      "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/card.png",
-                      "height": "28px"
-                    }
-                  ],
-                  "verticalContentAlignment": "Center",
-                  "width": "auto"
-                }
-              ]
+              "type": "TextBlock",
+              "text": "Card",
+              "size": "Small",
+              "isSubtle": true
             }
-          ]
+          ],
+          "verticalContentAlignment": "Center",
+          "width": "auto"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://raw.githubusercontent.com/ringcentral/trello-notification-app/main/icons/card.png",
+              "width": "28px"
+            }
+          ],
+          "verticalContentAlignment": "Center",
+          "width": "auto"
         }
       ]
     },
     {
       "type": "Container",
+      "id": "contentArea",
+      "isVisible": false,
       "items": [
         {
-          "type": "TextBlock",
-          "text": "${subject}",
-          "wrap": true
-        },
-        {
           "type": "Container",
-          "id": "commentArea",
+          "style": "emphasis",
           "items": [
             {
               "type": "TextBlock",
-              "text": "Comment",
-              "wrap": true,
-              "size": "Small",
-              "weight": "Bolder"
-            },
-            {
-              "type": "TextBlock",
-              "text": "${comment}",
+              "text": "${content}",
               "wrap": true
             }
-          ],
-          "isVisible": false
-        },
-        {
-          "type": "Container",
-          "id": "descriptionArea",
-          "items": [
-            {
-              "type": "TextBlock",
-              "text": "Description",
-              "wrap": true,
-              "size": "Small",
-              "weight": "Bolder"
-            },
-            {
-              "type": "TextBlock",
-              "text": "${description}",
-              "wrap": true
-            }
-          ],
-          "isVisible": false
+          ]
         }
       ],
       "spacing": "Medium"
