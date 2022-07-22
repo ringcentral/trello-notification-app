@@ -259,7 +259,14 @@ function truncateText(text, length) {
   return text;
 }
 
-function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', boardLabels, trelloCard, botId = '' }) {
+function getAdaptiveCardFromTrelloMessage({
+  trelloMessage,
+  webhookId = '',
+  boardLabels,
+  trelloCard,
+  botId = '',
+  disableButtons = false,
+}) {
   const action = trelloMessage.action;
   let card;
   let summary = getFallbackText(action);
@@ -337,7 +344,7 @@ function getAdaptiveCardFromTrelloMessage({ trelloMessage, webhookId = '', board
         listLabel.text = 'Card';
       }
     }
-    if (isArchivedCard) {
+    if (disableButtons || isArchivedCard) {
       const actionContainer1 = findItemInAdaptiveCard(card, 'actionContainer1');
       actionContainer1.isVisible = false;
       const actionContainer2 = findItemInAdaptiveCard(card, 'actionContainer2');

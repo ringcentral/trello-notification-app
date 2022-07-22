@@ -6,6 +6,7 @@ const { default: Bot } = require('ringcentral-chatbot-core/dist/models/Bot');
 const { server } = require('../src/server');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { TrelloUser } = require('../src/app/models/trello-user');
+const { findItemInAdaptiveCard } = require('../src/app/lib/findItemInAdaptiveCard');
 
 axios.defaults.adapter = require('axios/lib/adapters/http');
 
@@ -116,6 +117,76 @@ describe('Bot Notify', () => {
       .send(createCardData);
     expect(res.status).toEqual(200);
     expect(requestBody.fallbackText).toContain('New card created');
+    const actionContainer1 = findItemInAdaptiveCard(requestBody, 'actionContainer1');
+    expect(actionContainer1.isVisible).toEqual(undefined);
+    const actionContainer2 = findItemInAdaptiveCard(requestBody, 'actionContainer2');
+    expect(actionContainer2.isVisible).toEqual(undefined);
+    rcCardScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with createCardData message with disableButtons false', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    trelloWebhook.config = {
+      ...trelloWebhook.config,
+      disableButtons: false,
+    };
+    await trelloWebhook.save();
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    expect(requestBody.fallbackText).toContain('New card created');
+    const actionContainer1 = findItemInAdaptiveCard(requestBody, 'actionContainer1');
+    expect(actionContainer1.isVisible).toEqual(undefined);
+    const actionContainer2 = findItemInAdaptiveCard(requestBody, 'actionContainer2');
+    expect(actionContainer2.isVisible).toEqual(undefined);
+    rcCardScope.done();
+    trelloCardScope.done();
+  });
+
+  it('should get 200 with createCardData message with disableButtons true', async () => {
+    const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
+      .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))
+      .reply(200, {});
+    const trelloCardScope = nock('https://api.trello.com')
+      .get(uri => uri.includes('1/cards'))
+      .reply(200, {
+        id: 'test-card-id',
+        name: 'test-card-name',
+        labels: [],
+      });
+    let requestBody = null;
+    rcCardScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
+      requestBody = JSON.parse(reqBody);
+    });
+    trelloWebhook.config = {
+      ...trelloWebhook.config,
+      disableButtons: true,
+    };
+    await trelloWebhook.save();
+    const res = await request(server)
+      .post(`/trello-notify/${trelloWebhook.id}`)
+      .send(createCardData);
+    expect(res.status).toEqual(200);
+    expect(requestBody.fallbackText).toContain('New card created');
+    const actionContainer1 = findItemInAdaptiveCard(requestBody, 'actionContainer1');
+    expect(actionContainer1.isVisible).toEqual(false);
+    const actionContainer2 = findItemInAdaptiveCard(requestBody, 'actionContainer2');
+    expect(actionContainer2.isVisible).toEqual(false);
     rcCardScope.done();
     trelloCardScope.done();
   });
@@ -140,6 +211,10 @@ describe('Bot Notify', () => {
       .send(archiveCardData);
     expect(res.status).toEqual(200);
     expect(requestBody.fallbackText).toContain('archived');
+    const actionContainer1 = findItemInAdaptiveCard(requestBody, 'actionContainer1');
+    expect(actionContainer1.isVisible).toEqual(false);
+    const actionContainer2 = findItemInAdaptiveCard(requestBody, 'actionContainer2');
+    expect(actionContainer2.isVisible).toEqual(false);
     rcCardScope.done();
     trelloCardScope.done();
   });
@@ -256,7 +331,7 @@ describe('Bot Notify', () => {
     rcCardScope.done();
   });
 
-  it('should get 200  when bot send card with 502', async () => {
+  it('should get 200 when bot send card with 502', async () => {
     await trelloWebhook.save();
     const rcCardScope = nock(process.env.RINGCENTRAL_SERVER)
       .post(uri => uri.includes(`/restapi/v1.0/glip/chats/${conversationId}/adaptive-cards`))

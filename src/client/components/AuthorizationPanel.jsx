@@ -23,6 +23,7 @@ function LoginPanel({
 }) {
   return (
     <Fragment>
+      <br />
       <RcTypography
         color="textPrimary"
         variant="subheading1"
