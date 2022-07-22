@@ -295,7 +295,8 @@ function getAdaptiveCardFromTrelloMessage({
     });
   } else if (CARD_TYPES.indexOf(action.type) > -1) {
     const subject = getCardMessageSubject(action);
-    const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels))
+    const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels));
+    const selectedLabels = formatLabels(trelloCard.labels);
     const isDescriptionUpdated = action.display.translationKey === 'action_changed_description_of_card';
     const isArchivedCard = action.display.translationKey === 'action_archived_card';
     const isCommentAdded = action.type === 'commentCard';
@@ -315,16 +316,16 @@ function getAdaptiveCardFromTrelloMessage({
       messageType: botId ? 'Bot' : 'Notification',
       cardId: trelloMessage.action.data.card.id,
       defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id || '',
-      unselectedLabels: unselectedLabels,
+      unselectedLabels: unselectedLabels.length > 0 ? unselectedLabels : [{ title: 'no item', id: 'placeholder' }],
       defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id || '',
-      selectedLabels: formatLabels(trelloCard.labels),
+      selectedLabels: selectedLabels.length > 0 ? selectedLabels : [{ title: 'no item', id: 'placeholder' }],
     };
     card = getAdaptiveCardFromTemplate(cardTemplate, params);
     if (unselectedLabels.length === 0) {
       const addLabelForm = findItemInAdaptiveCard(card, 'addLabelForm');
       addLabelForm.isVisible = false;
     }
-    if (trelloCard.labels.length === 0) {
+    if (selectedLabels.length === 0) {
       const removeLabelForm = findItemInAdaptiveCard(card, 'removeLabelForm');
       removeLabelForm.isVisible = false;
       const selectedLabels = findItemInAdaptiveCard(card, 'selectedLabels');

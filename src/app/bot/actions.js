@@ -167,8 +167,8 @@ async function addOperationLogIntoCard({ bot, cardId, data, user }) {
   } else if (action === 'addLabel' || action === 'removeLabel') {
     const removeLabelInputItem = findItemInAdaptiveCard(card, 'removeLabel');
     const addLabelInputItem = findItemInAdaptiveCard(card, 'addLabel');
-    let unselectedLabels = addLabelInputItem.choices;
-    let selectedLabels = removeLabelInputItem.choices;
+    let unselectedLabels = addLabelInputItem.choices.filter(item => item.id !== 'placeholder');
+    let selectedLabels = removeLabelInputItem.choices.filter(item => item.id !== 'placeholder');
     if (action === 'addLabel') {
       const label = unselectedLabels.find(label => label.value === data.addLabel);
       description = `${name} added the label **${label.title}**`;
@@ -177,6 +177,7 @@ async function addOperationLogIntoCard({ bot, cardId, data, user }) {
       if (unselectedLabels.length === 0) {
         const addLabelFormItem = findItemInAdaptiveCard(card, 'addLabelForm');
         addLabelFormItem.isVisible = false;
+        unselectedLabels.push({ title: 'no item', id: 'placeholder' });
       }
       const removeLabelFormItem = findItemInAdaptiveCard(card, 'removeLabelForm');
       delete removeLabelFormItem.isVisible;
@@ -188,6 +189,7 @@ async function addOperationLogIntoCard({ bot, cardId, data, user }) {
       if (selectedLabels.length === 0) {
         const removeLabelFormItem = findItemInAdaptiveCard(card, 'removeLabelForm');
         removeLabelFormItem.isVisible = false;
+        selectedLabels.push({ title: 'no item', id: 'placeholder' });
       }
       const addLabelFormItem = findItemInAdaptiveCard(card, 'addLabelForm');
       delete addLabelFormItem.isVisible;
