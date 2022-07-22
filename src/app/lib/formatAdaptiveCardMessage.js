@@ -9,8 +9,8 @@ const authTemplate = require('../adaptiveCards/auth.json');
 
 const { ICON_URL, COLOR_IMAGE_URL_BASE } = require('./constants');
 
-function getAdaptiveCardFromTemplate(cardTemplate, params) {
-  const template = new Template(cardTemplate);
+function getAdaptiveCardFromTemplate(adaptiveCardTemplate, params) {
+  const template = new Template(adaptiveCardTemplate);
   const card = template.expand({
     $root: params
   });
@@ -58,14 +58,14 @@ function getLabelText(label) {
 const BOARD_TYPES = ['addMemberToBoard', 'moveListFromBoard', 'updateBoard'];
 function getBoardMessageSubject(action) {
   if (action.type === 'addMemberToBoard') {
-    return `**Added** [${action.member.fullName}](https://trello.com/${action.member.username}) to [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
+    return `**added** [${action.member.fullName}](https://trello.com/${action.member.username}) to [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
   }
   if (action.type === 'moveListFromBoard') {
-    return `List ${action.data.list.name} moved from [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
+    return `transferred list ${action.data.list.name} from [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink}) to another board`;
   }
   if (action.type === 'updateBoard') {
     if (action.display.translationKey === 'action_update_board_name') {
-      return `Renamed **${action.data.old.name}** to [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
+      return `renamed **${action.data.old.name}** to [${action.data.board.name}](https://trello.com/b/${action.data.board.shortLink})`;
     }
   }
 }
@@ -73,17 +73,17 @@ function getBoardMessageSubject(action) {
 const LIST_TYPES = ['createList', 'updateList'];
 function getListMessageSubject(action) {
   if (action.type === 'createList') {
-    return `Created [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
+    return `created [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
   }
   if (action.type === 'updateList') {
     if (action.display.translationKey === 'action_renamed_list') {
-      return `Renamed **${action.data.old.name}** to [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
+      return `renamed **${action.data.old.name}** to [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
     }
     if (action.display.translationKey === 'action_archived_list') {
-      return `Archived [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
+      return `archived [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
     }
     if (action.display.translationKey === 'action_sent_list_to_board') {
-      return `Unarchived [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink})`;
+      return `send [${action.data.list.name}](https://trello.com/b/${action.data.board.shortLink}) to the board`;
     }
   }
 }
@@ -91,47 +91,47 @@ function getListMessageSubject(action) {
 const CARD_TYPES = ['createCard', 'commentCard', 'addMemberToCard', 'removeMemberFromCard', 'addAttachmentToCard', 'addLabelToCard', 'removeLabelFromCard', 'updateCard'];
 function getCardMessageSubject(action) {
   if (action.type === 'createCard') {
-    return `New card created: [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `added [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'commentCard') {
-    return `Added a comment to [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `commented on [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'addMemberToCard') {
-    return `Added [${action.member.fullName}](https://trello.com/${action.member.username}) into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `added [${action.member.fullName}](https://trello.com/${action.member.username}) into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'removeMemberFromCard') {
-    return `Removed [${action.member.fullName}](https://trello.com/${action.member.username}) from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `removed [${action.member.fullName}](https://trello.com/${action.member.username}) from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'addAttachmentToCard') {
-    return `Added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
+    return `added attachment into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'addLabelToCard') {
-    return `Added label **${getLabelText(action.data.label)}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `added label **${getLabelText(action.data.label)}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'removeLabelFromCard') {
-    return `Removed label **${getLabelText(action.data.label)}** from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+    return `removed label **${getLabelText(action.data.label)}** from [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
   }
   if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_archived_card') {
-      return `Archived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+      return `archived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
     }
     if (action.display.translationKey === 'action_changed_description_of_card') {
-      return `Updated description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) `;
+      return `updated description of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
     }
     if (action.display.translationKey === 'action_added_a_due_date') {
-      return `Added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Due date:**  {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
+      return `added due date into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
     }
     if (action.display.translationKey === 'action_changed_a_due_date') {
-      return `Changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) \n**Due date:** {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
+      return `changed due date of [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
     }
     if (action.display.translationKey === 'action_move_card_from_list_to_list') {
-      return `Moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/b/${action.data.board.shortLink})`;
+      return `moved [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) from ${action.data.listBefore.name} to [${action.data.listAfter.name}](https://trello.com/b/${action.data.board.shortLink})`;
     }
     if (action.display.translationKey === 'action_renamed_card') {
-      return `Renamed **${action.data.old.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+      return `renamed **${action.data.old.name}** into [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
     }
     if (action.display.translationKey === 'action_sent_card_to_board') {
-      return `Unarchived [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink})`;
+      return `send [${action.data.card.name}](https://trello.com/c/${action.data.card.shortLink}) to the board`;
     }
   }
 }
@@ -179,7 +179,7 @@ function getFallbackText(action) {
       return `${action.memberCreator.fullName} archived ${action.data.list.name}`;
     }
     if (action.display.translationKey === 'action_sent_list_to_board') {
-      return `${action.memberCreator.fullName}  unarchived ${action.data.list.name}`;
+      return `${action.memberCreator.fullName} send ${action.data.list.name} to the board`;
     }
   }
   // card
@@ -224,7 +224,7 @@ function getFallbackText(action) {
       return `${action.memberCreator.fullName} renamed ${action.data.old.name} into ${action.data.card.name}`;
     }
     if (action.display.translationKey === 'action_sent_card_to_board') {
-      return `${action.memberCreator.fullName} unarchived ${action.data.card.name}`;
+      return `${action.memberCreator.fullName} send ${action.data.card.name} to the board`;
     }
   }
   // checklist
@@ -257,6 +257,25 @@ function truncateText(text, length) {
     return text.substring(0, length) + '...';
   }
   return text;
+}
+
+function getCardContentText(action) {
+  if (action.type === 'commentCard') {
+    return truncateText(action.data.text, 600);
+  }else if (action.type === 'addAttachmentToCard') {
+    return `**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
+  } else if (action.type === 'updateCard') {
+    if (action.display.translationKey === 'action_changed_description_of_card') {
+      return truncateText(action.data.card.desc, 800);
+    }
+    if (
+      action.display.translationKey === 'action_added_a_due_date' ||
+      action.display.translationKey === 'action_changed_a_due_date'
+    ) {
+      return `**Due date:**  {{DATE(${formatDateTime(action.data.card.due)},SHORT)}}`;
+    }
+  }
+  return '';
 }
 
 function getAdaptiveCardFromTrelloMessage({
@@ -295,10 +314,10 @@ function getAdaptiveCardFromTrelloMessage({
     });
   } else if (CARD_TYPES.indexOf(action.type) > -1) {
     const subject = getCardMessageSubject(action);
-    const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels))
-    const isDescriptionUpdated = action.display.translationKey === 'action_changed_description_of_card';
+    const unselectedLabels = formatLabels(getUnselectedLabels(boardLabels, trelloCard.labels));
+    const selectedLabels = formatLabels(trelloCard.labels);
     const isArchivedCard = action.display.translationKey === 'action_archived_card';
-    const isCommentAdded = action.type === 'commentCard';
+    const contentText = getCardContentText(action);
     const params = {
       summary,
       avatarUrl: getAvatarUrl(action),
@@ -308,35 +327,30 @@ function getAdaptiveCardFromTrelloMessage({
       boardName: trelloMessage.model.name,
       boardLink: trelloMessage.model.shortUrl,
       listName: trelloMessage.action.data.list ? trelloMessage.action.data.list.name : trelloMessage.action.data.card.name,
-      comment: isCommentAdded ? truncateText(trelloMessage.action.data.text, 600) : '',
-      description: isDescriptionUpdated ? truncateText(trelloMessage.action.data.card.desc, 800) : '',
+      content: contentText,
       webhookId,
       botId,
       messageType: botId ? 'Bot' : 'Notification',
       cardId: trelloMessage.action.data.card.id,
       defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id || '',
-      unselectedLabels: unselectedLabels,
+      unselectedLabels: unselectedLabels.length > 0 ? unselectedLabels : [{ title: 'no item', id: 'placeholder' }],
       defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id || '',
-      selectedLabels: formatLabels(trelloCard.labels),
+      selectedLabels: selectedLabels.length > 0 ? selectedLabels : [{ title: 'no item', id: 'placeholder' }],
     };
     card = getAdaptiveCardFromTemplate(cardTemplate, params);
     if (unselectedLabels.length === 0) {
       const addLabelForm = findItemInAdaptiveCard(card, 'addLabelForm');
       addLabelForm.isVisible = false;
     }
-    if (trelloCard.labels.length === 0) {
+    if (selectedLabels.length === 0) {
       const removeLabelForm = findItemInAdaptiveCard(card, 'removeLabelForm');
       removeLabelForm.isVisible = false;
       const selectedLabels = findItemInAdaptiveCard(card, 'selectedLabels');
       selectedLabels.isVisible = false;
     }
-    if (isCommentAdded) {
-      const commentArea = findItemInAdaptiveCard(card, 'commentArea');
-      delete commentArea.isVisible;
-    }
-    if (isDescriptionUpdated) {
-      const descriptionArea = findItemInAdaptiveCard(card, 'descriptionArea');
-      delete descriptionArea.isVisible;
+    if (contentText.length > 0) {
+      const contentArea = findItemInAdaptiveCard(card, 'contentArea');
+      delete contentArea.isVisible;
     }
     if (!trelloMessage.action.data.list) {
       const listLabel = findItemInAdaptiveCard(card, 'listLabel');
