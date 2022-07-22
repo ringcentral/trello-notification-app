@@ -459,6 +459,66 @@ describe('Bot Setup', () => {
       expect(trelloWebhookRecord.trello_user_id).toEqual(trelloUserId);
       expect(trelloWebhookRecord.conversation_id).toEqual(groupId);
       expect(trelloWebhookRecord.config.filters).toEqual('test,test1');
+      expect(trelloWebhookRecord.config.disableButtons).toEqual(false);
+      expect(trelloWebhookRecord.trello_webhook_id).toEqual('test_trello_webhook_id_xxx');
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      await trelloWebhookRecord.destroy();
+      trelloLabelsScope.done();
+      trelloWebhooksScope.done();
+      rcMessageScope.done();
+    });
+
+    it('should create subscription successfully with boardId and disableButtons', async () => {
+      const rcUserId = '1234444';
+      const groupId = '713297119';
+      const trelloUserId = 'trello-user-123456';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: groupId,
+      }, '24h');
+      const boardId = '5b6893f01cb3228998cf629e';
+      const trelloLabelsScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/boards/${boardId}/labels?`))
+        .reply(200, [
+          { "id":"6094fb83d41eeff1fa76129d", "name":"", "color":"green" },
+          { "id":"6094fb83d41eeff1fa7612a1", "name":"", "color":"yellow" },
+        ]);
+      const trelloWebhooksScope = nock('https://api.trello.com')
+        .post(uri => uri.includes('/1/webhooks?'))
+        .reply(200, {
+          id: 'test_trello_webhook_id_xxx',
+        });
+      const rcMessageScope = nock(process.env.RINGCENTRAL_SERVER)
+        .post(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}/posts`))
+        .reply(200, {});
+      const res = await request(server).post('/bot-subscription').send({
+        token,
+        filters: ['test', 'test1'],
+        boardId,
+        disableButtons: true,
+      });
+      expect(res.status).toEqual(200);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
+      const subscription = newRcUserRecord.bot_subscriptions[0];
+      expect(subscription.boardId).toEqual(boardId);
+      expect(subscription.conversation_id).toEqual(groupId);
+      const trelloWebhookRecord = await TrelloWebhook.findByPk(subscription.id);
+      expect(trelloWebhookRecord.bot_id).toEqual(botId);
+      expect(trelloWebhookRecord.trello_user_id).toEqual(trelloUserId);
+      expect(trelloWebhookRecord.conversation_id).toEqual(groupId);
+      expect(trelloWebhookRecord.config.filters).toEqual('test,test1');
+      expect(trelloWebhookRecord.config.disableButtons).toEqual(true);
       expect(trelloWebhookRecord.trello_webhook_id).toEqual('test_trello_webhook_id_xxx');
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -522,6 +582,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         subscriptionId,
+        disableButtons: false,
       });
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
@@ -533,6 +594,84 @@ describe('Bot Setup', () => {
       expect(newTrelloWebhookRecord.bot_id).toEqual(botId);
       expect(newTrelloWebhookRecord.conversation_id).toEqual(groupId);
       expect(newTrelloWebhookRecord.config.filters).toEqual('test,test1');
+      expect(newTrelloWebhookRecord.config.disableButtons).toEqual(false);
+      expect(newTrelloWebhookRecord.trello_webhook_id).toEqual('test_trello_webhook_id_xxx1');
+      await rcUserRecord.destroy();
+      await trelloUserRecord.destroy();
+      await newTrelloWebhookRecord.destroy();
+      trelloLabelsScope.done();
+      trelloWebhooksScope.done();
+      trelloDeleteWebhooksScope.done();
+    });
+
+    it('should update subscription successfully with subscriptionId with disableButtons', async () => {
+      const rcUserId = '1234444';
+      const groupId = '713297119';
+      const trelloUserId = 'trello-user-123456';
+      const subscriptionId = 'test_subscription_id';
+      const boardId = '5b6893f01cb3228998cf629e';
+      const trelloUserRecord = await TrelloUser.create({
+        id: trelloUserId,
+        writeable_token: 'xxx',
+      });
+      const rcUserRecord = await RcUser.create({
+        id: `rcext-${rcUserId}`,
+        trello_user_id: trelloUserId,
+        bot_subscriptions: [{
+          id: subscriptionId,
+          boardId,
+          conversation_id: groupId,
+        }],
+      });
+      await TrelloWebhook.create({
+        id: subscriptionId,
+        bot_id: botId,
+        conversation_id: groupId,
+        trello_user_id: 'trello-user-123456',
+        trello_webhook_id: 'test_trello_webhook_id_xxx',
+        config: {
+          boardId,
+          filters: 'test',
+          labels: [],
+          disableButtons: false,
+        },
+      });
+      const token = jwt.generateToken({
+        uId: rcUserId,
+        bId: botId,
+        gId: groupId,
+      }, '24h');
+      const trelloLabelsScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/boards/${boardId}/labels?`))
+        .reply(200, [
+          { "id":"6094fb83d41eeff1fa76129d", "name":"", "color":"green" },
+          { "id":"6094fb83d41eeff1fa7612a1", "name":"", "color":"yellow" },
+        ]);
+      const trelloDeleteWebhooksScope = nock('https://api.trello.com')
+        .delete(uri => uri.includes(`/1/webhooks/test_trello_webhook_id_xxx?`))
+        .reply(200, {});
+      const trelloWebhooksScope = nock('https://api.trello.com')
+        .post(uri => uri.includes('/1/webhooks?'))
+        .reply(200, {
+          id: 'test_trello_webhook_id_xxx1',
+        });
+      const res = await request(server).post('/bot-subscription').send({
+        token,
+        filters: ['test', 'test1'],
+        subscriptionId,
+        disableButtons: true,
+      });
+      expect(res.status).toEqual(200);
+      const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
+      expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
+      const subscription = newRcUserRecord.bot_subscriptions[0];
+      expect(subscription.boardId).toEqual(boardId);
+      expect(subscription.conversation_id).toEqual(groupId);
+      const newTrelloWebhookRecord = await TrelloWebhook.findByPk(subscription.id);
+      expect(newTrelloWebhookRecord.bot_id).toEqual(botId);
+      expect(newTrelloWebhookRecord.conversation_id).toEqual(groupId);
+      expect(newTrelloWebhookRecord.config.filters).toEqual('test,test1');
+      expect(newTrelloWebhookRecord.config.disableButtons).toEqual(true);
       expect(newTrelloWebhookRecord.trello_webhook_id).toEqual('test_trello_webhook_id_xxx1');
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
