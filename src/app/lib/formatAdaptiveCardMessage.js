@@ -266,7 +266,7 @@ function getCardContentText(action) {
     return `**Attachment**: [${action.data.attachment.name}](${action.data.attachment.url})`;
   } else if (action.type === 'updateCard') {
     if (action.display.translationKey === 'action_changed_description_of_card') {
-      return truncateText(trelloMessage.action.data.card.desc, 800);
+      return truncateText(action.data.card.desc, 800);
     }
     if (
       action.display.translationKey === 'action_added_a_due_date' ||
