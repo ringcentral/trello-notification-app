@@ -36,10 +36,11 @@ export class Client {
     }
   }
 
-  async saveSubscription({ boardId, filters, subscriptionId, boardName }) {
+  async saveSubscription({ boardId, filters, subscriptionId, boardName, disableButtons }) {
     const params = {
       token: this._token,
       filters,
+      disableButtons,
     };
     if (subscriptionId) {
       params.subscriptionId = subscriptionId;

@@ -106,6 +106,7 @@ async function notification(req, res) {
         botId: trelloWebhook.bot_id,
         trelloCard: card,
         boardLabels: trelloWebhook.config.labels || [],
+        disableButtons: trelloWebhook.config.disableButtons,
       });
       if (isBotNotification) {
         const bot = await Bot.findByPk(trelloWebhook.bot_id);

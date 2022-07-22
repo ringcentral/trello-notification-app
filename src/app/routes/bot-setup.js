@@ -168,6 +168,7 @@ async function saveSubscription(req, res) {
         boardId: trelloWebhook.config.boardId,
         filters: String(filters),
         labels,
+        disableButtons: !!req.body.disableButtons,
       };
       trelloWebhook.bot_id = bot.id;
       await trelloWebhook.save();
@@ -182,6 +183,7 @@ async function saveSubscription(req, res) {
           boardId,
           filters: String(filters),
           labels,
+          disableButtons: !!req.body.disableButtons,
         },
       });
     }

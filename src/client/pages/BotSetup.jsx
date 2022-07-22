@@ -14,9 +14,13 @@ import {
   RcStepper,
   RcThemeProvider,
   RcButton,
+  RcTypography,
+  RcCheckbox,
+  RcTooltip,
+  RcIcon,
 } from '@ringcentral/juno';
 import { styled } from '@ringcentral/juno/foundation';
-import { Feedback, Close } from '@ringcentral/juno/icon';
+import { Feedback, Close, InfoBorder } from '@ringcentral/juno/icon';
 
 import { AuthorizationPanel } from '../components/AuthorizationPanel';
 import { Subscriptions } from '../components/Subscriptions';
@@ -46,13 +50,26 @@ const Container = styled.div`
 const FloatingLink = styled.a`
   position: fixed;
   right: 10px;
-  bottom: 20px;
+  bottom: 10px;
 `;
 
-const FilterSection = styled.div`
+const SettingSection = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+`;
+
+const SettingLine = styled.div`
+  width: 100%;
+`;
+
+const OptionLine = styled(SettingLine)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  .MuiFormControlLabel-root {
+    margin-left: 0;
+  }
 `;
 
 const StyledSnackbar = styled(RcSnackbar)`
@@ -69,6 +86,7 @@ function StepContent({
   activeStep,
   userInfo,
   boards,
+  subscriptionId,
   boardId,
   setBoardId,
   subscriptions,
@@ -83,6 +101,8 @@ function StepContent({
   onEditSubscription,
   onNewSubscription,
   onDeleteSubscription,
+  enabledInteractiveButtons,
+  setEnabledInteractiveButtons,
 }) {
   if (activeStep === 1) {
     return (
@@ -101,21 +121,46 @@ function StepContent({
   }
   if (activeStep === 2) {
     return (
-      <FilterSection>
+      <SettingSection>
+        <SettingLine>
+          <RcTypography variant="subheading2">
+            Event Filters:
+          </RcTypography>
+        </SettingLine>
         <FilterCheckList
           selectedFilters={selectedFilters}
           setSelectedFilters={setSelectedFilters}
           analytics={analytics}
         />
         <br />
+        <SettingLine>
+          <RcTypography variant="subheading2">
+            Options:
+          </RcTypography>
+        </SettingLine>
+        <OptionLine>
+          <RcCheckbox
+            formControlLabelProps={{
+              labelPlacement: 'end',
+            }}
+            label="Enable interactive buttons"
+            checked={enabledInteractiveButtons}
+            onChange={(_, checked) => {
+              setEnabledInteractiveButtons(checked);
+            }}
+          />
+          <RcTooltip title="Support to update trello card in team messages">
+            <RcIcon symbol={InfoBorder} size="medium" />
+          </RcTooltip>
+        </OptionLine>
         <br />
         <RcButton
           disabled={selectedFilters.length === 0}
           onClick={onSaveSubscription}
         >
-          Save
+          { subscriptionId ? 'Save subscription' : 'Create subscription' }
         </RcButton>
-      </FilterSection>
+      </SettingSection>
     );
   }
   return (
@@ -147,6 +192,7 @@ export function BotSetup({ client, analytics }) {
   const [subscriptionId, setSubscriptionId] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [boardStepName, setBoardStepName] = useState('Select board');
+  const [enabledInteractiveButtons, setEnabledInteractiveButtons] = useState(true);
 
   useEffect(() => {
     async function syncInfo() {
@@ -182,6 +228,7 @@ export function BotSetup({ client, analytics }) {
   useEffect(() => {
     if (!subscriptionId) {
       setSelectedFilters([]);
+      setEnabledInteractiveButtons(true);
       return;
     }
     async function fetchSubscription() {
@@ -189,6 +236,7 @@ export function BotSetup({ client, analytics }) {
         setLoading(true);
         const subscription = await client.getSubscription(subscriptionId);
         setSelectedFilters(subscription.config.filters.split(','));
+        setEnabledInteractiveButtons(!subscription.config.disableButtons);
         setLoading(false);
       } catch (e) {
         console.error(e);
@@ -292,7 +340,7 @@ export function BotSetup({ client, analytics }) {
           </RcStep>
           <RcStep completed={filterSettingCompleted}>
             <RcStepLabel>
-              Set filters
+              Settings
             </RcStepLabel>
           </RcStep>
         </StyledStepper>
@@ -301,6 +349,7 @@ export function BotSetup({ client, analytics }) {
             activeStep={activeStep}
             userInfo={userInfo}
             boards={boards}
+            subscriptionId={subscriptionId}
             boardId={boardId}
             setBoardId={setBoardId}
             authorized={authorized}
@@ -327,6 +376,7 @@ export function BotSetup({ client, analytics }) {
                   filters: selectedFilters,
                   boardId,
                   boardName,
+                  disableButtons: !enabledInteractiveButtons,
                 });
                 if (boardId) {
                   const info = await client.getInfo();
@@ -367,6 +417,8 @@ export function BotSetup({ client, analytics }) {
             }}
             selectedFilters={selectedFilters}
             setSelectedFilters={setSelectedFilters}
+            enabledInteractiveButtons={enabledInteractiveButtons}
+            setEnabledInteractiveButtons={setEnabledInteractiveButtons}
             onLogin={() => {
               setLoading(true);
               window.open(client.authorizationUri, '_blank');
