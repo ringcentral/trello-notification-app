@@ -7,32 +7,33 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { RcUser } = require('../src/app/models/rc-user');
 const { TrelloUser } = require('../src/app/models/trello-user');
 const { decodeToken } = require('../src/app/lib/jwt');
+const { findItemInAdaptiveCard } = require('../src/app/lib/findItemInAdaptiveCard');
 
 const { getRequestBody } = require('./utils');
 
 const mockAdaptiveCardData = require('./mock-data/card.json');
+const { default: Bot } = require('ringcentral-chatbot-core/dist/models/Bot');
 
 describe('Bot Notification', () => {
   const botId = '266262004';
   const groupId = '713297005';
 
-  beforeAll(async () => {
-    const rcTokenScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes('/restapi/oauth/token'))
-      .reply(200, {
+  beforeEach(async () => {
+    await Bot.create({
+      id: botId,
+      token: {
         access_token: 'xxxxxx',
         token_type: 'bearer',
         expires_in: 2147483647,
         scope: 'SubscriptionWebhook TeamMessing ReadAccounts',
         owner_id: botId,
         endpoint_id: 'p7GZlEVHRwKDwbx6UkH0YQ'
-      });
-    const rcWebhookScope = nock(process.env.RINGCENTRAL_SERVER)
-      .post(uri => uri.includes('/restapi/v1.0/subscription'))
-      .reply(200, {});
-    await request(server).get('/bot/oauth?code=xxxxxx&client_id=xxxxxx');
-    rcTokenScope.done();
-    rcWebhookScope.done();
+      },
+    });
+  });
+
+  afterEach(async () => {
+    await Bot.destroy({ where: { id: botId } });
   });
 
   it('should get 400 with wrong body params', async () => {
@@ -768,6 +769,53 @@ describe('Bot Notification', () => {
       rcCardGetScope.done();
     });
 
+    it('should add label successfully with no label left', async() => {
+      const trelloCardId = 'test-trello-card-id';
+      const trelloScope = nock('https://api.trello.com')
+        .post(uri => uri.includes(`/1/cards/${trelloCardId}/idLabels?`))
+        .reply(200, {});
+      const rcCardPutScope = nock(process.env.RINGCENTRAL_SERVER)
+        .put(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
+        .reply(200, {
+          id: 'rc_card_id',
+        });
+      const newMockAdaptiveCardData = JSON.parse(JSON.stringify(mockAdaptiveCardData));
+      const addLabelChoiceSet = findItemInAdaptiveCard(newMockAdaptiveCardData, 'addLabel');
+      addLabelChoiceSet.choices = [addLabelChoiceSet.choices[0]];
+      const rcCardGetScope = nock(process.env.RINGCENTRAL_SERVER)
+        .get(uri => uri.includes(`/restapi/v1.0/glip/adaptive-cards/rc_card_id`))
+        .reply(200, newMockAdaptiveCardData);
+      const rcCardRequestBodyPromise = getRequestBody(rcCardPutScope);
+      const res = await request(server).post('/interactive-messages').send({
+        data: {
+          messageType: 'Bot',
+          botId: botId,
+          action: 'addLabel',
+          cardId: trelloCardId,
+          addLabel: addLabelChoiceSet.choices[0].value,
+        },
+        user: {
+          firstName: 'Test',
+          lastName: 'Test1',
+          extId: rcUserId,
+        },
+        card: {
+          id: 'rc_card_id',
+        },
+        conversation: {
+          id: groupId,
+        },
+      });
+      expect(res.status).toEqual(200);
+      const rcCardRequestBody = await rcCardRequestBodyPromise;
+      expect(JSON.stringify(rcCardRequestBody)).toContain('added the label');
+      const addLabelForm = findItemInAdaptiveCard(rcCardRequestBody, 'addLabelForm');
+      expect(addLabelForm.isVisible).toEqual(false);
+      rcCardPutScope.done();
+      trelloScope.done();
+      rcCardGetScope.done();
+    });
+
     it('should remove label successfully', async() => {
       const trelloCardId = 'test-trello-card-id';
       const trelloScope = nock('https://api.trello.com')
@@ -805,6 +853,8 @@ describe('Bot Notification', () => {
       expect(res.status).toEqual(200);
       const rcCardRequestBody = await rcCardRequestBodyPromise;
       expect(JSON.stringify(rcCardRequestBody)).toContain('removed the label');
+      const removeLabelForm = findItemInAdaptiveCard(rcCardRequestBody, 'removeLabelForm');
+      expect(removeLabelForm.isVisible).toEqual(false);
       rcCardPutScope.done();
       trelloScope.done();
       rcCardGetScope.done();
