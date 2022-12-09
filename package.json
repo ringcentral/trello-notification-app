@@ -56,7 +56,7 @@
     "whatwg-fetch": "^2.0.3"
   },
   "dependencies": {
-    "adaptive-expressions": "^4.14.1",
+    "adaptive-expressions": "^4.18.0",
     "adaptivecards-templating": "^2.1.0",
     "axios": "^0.26.1",
     "dotenv": "6.2.0",
