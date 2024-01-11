@@ -1,18 +1,24 @@
-import Segment from './segment';
+import mixpanel from 'mixpanel-browser';
+
+mixpanel._$$track = mixpanel.track;
+mixpanel.track = (...params) => {
+  const props = params[1] || {};
+  props['$current_url'] = `${window.location.origin}${window.location.pathname}`; // remove sensitive data in url
+  if (params.length === 1) {
+    params.push(props);
+  } else {
+    params[1] = props;
+  }
+  return mixpanel._$$track(...params);
+}
 
 export class Analytics {
   _ready = false;
 
-  constructor({ segmentKey, appName = 'Trello Notifications' }) {
-    this._analytics = Segment();
+  constructor({ mixpanelKey, appName = 'Trello Notifications' }) {
     this._appName = appName;
-    if (segmentKey) {
-      analytics.load(segmentKey, {
-        integrations: {
-          All: true,
-          Mixpanel: true,
-        },
-      });
+    if (mixpanelKey) {
+      mixpanel.init(mixpanelKey);
       this._ready = true;
     }
   }
@@ -25,11 +31,6 @@ export class Analytics {
       appName: this._appName,
       ...properties,
     };
-    analytics.track(event, trackProps, {
-      integrations: {
-        All: true,
-        Mixpanel: true,
-      },
-    });
+    mixpanel.track(event, trackProps);
   }
 }

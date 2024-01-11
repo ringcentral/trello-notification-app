@@ -39,6 +39,7 @@
     "babel-loader": "^8.1.0",
     "dynamodb-local": "0.0.31",
     "jest": "^27.0.6",
+    "mixpanel-browser": "2.48.1",
     "ngrok": "^4.3.0",
     "nock": "^13.1.3",
     "react": "^17.0.2",

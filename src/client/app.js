@@ -10,7 +10,7 @@ import { Analytics } from './lib/analytics';
 const integrationHelper = new RingCentralNotificationIntegrationHelper()
 const client = new Client(window.trelloNotifications);
 const analytics = new Analytics({
-  segmentKey: window.trelloNotifications.segmentKey,
+  mixpanelKey: window.trelloNotifications.mixpanelKey,
 });
 window.client = client;
 
