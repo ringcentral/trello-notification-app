@@ -6,6 +6,7 @@ const { RcUser } = require('../models/rc-user');
 const { Trello } = require('../lib/Trello');
 const { generateToken } = require('../lib/jwt');
 const { DIALOG_ICON_URL } = require('../lib/constants');
+const { Analytics } = require('../lib/analytics');
 
 const botActions = require('../bot/actions');
 
@@ -300,6 +301,15 @@ async function botInteractiveMessagesHandler(req, res) {
       cardId,
       data: body.data,
       user: body.user,
+    });
+    const analytics = new Analytics({
+      mixpanelKey: process.env.MIXPANEL_KEY,
+      secretKey: process.env.ANALYTICS_SECRET_KEY,
+      userId: body.user.extId,
+      accountId: body.user.accountId,
+    });
+    await analytics.track('Trello action', {
+      action,
     });
     res.status(200);
     res.send('ok');

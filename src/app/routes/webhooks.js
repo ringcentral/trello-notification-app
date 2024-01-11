@@ -25,7 +25,7 @@ async function newWebhook(req, res) {
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/revoke`,
       webhookInfoUri: `${process.env.APP_SERVER}/webhooks/info`,
       webhookCreationUri: `${process.env.APP_SERVER}/webhooks`,
-      segmentKey: process.env.SEGMENT_KEY,
+      mixpanelKey: process.env.MIXPANEL_KEY,
     },
   });
 }

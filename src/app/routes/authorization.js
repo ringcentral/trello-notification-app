@@ -49,7 +49,7 @@ async function botAuthSetup(req, res) {
       infoUri: `${process.env.APP_SERVER}/bot-info`,
       authorizationUri: trello.authorizationUrl({ scope: 'read,write' }),
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
-      segmentKey: process.env.SEGMENT_KEY,
+      mixpanelKey: process.env.MIXPANEL_KEY,
     },
   });
 }

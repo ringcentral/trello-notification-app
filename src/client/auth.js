@@ -8,7 +8,7 @@ import { Analytics } from './lib/analytics';
 
 const client = new Client(window.trelloNotifications);
 const analytics = new Analytics({
-  segmentKey: window.trelloNotifications.segmentKey,
+  mixpanelKey: window.trelloNotifications.mixpanelKey,
   appName: 'Trello Bot',
 });
 window.client = client;
