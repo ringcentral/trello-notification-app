@@ -13,12 +13,14 @@ class Analytics {
     secretKey,
     userId,
     accountId,
+    appName = 'Trello Bot',
   }) {
     if (mixpanelKey) {
       this._mixpanel = Mixpanel.init(mixpanelKey);
     }
     this._hashUserId = getHashValue(userId, secretKey);
     this._hashAccountId = getHashValue(accountId, secretKey);
+    this._appName = appName;
   }
 
   track(event, properties = {}) {
@@ -30,6 +32,7 @@ class Analytics {
         ...properties,
         distinct_id: this._hashUserId,
         rcAccountId: this._hashAccountId,
+        appName: this._appName,
       }, (err) => {
         if (err) {
           reject(err);
