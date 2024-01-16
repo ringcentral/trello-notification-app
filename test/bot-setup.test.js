@@ -12,11 +12,22 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 axios.defaults.adapter = require('axios/lib/adapters/http');
 
 describe('Bot Setup', () => {
-  it('should get 200 at setup page request', async () => {
+  it('should get 401 at setup page request', async () => {
     const res = await request(server).get('/bot-setup?token=new_token');
-    expect(res.status).toEqual(200);
-    expect(res.text).toContain('new_token');
+    expect(res.status).toEqual(401);
   });
+
+  it('should get 200 at setup page request', async () => {
+    const token = jwt.generateToken({
+      uId: '123',
+      bId: '123',
+      gId: '111',
+    });
+    const res = await request(server).get(`/bot-setup?token=${token}`);
+    expect(res.status).toEqual(200);
+    expect(res.text).toContain(token);
+  });
+
 
   describe('Info', () => {
     it('should get 403 without token', async () => {

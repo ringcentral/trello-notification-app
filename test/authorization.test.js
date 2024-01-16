@@ -38,9 +38,12 @@ describe('Trello Authorization', () => {
   });
 
   it('should get 200 at auth setup page request', async () => {
-    const res = await request(server).get('/bot-auth-setup?token=new_token');
+    const token = jwt.generateToken({
+      id: 'xxx',
+    });
+    const res = await request(server).get(`/bot-auth-setup?token=${token}`);
     expect(res.status).toEqual(200);
-    expect(res.text).toContain('new_token');
+    expect(res.text).toContain(token);
   });
 
   it('should response 403 when save token without token', async () => {

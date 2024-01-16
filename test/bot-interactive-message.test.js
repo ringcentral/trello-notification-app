@@ -111,7 +111,7 @@ describe('Bot Notification', () => {
     expect(res.body.dialog.title).toEqual('Trello setup for Team name');
     const iframeURL = res.body.dialog.iframeURL;
     expect(iframeURL).toContain('/bot-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1];
+    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
     expect(token.uId).toEqual('test_ext_id');
@@ -141,7 +141,7 @@ describe('Bot Notification', () => {
     expect(res.body.dialog.title).toEqual('Trello setup for this conversation');
     const iframeURL = res.body.dialog.iframeURL;
     expect(iframeURL).toContain('/bot-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1];
+    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
     expect(token.uId).toEqual('test_ext_id');
@@ -307,7 +307,7 @@ describe('Bot Notification', () => {
     expect(res.body.dialog.title).toEqual('Trello authorization');
     const iframeURL = res.body.dialog.iframeURL;
     expect(iframeURL).toContain('/bot-auth-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1];
+    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
     expect(token.uId).toEqual('test_ext_id');
@@ -530,7 +530,7 @@ describe('Bot Notification', () => {
     expect(res.body.dialog.title).toEqual('Trello authorization');
     const iframeURL = res.body.dialog.iframeURL;
     expect(iframeURL).toContain('bot-auth-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1];
+    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
     expect(token.uId).toEqual('test_ext_id');
@@ -919,7 +919,7 @@ describe('Bot Notification', () => {
       expect(res.body.dialog.title).toEqual('Trello authorization');
       const iframeURL = res.body.dialog.iframeURL;
       expect(iframeURL).toContain('/bot-auth-setup?token=');
-      const tokenStr = iframeURL.split('?token=')[1];
+      const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
       const token = decodeToken(tokenStr);
       expect(token.bId).toEqual(botId);
       expect(token.uId).toEqual(rcUserId);

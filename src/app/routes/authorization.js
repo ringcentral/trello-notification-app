@@ -2,6 +2,7 @@ const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 
 const { Trello } = require('../lib/Trello');
 const { decodeToken, generateToken } = require('../lib/jwt');
+const { getHashValue } = require('../lib/getHashValue');
 const botActions = require('../bot/actions');
 
 const { TrelloUser } = require('../models/trello-user');
@@ -42,6 +43,12 @@ async function botAuthSetup(req, res) {
     redirectUrl: `${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${token}`,
     name: 'RingCentral Bot',
   });
+  const decodedToken = decodeToken(token);
+  if (!decodedToken) {
+    res.status(401);
+    res.send('Token invalid, please reopen.');
+    return;
+  }
   res.render('auth-setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {
@@ -50,6 +57,9 @@ async function botAuthSetup(req, res) {
       authorizationUri: trello.authorizationUrl({ scope: 'read,write' }),
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
       mixpanelKey: process.env.MIXPANEL_KEY,
+      trackUserId: getHashValue(decodedToken.uId, process.env.ANALYTICS_SECRET_KEY),
+      trackAccountId: req.query.trackAccountId,
+      trackBotId: getHashValue(decodedToken.bId, process.env.ANALYTICS_SECRET_KEY),
     },
   });
 }

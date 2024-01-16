@@ -6,6 +6,7 @@ const { RCWebhook } = require('../models/rc-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { getFilterId } = require('../lib/filter');
 const { Trello } = require('../lib/Trello');
+const { Analytics } = require('../lib/analytics');
 const {
   getAdaptiveCardFromTrelloMessage,
   CARD_TYPES,
@@ -112,6 +113,15 @@ async function notification(req, res) {
         const bot = await Bot.findByPk(trelloWebhook.bot_id);
         if (bot) {
           await bot.sendAdaptiveCard(trelloWebhook.conversation_id, adaptiveCard);
+          const analytics = new Analytics({
+            mixpanelKey: process.env.MIXPANEL_KEY,
+            secretKey: process.env.ANALYTICS_SECRET_KEY,
+            userId: bot.id,
+            accountId: bot.token && bot.token.creator_account_id,
+          });
+          analytics.trackBotAction('cardPosted', {
+            chatId: trelloWebhook.conversation_id,
+          });
         } else {
           // Bot Removed
           await onBotRemoved(trello, trelloWebhook, trelloUser);
