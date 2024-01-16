@@ -10,6 +10,9 @@ const client = new Client(window.trelloNotifications);
 const analytics = new Analytics({
   mixpanelKey: window.trelloNotifications.mixpanelKey,
   appName: 'Trello Bot',
+  botId: window.trelloNotifications.trackBotId,
+  userId: window.trelloNotifications.trackUserId,
+  accountId: window.trelloNotifications.trackAccountId,
 });
 window.client = client;
 

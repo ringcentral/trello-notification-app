@@ -4,6 +4,7 @@ const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 const { Trello } = require('../lib/Trello');
+const { getHashValue } = require('../lib/getHashValue');
 const { generateToken } = require('../lib/jwt');
 const { DIALOG_ICON_URL } = require('../lib/constants');
 const { Analytics } = require('../lib/analytics');
@@ -156,13 +157,14 @@ function getSetupDialog(botId, body) {
     bId: botId,
     gId: body.data.conversationId || body.conversation.id,
   }, '24h');
+  const trackAccountId = getHashValue(body.user.accountId, process.env.ANALYTICS_SECRET_KEY);
   return {
     type: 'dialog',
     dialog: {
       title: `Trello setup for ${body.data.conversationName || 'this conversation'}`,
       size: 'medium',
       iconURL: DIALOG_ICON_URL,
-      iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}`,
+      iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}&trackAccountId=${trackAccountId}`,
     }
   };
 }
@@ -173,13 +175,14 @@ function getAuthDialog(botId, body) {
     bId: botId,
     gId: body.conversation.id,
   }, '24h');
+  const trackAccountId = getHashValue(body.user.accountId, process.env.ANALYTICS_SECRET_KEY);
   return {
     type: 'dialog',
     dialog: {
       title: `Trello authorization`,
       size: 'small',
       iconURL: DIALOG_ICON_URL,
-      iframeURL: `${process.env.APP_SERVER}/bot-auth-setup?token=${botToken}`,
+      iframeURL: `${process.env.APP_SERVER}/bot-auth-setup?token=${botToken}&trackAccountId=${trackAccountId}`,
     }
   };
 }
@@ -191,6 +194,11 @@ async function botInteractiveMessagesHandler(req, res) {
   let trelloUser;
   let bot;
   let trello;
+  const analytics = new Analytics({
+    mixpanelKey: process.env.MIXPANEL_KEY,
+    secretKey: process.env.ANALYTICS_SECRET_KEY,
+    userId: botId,
+  });
   try {
     bot = await Bot.findByPk(botId);
     if (!bot) {
@@ -198,11 +206,19 @@ async function botInteractiveMessagesHandler(req, res) {
       res.send('Params error');
       return;
     }
+    if (bot.token) {
+      analytics.setAccountId(bot.token.creator_account_id)
+    }
     const action = body.data.action;
     if (action === 'setup') {
       // show dialog for action from old card
       res.status(200);
       res.json(getSetupDialog(botId, body));
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action: 'openSetupDialog',
+        chatId: body.conversation.id,
+        result: 'success',
+      });
       return;
     }
     if (
@@ -222,12 +238,22 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       res.status(200);
       res.send('ok');
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action,
+        chatId: body.conversation.id,
+        result: 'success',
+      });
       return;
     }
     if (action === 'authorize') {
       // show dialog for authorization
       res.status(200);
       res.json(getAuthDialog(botId, body));
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action: 'openAuthDialog',
+        chatId: body.conversation.id,
+        result: 'success',
+      });
       return;
     }
     const rcUser = await RcUser.findByPk(`rcext-${body.user.extId}`);
@@ -267,11 +293,21 @@ async function botInteractiveMessagesHandler(req, res) {
       }
       res.status(200);
       res.send('ok');
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action: 'unauthorize',
+        chatId: body.conversation.id,
+        result: 'success',
+      });
       return;
     }
     if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
       res.status(200);
       res.json(getAuthDialog(botId, body));
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action,
+        result: 'authorizeRequired',
+        chatId: body.conversation.id,
+      });
       return;
     }
     trello.setToken(trelloUser.writeable_token);
@@ -283,6 +319,11 @@ async function botInteractiveMessagesHandler(req, res) {
         });
         res.status(200);
         res.send('ok');
+        await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+          action,
+          result: 'alreadyJoined',
+          chatId: body.conversation.id,
+        });
         return;
       } else {
         await trello.joinCard(body.data.cardId, trelloUser.id);
@@ -302,17 +343,13 @@ async function botInteractiveMessagesHandler(req, res) {
       data: body.data,
       user: body.user,
     });
-    const analytics = new Analytics({
-      mixpanelKey: process.env.MIXPANEL_KEY,
-      secretKey: process.env.ANALYTICS_SECRET_KEY,
-      userId: body.user.extId,
-      accountId: body.user.accountId,
-    });
-    await analytics.track('Trello action', {
-      action,
-    });
     res.status(200);
     res.send('ok');
+    await analytics.trackUserAction('cardSubmitted', body.user.extId, {
+      action,
+      result: 'success',
+      chatId: body.conversation.id,
+    });
   } catch (e) {
     if (
       e.response &&
@@ -325,6 +362,11 @@ async function botInteractiveMessagesHandler(req, res) {
       await trelloUser.save();
       res.status(200);
       res.json(getAuthDialog(botId, body));
+      analytics.trackUserAction('cardSubmitted', body.user.extId, {
+        action: body.data.action,
+        result: 'authorizeRequired',
+        chatId: body.conversation.id,
+      });
       return;
     }
     console.error(e);
