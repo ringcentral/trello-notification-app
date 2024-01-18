@@ -1,7 +1,7 @@
 const request = require('supertest');
 const nock = require('nock');
 const axios = require('axios');
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 const { server } = require('../src/server');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { RcUser } = require('../src/app/models/rc-user');

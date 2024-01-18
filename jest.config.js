@@ -16,4 +16,7 @@ module.exports = {
   maxConcurrency: 1,
   testEnvironment: 'node',
   coveragePathIgnorePatterns: ['/node_modules/'],
+  moduleNameMapper: {
+    "^axios$": 'axios/dist/node/axios.cjs'
+  },
 };

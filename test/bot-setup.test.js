@@ -9,7 +9,7 @@ const { TrelloUser } = require('../src/app/models/trello-user');
 const { RcUser } = require('../src/app/models/rc-user');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 describe('Bot Setup', () => {
   it('should get 401 at setup page request', async () => {

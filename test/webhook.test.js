@@ -8,7 +8,7 @@ const { TrelloUser } = require('../src/app/models/trello-user');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { RCWebhook } = require('../src/app/models/rc-webhook');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 describe('Notification Webhooks', () => {
   it('should get 404 without webhook uri', async () => {
