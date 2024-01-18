@@ -7,7 +7,7 @@ const { RCWebhook } = require('../src/app/models/rc-webhook');
 const { RcUser } = require('../src/app/models/rc-user');
 const { TrelloUser } = require('../src/app/models/trello-user');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 describe('Interactive Messages', () => {
   const rcWebhookId = '12121';

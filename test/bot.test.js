@@ -6,7 +6,7 @@ const { default: Bot } = require('ringcentral-chatbot-core/dist/models/Bot');
 const { TrelloUser } = require('../src/app/models/trello-user');
 const { RcUser } = require('../src/app/models/rc-user');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 const { server } = require('../src/server');
 

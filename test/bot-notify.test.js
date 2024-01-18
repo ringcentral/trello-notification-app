@@ -8,7 +8,7 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 const { TrelloUser } = require('../src/app/models/trello-user');
 const { findItemInAdaptiveCard } = require('../src/app/lib/findItemInAdaptiveCard');
 
-axios.defaults.adapter = require('axios/lib/adapters/http');
+axios.defaults.adapter = 'http';
 
 const createListData = require('../example-payloads/createList.json');
 const addMemberToBoardData = require('../example-payloads/addMemberToBoard.json');
