@@ -63,7 +63,7 @@
     "dotenv": "6.2.0",
     "dynamo-sequelize": "^3.1.0",
     "glip-integration-js": "^0.2.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "mixpanel": "^0.18.0",
     "nanoid": "^3.2.0",
     "pug": "^3.0.0",
