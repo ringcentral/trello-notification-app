@@ -134,7 +134,7 @@ async function notification(req, res) {
       }
     }
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     if (
       e.response &&
       (e.response.status === 403 || e.response.status === 404) &&

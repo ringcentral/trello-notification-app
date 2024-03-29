@@ -1,5 +1,3 @@
-const { createApp } = require('glip-integration-js');
+const { app } = require('./app/index.js');
 
-const appConf = require('./app/index.js');
-
-exports.server = createApp(appConf);
+exports.server = app;

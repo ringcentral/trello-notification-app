@@ -1,7 +1,7 @@
 const request = require('supertest');
 const nock = require('nock');
 const axios = require('axios');
-const { generate } = require('shortid');
+const { nanoid } = require('nanoid');
 const { default: Bot } = require('ringcentral-chatbot-core/dist/models/Bot');
 const { server } = require('../src/server');
 const { TrelloWebhook } = require('../src/app/models/trello-webhook');
@@ -38,7 +38,7 @@ describe('Bot Notify', () => {
       writeable_token: 'test-token',
     });
     trelloWebhook = await TrelloWebhook.create({
-      id: generate(),
+      id: nanoid(15),
       bot_id: botId,
       conversation_id: conversationId,
       trello_user_id: trelloUser.id,

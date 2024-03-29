@@ -189,7 +189,7 @@ async function createWebhook(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal server error');
     return;

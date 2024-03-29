@@ -124,7 +124,7 @@ async function botHandler({
       );
     }
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
   }
 }
 

@@ -230,7 +230,7 @@ async function saveSubscription(req, res) {
       res.send('Trello authorization required');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.json('Internal server error');
   }
@@ -270,7 +270,7 @@ async function getSubscription(req, res) {
       config: trelloWebhook.config || {},
     });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.json('Internal server error');
   }
@@ -344,7 +344,7 @@ async function removeSubscription(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.json('Internal server error');
   }

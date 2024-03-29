@@ -140,7 +140,7 @@ class Trello {
     try {
       await axios.delete(uri);
     } catch (e) {
-      console.error(e);
+      console.error(e && e.message);
     }
   }
 

@@ -150,7 +150,7 @@ async function botSaveToken(req, res) {
       res.send('Token invalid.');
       return;
     }
-    console.error(e);
+    console.error(e  && e.message);
     res.status(500);
     res.send('Internal error');
     return;
@@ -202,7 +202,7 @@ async function saveToken(req, res) {
       res.send('Token invalid.');
       return;
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal error.');
   }
@@ -240,7 +240,7 @@ async function revokeToken(req, res) {
       authorized: false,
     });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('internal error');
   }
@@ -295,7 +295,7 @@ async function botRevokeToken(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('internal error');
   }
