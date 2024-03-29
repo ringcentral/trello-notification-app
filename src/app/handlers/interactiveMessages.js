@@ -144,7 +144,7 @@ async function notificationInteractiveMessagesHandler(req, res) {
         return;
       }
     }
-    console.error(e);
+    console.error(e && e.message);
     res.status(500);
     res.send('Internal error');
     return;
@@ -369,7 +369,7 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
-    console.error(e);
+    console.error(e  && e.message);
     res.status(500);
     res.send('Internal error');
   }
