@@ -20,6 +20,11 @@ async function botSetup(req, res) {
     res.send('Token invalid, please reopen');
     return;
   }
+  let trackAccountId = undefined;
+  if (req.query.trackAccountId) {
+    // escape the value to prevent XSS
+    trackAccountId = encodeURIComponent(req.query.trackAccountId);
+  }
   res.render('bot-setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {
@@ -31,7 +36,7 @@ async function botSetup(req, res) {
       mixpanelKey: process.env.MIXPANEL_KEY,
       trackBotId: getHashValue(decodedToken.bId, process.env.ANALYTICS_SECRET_KEY),
       trackUserId: getHashValue(decodedToken.uId, process.env.ANALYTICS_SECRET_KEY),
-      trackAccountId: req.query.trackAccountId,
+      trackAccountId,
     },
   });
 }
