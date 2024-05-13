@@ -49,6 +49,11 @@ async function botAuthSetup(req, res) {
     res.send('Token invalid, please reopen.');
     return;
   }
+  let trackAccountId = undefined;
+  if (req.query.trackAccountId) {
+    // escape the value to prevent XSS
+    trackAccountId = encodeURIComponent(req.query.trackAccountId);
+  }
   res.render('auth-setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {
@@ -58,7 +63,7 @@ async function botAuthSetup(req, res) {
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
       mixpanelKey: process.env.MIXPANEL_KEY,
       trackUserId: getHashValue(decodedToken.uId, process.env.ANALYTICS_SECRET_KEY),
-      trackAccountId: req.query.trackAccountId,
+      trackAccountId,
       trackBotId: getHashValue(decodedToken.bId, process.env.ANALYTICS_SECRET_KEY),
     },
   });
