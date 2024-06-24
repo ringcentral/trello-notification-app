@@ -6,7 +6,13 @@ export class Client {
   }
 
   async getInfo() {
-    const response = await fetch(`${this._config.infoUri}?token=${this._token}&random=${Date.now()}`);
+    const response = await fetch(`${this._config.infoUri}?random=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'x-access-token': this._token,
+        'Content-Type': 'application/json',
+      },
+    });
     if (response.status === 401) {
       throw new Error('Session expired! Please reopen the dialog.');
     }
@@ -64,7 +70,13 @@ export class Client {
   }
 
   async getSubscription(id) {
-    const response = await fetch(`${this._config.subscriptionUri}?token=${this._token}&id=${id}&random=${Date.now()}`);
+    const response = await fetch(`${this._config.subscriptionUri}?id=${id}&random=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'x-access-token': this._token,
+        'Content-Type': 'application/json',
+      },
+    });
     if (response.status === 401) {
       throw new Error('Session expired! Please reopen the dialog.');
     }

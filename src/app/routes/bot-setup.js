@@ -42,7 +42,7 @@ async function botSetup(req, res) {
 }
 
 async function info(req, res) {
-  const jwtToken = req.query.token;
+  const jwtToken = req.headers['x-access-token'];
   if (!jwtToken) {
     res.status(403);
     res.send('Error params');
@@ -242,7 +242,7 @@ async function saveSubscription(req, res) {
 }
 
 async function getSubscription(req, res) {
-  const jwtToken = req.query.token;
+  const jwtToken = req.headers['x-access-token'];
   const subscriptionId = req.query.id;
   if (!jwtToken || !subscriptionId) {
     res.status(403);
