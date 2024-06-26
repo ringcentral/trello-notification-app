@@ -12,8 +12,13 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 axios.defaults.adapter = 'http';
 
 describe('Bot Setup', () => {
+  it('should get 400 at setup page request', async () => {
+    const res = await request(server).get('/bot-setup');
+    expect(res.status).toEqual(400);
+  });
+
   it('should get 401 at setup page request', async () => {
-    const res = await request(server).get('/bot-setup?token=new_token');
+    const res = await request(server).get('/bot-setup?code=new_token');
     expect(res.status).toEqual(401);
   });
 
@@ -23,9 +28,8 @@ describe('Bot Setup', () => {
       bId: '123',
       gId: '111',
     });
-    const res = await request(server).get(`/bot-setup?token=${token}`);
+    const res = await request(server).get(`/bot-setup?code=${token}`);
     expect(res.status).toEqual(200);
-    expect(res.text).toContain(token);
   });
 
 

@@ -41,9 +41,8 @@ describe('Trello Authorization', () => {
     const token = jwt.generateToken({
       id: 'xxx',
     });
-    const res = await request(server).get(`/bot-auth-setup?token=${token}`);
+    const res = await request(server).get(`/bot-auth-setup?code=${token}`);
     expect(res.status).toEqual(200);
-    expect(res.text).toContain(token);
   });
 
   it('should response 403 when save token without token', async () => {
@@ -191,8 +190,15 @@ describe('Trello Authorization', () => {
   });
 
   describe('Bot Save Token', () => {
+    it('should response 403 when save bot token without bot token', async () => {
+      const res = await request(server).post('/trello/bot-oauth-callback');
+      expect(res.status).toEqual(403);
+    });
+
     it('should response 401 when save bot token with invalid bot token', async () => {
-      const res = await request(server).post('/trello/bot-oauth-callback/xxx');
+      const res = await request(server).post('/trello/bot-oauth-callback').send({
+        botToken: 'xxx',
+      });
       expect(res.status).toEqual(401);
     });
   
@@ -203,7 +209,9 @@ describe('Trello Authorization', () => {
         cId: 'cardId',
         gId: 'conversationId',
       });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+      });
       expect(res.status).toEqual(401);
     });
   
@@ -217,7 +225,10 @@ describe('Trello Authorization', () => {
       const trelloUserScope = nock('https://api.trello.com')
         .get(uri => uri.includes(`/1/members/me?`))
         .reply(200, {});
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(403);
       trelloUserScope.done();
     });
@@ -232,7 +243,10 @@ describe('Trello Authorization', () => {
       const trelloUserScope = nock('https://api.trello.com')
         .get(uri => uri.includes(`/1/members/me?`))
         .reply(401, {});
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(401);
       trelloUserScope.done();
     });
@@ -247,7 +261,10 @@ describe('Trello Authorization', () => {
       const trelloUserScope = nock('https://api.trello.com')
         .get(uri => uri.includes(`/1/members/me?`))
         .reply(500, {});
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(500);
       trelloUserScope.done();
     });
@@ -266,7 +283,10 @@ describe('Trello Authorization', () => {
           id: trelloUserId,
           fullName: 'test name',
         });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(404);
       trelloUserScope.done();
     });
@@ -304,7 +324,10 @@ describe('Trello Authorization', () => {
       rcAuthCardPutScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
         requestBody = JSON.parse(reqBody);
       });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
@@ -359,7 +382,10 @@ describe('Trello Authorization', () => {
       rcAuthCardPutScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
         requestBody = JSON.parse(reqBody);
       });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
@@ -401,7 +427,10 @@ describe('Trello Authorization', () => {
           id: trelloUserId,
           fullName: 'test name',
         });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(200);
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(trelloUserRecord.writeable_token).toEqual('xxx');
@@ -458,7 +487,10 @@ describe('Trello Authorization', () => {
       rcCardPutScope.once('request', ({ headers: requestHeaders }, interceptor, reqBody) => {
         requestBody = JSON.parse(reqBody);
       });
-      const res = await request(server).post(`/trello/bot-oauth-callback/${botToken}?token=xxx`);
+      const res = await request(server).post(`/trello/bot-oauth-callback`).send({
+        botToken,
+        trelloToken: 'xxx',
+      });
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Trello setup for **test team**');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);

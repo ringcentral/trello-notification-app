@@ -3,23 +3,33 @@ const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 const { RcUser } = require('../models/rc-user');
 const { TrelloUser } = require('../models/trello-user');
 const { TrelloWebhook } = require('../models/trello-webhook');
-const { decodeToken } = require('../lib/jwt');
+const { decodeToken, generateToken } = require('../lib/jwt');
 const { Trello } = require('../lib/Trello');
 const { getHashValue } = require('../lib/getHashValue');
 
 async function botSetup(req, res) {
-  const token = req.query.token;
+  const code = req.query.code;
+  if (!code) {
+    res.status(400);
+    res.send('Code is required.');
+    return;
+  }
+  const decodedCode = decodeToken(code);
+  if (!decodedCode) {
+    res.status(401);
+    res.send('Token invalid, please reopen');
+    return;
+  }
+  const token = generateToken({
+    uId: decodedCode._uId,
+    bId: decodedCode.bId,
+    gId: decodedCode.gId,
+  }, '24h');
   const trello = new Trello({
     appKey: process.env.TRELLO_APP_KEY,
     redirectUrl: `${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${token}`,
     name: 'RingCentral Bot',
   });
-  const decodedToken = decodeToken(token);
-  if (!decodedToken) {
-    res.status(401);
-    res.send('Token invalid, please reopen');
-    return;
-  }
   let trackAccountId = undefined;
   if (req.query.trackAccountId) {
     // escape the value to prevent XSS
@@ -34,8 +44,8 @@ async function botSetup(req, res) {
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
       subscriptionUri: `${process.env.APP_SERVER}/bot-subscription`,
       mixpanelKey: process.env.MIXPANEL_KEY,
-      trackBotId: getHashValue(decodedToken.bId, process.env.ANALYTICS_SECRET_KEY),
-      trackUserId: getHashValue(decodedToken.uId, process.env.ANALYTICS_SECRET_KEY),
+      trackBotId: getHashValue(decodedCode.bId, process.env.ANALYTICS_SECRET_KEY),
+      trackUserId: getHashValue(decodedCode._uId, process.env.ANALYTICS_SECRET_KEY),
       trackAccountId,
     },
   });

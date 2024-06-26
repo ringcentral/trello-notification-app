@@ -33,22 +33,30 @@ function oauthCallback(req, res) {
 };
 
 function botOauthCallback(req, res) {
-  res.render('bot-oauth-callback');
+  res.render('bot-oauth-callback', {
+    authPath: `${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback`,
+    botToken: encodeURIComponent(req.params.botToken),
+  });
 }
 
 async function botAuthSetup(req, res) {
-  const token = req.query.token;
+  const code = req.query.code;
+  const decodedCode = decodeToken(code);
+  if (!decodedCode) {
+    res.status(401);
+    res.send('Token invalid, please reopen.');
+    return;
+  }
+  const token = generateToken({
+    uId: decodedCode._uId,
+    bId: decodedCode.bId,
+    gId: decodedCode.gId,
+  }, '24h');
   const trello = new Trello({
     appKey: process.env.TRELLO_APP_KEY,
     redirectUrl: `${process.env.RINGCENTRAL_CHATBOT_SERVER}/trello/bot-oauth-callback/${token}`,
     name: 'RingCentral Bot',
   });
-  const decodedToken = decodeToken(token);
-  if (!decodedToken) {
-    res.status(401);
-    res.send('Token invalid, please reopen.');
-    return;
-  }
   let trackAccountId = undefined;
   if (req.query.trackAccountId) {
     // escape the value to prevent XSS
@@ -62,15 +70,20 @@ async function botAuthSetup(req, res) {
       authorizationUri: trello.authorizationUrl({ scope: 'read,write' }),
       authorizationRevokeUri: `${process.env.APP_SERVER}/trello/bot-revoke`,
       mixpanelKey: process.env.MIXPANEL_KEY,
-      trackUserId: getHashValue(decodedToken.uId, process.env.ANALYTICS_SECRET_KEY),
+      trackUserId: getHashValue(decodedCode._uId, process.env.ANALYTICS_SECRET_KEY),
       trackAccountId,
-      trackBotId: getHashValue(decodedToken.bId, process.env.ANALYTICS_SECRET_KEY),
+      trackBotId: getHashValue(decodedCode.bId, process.env.ANALYTICS_SECRET_KEY),
     },
   });
 }
 
 async function botSaveToken(req, res) {
-  const botToken = req.params.botToken;
+  const botToken = req.body.botToken;
+  if (!botToken) {
+    res.status(403);
+    res.send('Params error');
+    return;
+  }
   const decodedToken = decodeToken(botToken);
   if (!decodedToken) {
     res.status(401);
@@ -82,7 +95,7 @@ async function botSaveToken(req, res) {
   const cardId = decodedToken.cId;
   const conversationId = decodedToken.gId;
   const nextAction = decodedToken.next;
-  const trelloToken = req.query.token;
+  const trelloToken = req.body.trelloToken;
   if (!trelloToken) {
     res.status(401);
     res.send('Trello token invalid.');
