@@ -70,7 +70,7 @@
     "mixpanel": "^0.18.0",
     "morgan": "^1.10.0",
     "nanoid": "^3.2.0",
-    "pug": "^3.0.0",
+    "pug": "^3.0.3",
     "qs": "^6.7.3",
     "ringcentral-chatbot-core": "^1.3.3",
     "sequelize": "^6.29.0",
