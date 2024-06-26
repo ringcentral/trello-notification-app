@@ -13,12 +13,21 @@ html
     script.
       var container = window.document.getElementById('container');
       var tokenHash = window.location.hash.substr(1);
+      var botToken = "#{botToken}";
       var parsedQuery = new URLSearchParams(tokenHash);
+      var authPath = "#{authPath}";
       if (parsedQuery.get('error')) {
         container.innerText = "Authorization error from Trello.";
       } else {
-        fetch(window.location.pathname + '?' + tokenHash, {
+        fetch(authPath, {
           method: 'POST',
+          body: JSON.stringify({
+            trelloToken: parsedQuery.get('token'),
+            botToken: botToken,
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
         }).then(function(response) {
           if (response.status === 200) {
             container.innerText = "Authorized! Please close this page and go back to RingCentral conversation with this bot.";

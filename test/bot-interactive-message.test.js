@@ -110,11 +110,11 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello setup for Team name');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('/bot-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
+    expect(iframeURL).toContain('/bot-setup?code=');
+    const tokenStr = iframeURL.split('?code=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
-    expect(token.uId).toEqual('test_ext_id');
+    expect(token._uId).toEqual('test_ext_id');
     expect(token.gId).toEqual(groupId);
   });
 
@@ -140,11 +140,11 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello setup for this conversation');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('/bot-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
+    expect(iframeURL).toContain('/bot-setup?code=');
+    const tokenStr = iframeURL.split('?code=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
-    expect(token.uId).toEqual('test_ext_id');
+    expect(token._uId).toEqual('test_ext_id');
     expect(token.gId).toEqual('test_conversation_id');
   });
 
@@ -306,11 +306,11 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello authorization');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('/bot-auth-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
+    expect(iframeURL).toContain('/bot-auth-setup?code=');
+    const tokenStr = iframeURL.split('?code=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
-    expect(token.uId).toEqual('test_ext_id');
+    expect(token._uId).toEqual('test_ext_id');
     expect(token.gId).toEqual(groupId);
   });
 
@@ -529,11 +529,11 @@ describe('Bot Notification', () => {
     expect(res.body.type).toEqual('dialog');
     expect(res.body.dialog.title).toEqual('Trello authorization');
     const iframeURL = res.body.dialog.iframeURL;
-    expect(iframeURL).toContain('bot-auth-setup?token=');
-    const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
+    expect(iframeURL).toContain('bot-auth-setup?code=');
+    const tokenStr = iframeURL.split('?code=')[1].split('&')[0];
     const token = decodeToken(tokenStr);
     expect(token.bId).toEqual(botId);
-    expect(token.uId).toEqual('test_ext_id');
+    expect(token._uId).toEqual('test_ext_id');
     expect(token.gId).toEqual(groupId);
   });
 
@@ -918,11 +918,11 @@ describe('Bot Notification', () => {
       expect(res.body.type).toEqual('dialog');
       expect(res.body.dialog.title).toEqual('Trello authorization');
       const iframeURL = res.body.dialog.iframeURL;
-      expect(iframeURL).toContain('/bot-auth-setup?token=');
-      const tokenStr = iframeURL.split('?token=')[1].split('&')[0];
+      expect(iframeURL).toContain('/bot-auth-setup?code=');
+      const tokenStr = iframeURL.split('?code=')[1].split('&')[0];
       const token = decodeToken(tokenStr);
       expect(token.bId).toEqual(botId);
-      expect(token.uId).toEqual(rcUserId);
+      expect(token._uId).toEqual(rcUserId);
       expect(token.gId).toEqual(groupId);
       trelloCommentScope.done();
     });

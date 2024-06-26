@@ -51,6 +51,6 @@ app.get('/bot-auth-setup', authorizationRoute.botAuthSetup);
 app.post('/trello/bot-revoke', authorizationRoute.botRevokeToken);
 extendBotApp(app, [], botHandler, botConfig);
 app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
-app.post('/trello/bot-oauth-callback/:botToken', authorizationRoute.botSaveToken);
+app.post('/trello/bot-oauth-callback', authorizationRoute.botSaveToken);
 
 exports.app = app;

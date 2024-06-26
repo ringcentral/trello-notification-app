@@ -152,11 +152,11 @@ async function notificationInteractiveMessagesHandler(req, res) {
 };
 
 function getSetupDialog(botId, body) {
-  const botToken = generateToken({
-    uId: body.user.extId,
+  const botCode = generateToken({
+    _uId: body.user.extId, // make code token different as access token
     bId: botId,
     gId: body.data.conversationId || body.conversation.id,
-  }, '24h');
+  }, 20); // bot code 20s valid
   const trackAccountId = getHashValue(body.user.accountId, process.env.ANALYTICS_SECRET_KEY);
   return {
     type: 'dialog',
@@ -164,14 +164,14 @@ function getSetupDialog(botId, body) {
       title: `Trello setup for ${body.data.conversationName || 'this conversation'}`,
       size: 'medium',
       iconURL: DIALOG_ICON_URL,
-      iframeURL: `${process.env.APP_SERVER}/bot-setup?token=${botToken}&trackAccountId=${trackAccountId}`,
+      iframeURL: `${process.env.APP_SERVER}/bot-setup?code=${botCode}&trackAccountId=${trackAccountId}`,
     }
   };
 }
 
 function getAuthDialog(botId, body) {
-  const botToken = generateToken({
-    uId: body.user.extId,
+  const botCode = generateToken({
+    _uId: body.user.extId, // make code token different as access token
     bId: botId,
     gId: body.conversation.id,
   }, '24h');
@@ -182,7 +182,7 @@ function getAuthDialog(botId, body) {
       title: `Trello authorization`,
       size: 'small',
       iconURL: DIALOG_ICON_URL,
-      iframeURL: `${process.env.APP_SERVER}/bot-auth-setup?token=${botToken}&trackAccountId=${trackAccountId}`,
+      iframeURL: `${process.env.APP_SERVER}/bot-auth-setup?code=${botCode}&trackAccountId=${trackAccountId}`,
     }
   };
 }

@@ -32,17 +32,20 @@ describe('Notification Webhooks', () => {
   });
 
   it('should get 403 when request webhook info without rcWebhookUri', async () => {
-    const res = await request(server).get('/webhooks/info?token=xxx');
+    const res = await request(server).get('/webhooks/info')
+      .set('x-access-token', 'xxx');
     expect(res.status).toEqual(403);
   });
 
   it('should get 403 when request webhook info with wrong rcWebhook', async () => {
-    const res = await request(server).get('/webhooks/info?token=xxx&rcWebhook=tel://123');
+    const res = await request(server).get('/webhooks/info?rcWebhook=tel://123')
+      .set('x-access-token', 'xxx');
     expect(res.status).toEqual(403);
   });
 
   it('should get 401 when request webhook info with invalid token', async () => {
-    const res = await request(server).get('/webhooks/info?token=xxx&rcWebhook=http://test.com/webhook/12111');
+    const res = await request(server).get('/webhooks/info?rcWebhook=http://test.com/webhook/12111')
+      .set('x-access-token', 'xxx');
     expect(res.status).toEqual(401);
   });
 
@@ -50,7 +53,8 @@ describe('Notification Webhooks', () => {
     const token = jwt.generateToken({
       id: 'wrong_user_id',
     });
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
+    const res = await request(server).get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(401);
   });
 
@@ -63,7 +67,9 @@ describe('Notification Webhooks', () => {
     const token = jwt.generateToken({
       id: trelloUserId,
     });
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
+    const res = await request(server)
+      .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
@@ -94,7 +100,9 @@ describe('Notification Webhooks', () => {
       .reply(200, {
         fullName: 'test_user',
       });
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
+    const res = await request(server)
+      .get(`/webhooks/info?&rcWebhook=http://test.com/webhook/12111`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.boards.length).toEqual(2);
@@ -115,7 +123,9 @@ describe('Notification Webhooks', () => {
     const trelloBoardScope = nock('https://api.trello.com')
       .get(uri => uri.includes(`/1/members/me/boards?`))
       .reply(401, {});
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
+    const res = await request(server)
+      .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
@@ -133,7 +143,9 @@ describe('Notification Webhooks', () => {
     const trelloBoardScope = nock('https://api.trello.com')
       .get(uri => uri.includes(`/1/members/me/boards?`))
       .reply(500, {});
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/12111`);
+    const res = await request(server)
+      .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(500);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
@@ -174,7 +186,9 @@ describe('Notification Webhooks', () => {
       .reply(200, {
         fullName: 'test_user',
       });
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/${rcWebhookId}`);
+    const res = await request(server)
+      .get(`/webhooks/info?rcWebhook=http://test.com/webhook/${rcWebhookId}`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual('test-board-id');
@@ -211,7 +225,9 @@ describe('Notification Webhooks', () => {
       .reply(200, {
         fullName: 'test_user',
       });
-    const res = await request(server).get(`/webhooks/info?token=${token}&rcWebhook=http://test.com/webhook/${rcWebhookId}`);
+    const res = await request(server)
+      .get(`/webhooks/info?rcWebhook=http://test.com/webhook/${rcWebhookId}`)
+      .set('x-access-token', token);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual(undefined);

@@ -31,7 +31,7 @@ async function newWebhook(req, res) {
 }
 
 async function webhookInfo(req, res) {
-  const jwtToken = req.query.token;
+  const jwtToken = req.headers['x-access-token'];
   const rcWebhookUri = req.query.rcWebhook;
   const rcWebhookId = getRCWebhookId(rcWebhookUri);
   if (!jwtToken || !rcWebhookId) {

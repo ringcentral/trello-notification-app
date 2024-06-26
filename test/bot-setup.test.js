@@ -12,8 +12,13 @@ const { TrelloWebhook } = require('../src/app/models/trello-webhook');
 axios.defaults.adapter = 'http';
 
 describe('Bot Setup', () => {
+  it('should get 400 at setup page request', async () => {
+    const res = await request(server).get('/bot-setup');
+    expect(res.status).toEqual(400);
+  });
+
   it('should get 401 at setup page request', async () => {
-    const res = await request(server).get('/bot-setup?token=new_token');
+    const res = await request(server).get('/bot-setup?code=new_token');
     expect(res.status).toEqual(401);
   });
 
@@ -23,9 +28,8 @@ describe('Bot Setup', () => {
       bId: '123',
       gId: '111',
     });
-    const res = await request(server).get(`/bot-setup?token=${token}`);
+    const res = await request(server).get(`/bot-setup?code=${token}`);
     expect(res.status).toEqual(200);
-    expect(res.text).toContain(token);
   });
 
 
@@ -36,7 +40,9 @@ describe('Bot Setup', () => {
     });
 
     it('should get 401 with invalid token', async () => {
-      const res = await request(server).get('/bot-info?token=123');
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', '123');
       expect(res.status).toEqual(401);
     });
 
@@ -46,7 +52,9 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '-10s');
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(401);
     });
 
@@ -56,7 +64,9 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
     });
@@ -71,7 +81,9 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
       await rcUserRecord.destroy();
@@ -88,7 +100,9 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
       await rcUserRecord.destroy();
@@ -110,7 +124,9 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
       await rcUserRecord.destroy();
@@ -145,7 +161,9 @@ describe('Bot Setup', () => {
             "id": "5b689b3228998cf3f01c629e",
           },
         ]);
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(true);
       expect(res.body.boards.length).toEqual(2);
@@ -191,7 +209,9 @@ describe('Bot Setup', () => {
             "id": "5b689b3228998cf3f01c629e",
           },
         ]);
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(true);
       expect(res.body.boards.length).toEqual(2);
@@ -221,7 +241,9 @@ describe('Bot Setup', () => {
       const trelloBoardScope = nock('https://api.trello.com')
         .get(uri => uri.includes(`/1/members/me/boards?`))
         .reply(401, {});
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
       trelloBoardScope.done();
@@ -248,7 +270,9 @@ describe('Bot Setup', () => {
       const trelloBoardScope = nock('https://api.trello.com')
         .get(uri => uri.includes(`/1/members/me/boards?`))
         .reply(500, {});
-      const res = await request(server).get(`/bot-info?token=${token}`);
+      const res = await request(server)
+        .get('/bot-info')
+        .set('x-access-token', token);
       expect(res.status).toEqual(500);
       trelloBoardScope.done();
       await rcUserRecord.destroy();
@@ -884,12 +908,16 @@ describe('Bot Setup', () => {
     });
 
     it('should get 403 without subscription id', async () => {
-      const res = await request(server).get('/bot-subscription?token=123');
+      const res = await request(server)
+        .get('/bot-subscription')
+        .set('x-access-token', '123');
       expect(res.status).toEqual(403);
     });
 
     it('should get 401 with invalid token', async () => {
-      const res = await request(server).get('/bot-subscription?token=123&id=xxx');
+      const res = await request(server)
+        .get('/bot-subscription?id=xxx')
+        .set('x-access-token', '123');
       expect(res.status).toEqual(401);
     });
 
@@ -899,7 +927,8 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '-10s');
-      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      const res = await request(server).get(`/bot-subscription?id=xxx`)
+        .set('x-access-token', token);
       expect(res.status).toEqual(401);
     });
 
@@ -909,7 +938,8 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      const res = await request(server).get(`/bot-subscription?id=xxx`)
+        .set('x-access-token', token);
       expect(res.status).toEqual(401);
     });
 
@@ -923,7 +953,8 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-subscription?token=${token}&id=xxx`);
+      const res = await request(server).get(`/bot-subscription?id=xxx`)
+        .set('x-access-token', token);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
     });
@@ -955,7 +986,8 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-subscription?token=${token}&id=${subscriptionId}`);
+      const res = await request(server).get(`/bot-subscription?id=${subscriptionId}`)
+        .set('x-access-token', token);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloWebhookRecord.destroy();
@@ -988,7 +1020,8 @@ describe('Bot Setup', () => {
         bId: '123',
         gId: '111',
       }, '24h');
-      const res = await request(server).get(`/bot-subscription?token=${token}&id=${subscriptionId}`);
+      const res = await request(server).get(`/bot-subscription?id=${subscriptionId}`)
+        .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.id).toEqual(subscriptionId);
       expect(res.body.config.filters).toEqual('test,test1');

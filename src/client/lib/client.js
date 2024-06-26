@@ -71,7 +71,13 @@ export class Client {
   }
 
   async getInfo() {
-    const response = await fetch(`${this._config.webhookInfoUri}?token=${this.token}&rcWebhook=${this._config.rcWebhookUri}&random=${Date.now()}`);
+    const response = await fetch(`${this._config.webhookInfoUri}?rcWebhook=${this._config.rcWebhookUri}&random=${Date.now()}`, {
+      method: 'GET',
+      headers: {
+        'x-access-token': this.token,
+        'Content-Type': 'application/json',
+      },
+    });
     if (response.status === 401) {
       this.cleanToken();
       throw new Error('Unauthorized');
