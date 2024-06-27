@@ -117,7 +117,7 @@ async function info(req, res) {
       res.json(botInfo);
       return;
     }
-    console.log(e);
+    console.log(e && e.message);
     res.status(500);
     res.send('Internal server');
   }

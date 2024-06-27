@@ -11,7 +11,7 @@
     "ngrok": "ngrok http 6066",
     "server": "node ./src/run-server.js",
     "start": "npm run server",
-    "test": "jest",
+    "test": "jest test/bot.test.js",
     "test-dynamodb": "DB=dynamodb jest --runInBand --forceExit",
     "test-coverage": "jest --coverage",
     "dynamo-local": "node ./scripts/dynamo-local.js",
@@ -72,7 +72,7 @@
     "nanoid": "^3.2.0",
     "pug": "^3.0.3",
     "qs": "^6.7.3",
-    "ringcentral-chatbot-core": "^1.3.3",
+    "ringcentral-chatbot-core": "^1.6.1",
     "sequelize": "^6.29.0",
     "serverless-http": "^2.6.0"
   }
