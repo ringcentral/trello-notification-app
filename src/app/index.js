@@ -13,7 +13,29 @@ const { botHandler } = require('./bot/handler');
 const { botConfig } = require('./bot/config');
 
 const app = express();
-app.use(morgan('tiny'));
+app.use(morgan(function (tokens, req, res) {
+  let url = tokens.url(req, res);
+  if (
+    url.indexOf('/bot-auth-setup') === 0 ||
+    url.indexOf('/bot-setup') === 0
+  ) {
+    const code = req.query.code;
+    if (code) {
+      const maskCode = `[MASK]-${code.slice(-5)}`;
+      url = url.replace(code, maskCode);
+    }
+  }
+  if (url.indexOf('/trello/bot-oauth-callback/') === 0) {
+    url = `/trello/bot-oauth-callback/[MASK]-${url.slice(-5)}`;
+  }
+  return [
+    tokens.method(req, res),
+    url,
+    tokens.status(req, res),
+    tokens.res(req, res, 'content-length'), '-',
+    tokens['response-time'](req, res), 'ms'
+  ].join(' ');
+}));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -52,5 +74,14 @@ app.post('/trello/bot-revoke', authorizationRoute.botRevokeToken);
 extendBotApp(app, [], botHandler, botConfig);
 app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
 app.post('/trello/bot-oauth-callback', authorizationRoute.botSaveToken);
+
+app.use(function (err, req, res, next) {
+  console.error(err && err.message);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500);
+  res.json({ result: 'error', message: 'Internal server error' });
+});
 
 exports.app = app;
