@@ -24,28 +24,34 @@ describe('Notification Webhooks', () => {
   it('should get new webhook page successfully', async () => {
     const res = await request(server).get('/webhooks/new?webhook=http://test.com/webhook/12111');
     expect(res.status).toEqual(200);
+    expect(res.headers['content-security-policy']).toContain(`frame-ancestors 'self'`);
   });
 
   it('should get 403 when request webhook info without token', async () => {
-    const res = await request(server).get('/webhooks/info');
+    const res = await request(server)
+      .get('/webhooks/info')
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
   it('should get 403 when request webhook info without rcWebhookUri', async () => {
     const res = await request(server).get('/webhooks/info')
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
       .set('x-access-token', 'xxx');
     expect(res.status).toEqual(403);
   });
 
   it('should get 403 when request webhook info with wrong rcWebhook', async () => {
     const res = await request(server).get('/webhooks/info?rcWebhook=tel://123')
-      .set('x-access-token', 'xxx');
+      .set('x-access-token', 'xxx')
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
   it('should get 401 when request webhook info with invalid token', async () => {
     const res = await request(server).get('/webhooks/info?rcWebhook=http://test.com/webhook/12111')
-      .set('x-access-token', 'xxx');
+      .set('x-access-token', 'xxx')
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
   });
 
@@ -54,7 +60,8 @@ describe('Notification Webhooks', () => {
       id: 'wrong_user_id',
     });
     const res = await request(server).get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
   });
 
@@ -69,7 +76,8 @@ describe('Notification Webhooks', () => {
     });
     const res = await request(server)
       .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
@@ -102,7 +110,8 @@ describe('Notification Webhooks', () => {
       });
     const res = await request(server)
       .get(`/webhooks/info?&rcWebhook=http://test.com/webhook/12111`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.boards.length).toEqual(2);
@@ -125,7 +134,8 @@ describe('Notification Webhooks', () => {
       .reply(401, {});
     const res = await request(server)
       .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
@@ -145,7 +155,8 @@ describe('Notification Webhooks', () => {
       .reply(500, {});
     const res = await request(server)
       .get(`/webhooks/info?rcWebhook=http://test.com/webhook/12111`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(500);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloBoardScope.done();
@@ -188,7 +199,8 @@ describe('Notification Webhooks', () => {
       });
     const res = await request(server)
       .get(`/webhooks/info?rcWebhook=http://test.com/webhook/${rcWebhookId}`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual('test-board-id');
@@ -227,7 +239,8 @@ describe('Notification Webhooks', () => {
       });
     const res = await request(server)
       .get(`/webhooks/info?rcWebhook=http://test.com/webhook/${rcWebhookId}`)
-      .set('x-access-token', token);
+      .set('x-access-token', token)
+      .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     expect(res.body.userInfo.fullName).toEqual('test_user');
     expect(res.body.config.boardId).toEqual(undefined);
@@ -238,14 +251,14 @@ describe('Notification Webhooks', () => {
   });
 
   it('should get 403 when create webhook info without token', async () => {
-    const res = await request(server).post('/webhooks');
+    const res = await request(server).post('/webhooks').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
   it('should get 403 when create webhook info without rcWebhook', async () => {
     const res = await request(server).post('/webhooks').send({
       token: 'test_token',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
@@ -253,7 +266,7 @@ describe('Notification Webhooks', () => {
     const res = await request(server).post('/webhooks').send({
       token: 'test_token',
       rcWebhook: 'http://test.com/webhook/12121',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
@@ -262,7 +275,7 @@ describe('Notification Webhooks', () => {
       token: 'test_token',
       rcWebhook: 'http://test.com/webhook/12121',
       boardId: 'test_board_id',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
@@ -272,7 +285,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: 'http://test.com/webhook/12121',
       boardId: 'test_board_id',
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
   });
 
@@ -285,7 +298,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: 'http://test.com/webhook/12121',
       boardId: 'test_board_id',
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
   });
 
@@ -303,7 +316,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: 'http://test.com/webhook/12121',
       boardId: 'test_board_id',
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
   });
@@ -336,7 +349,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: `http://test.com/webhook/${rcWebhookId}`,
       boardId,
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     const rcWebhookRecord = await RCWebhook.findByPk(rcWebhookId);
@@ -379,7 +392,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: `http://test.com/webhook/${rcWebhookId}`,
       boardId,
       filters: 'addChecklistToCard,commentCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     const trelloWebhookRecord = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
     expect(trelloWebhookRecord.trello_webhook_id).toEqual(trelloWebhookId);
@@ -438,7 +451,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: `http://test.com/webhook/${rcWebhookId}`,
       boardId,
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     trelloWebhookRecord = await TrelloWebhook.findByPk(rcWebhookRecord.trello_webhook_id);
     expect(trelloWebhookRecord.trello_webhook_id).toEqual(trelloWebhookId);
@@ -469,7 +482,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: `http://test.com/webhook/${rcWebhookId}`,
       boardId,
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloLabelsScope.done();
@@ -494,7 +507,7 @@ describe('Notification Webhooks', () => {
       rcWebhook: `http://test.com/webhook/${rcWebhookId}`,
       boardId,
       filters: 'addChecklistToCard',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(500);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloLabelsScope.done();

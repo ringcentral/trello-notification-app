@@ -43,10 +43,11 @@ describe('Trello Authorization', () => {
     });
     const res = await request(server).get(`/bot-auth-setup?code=${token}`);
     expect(res.status).toEqual(200);
+    expect(res.headers['content-security-policy']).toContain(`frame-ancestors 'self'`);
   });
 
   it('should response 403 when save token without token', async () => {
-    const res = await request(server).post('/trello/token');
+    const res = await request(server).post('/trello/token').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
@@ -56,7 +57,7 @@ describe('Trello Authorization', () => {
       .reply(401, {});
     const res = await request(server).post('/trello/token').send({
       token: 'xxx',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
     trelloUserScope.done();
   });
@@ -67,7 +68,7 @@ describe('Trello Authorization', () => {
       .reply(500, {});
     const res = await request(server).post('/trello/token').send({
       token: 'xxx',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(500);
     trelloUserScope.done();
   });
@@ -78,7 +79,7 @@ describe('Trello Authorization', () => {
       .reply(200, {});
     const res = await request(server).post('/trello/token').send({
       token: 'xxx',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
     trelloUserScope.done();
   });
@@ -92,7 +93,7 @@ describe('Trello Authorization', () => {
       });
     const res = await request(server).post('/trello/token').send({
       token: 'xxxx',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
@@ -114,7 +115,7 @@ describe('Trello Authorization', () => {
     });
     const res = await request(server).post('/trello/token').send({
       token: 'new_token',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
@@ -124,14 +125,14 @@ describe('Trello Authorization', () => {
   });
 
   it('should response 403 when revoke trello without token', async () => {
-    const res = await request(server).post('/trello/revoke');
+    const res = await request(server).post('/trello/revoke').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(403);
   });
 
   it('should response 401 when revoke trello with invalid token', async () => {
     const res = await request(server).post('/trello/revoke').send({
       token: 'xxx',
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(401);
   });
 
@@ -141,7 +142,7 @@ describe('Trello Authorization', () => {
     });
     const res = await request(server).post('/trello/revoke').send({
       token,
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
   });
 
@@ -159,7 +160,7 @@ describe('Trello Authorization', () => {
       .reply(200, {});
     const res = await request(server).post('/trello/revoke').send({
       token,
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
     expect(!!trelloUserRecord.token).toEqual(false);
@@ -181,7 +182,7 @@ describe('Trello Authorization', () => {
       .reply(404, {});
     const res = await request(server).post('/trello/revoke').send({
       token,
-    });
+    }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
     expect(!!trelloUserRecord.token).toEqual(false);
@@ -191,14 +192,14 @@ describe('Trello Authorization', () => {
 
   describe('Bot Save Token', () => {
     it('should response 403 when save bot token without bot token', async () => {
-      const res = await request(server).post('/trello/bot-oauth-callback');
+      const res = await request(server).post('/trello/bot-oauth-callback').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
     it('should response 401 when save bot token with invalid bot token', async () => {
       const res = await request(server).post('/trello/bot-oauth-callback').send({
         botToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
   
@@ -211,7 +212,7 @@ describe('Trello Authorization', () => {
       });
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
   
@@ -228,7 +229,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
       trelloUserScope.done();
     });
@@ -246,7 +247,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       trelloUserScope.done();
     });
@@ -264,7 +265,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(500);
       trelloUserScope.done();
     });
@@ -286,7 +287,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       trelloUserScope.done();
     });
@@ -327,7 +328,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
@@ -385,7 +386,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
@@ -430,7 +431,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(trelloUserRecord.writeable_token).toEqual('xxx');
@@ -490,7 +491,7 @@ describe('Trello Authorization', () => {
       const res = await request(server).post(`/trello/bot-oauth-callback`).send({
         botToken,
         trelloToken: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Trello setup for **test team**');
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
@@ -508,13 +509,16 @@ describe('Trello Authorization', () => {
 
   describe('Bot Revoke Token', () => {
     it('should response 403 when revoke bot token without token', async () => {
-      const res = await request(server).post('/trello/bot-revoke');
+      const res = await request(server).post('/trello/bot-revoke').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
   
     it('should response 401 when revoke bot token with invalid trello token', async () => {
       const botToken = 'xxxx';
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .send({ token: botToken })
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -524,7 +528,10 @@ describe('Trello Authorization', () => {
         bId: 'botId',
         gId: 'conversationId',
       });
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
     });
 
@@ -538,7 +545,10 @@ describe('Trello Authorization', () => {
       const rcUserRecord = await RcUser.create({
         id: `rcext-${rcUserId}`,
       });
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
     });
@@ -554,7 +564,10 @@ describe('Trello Authorization', () => {
         id: `rcext-${rcUserId}`,
         trello_user_id: 'xxx',
       });
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
     });
@@ -574,7 +587,10 @@ describe('Trello Authorization', () => {
         id: 'test_trello_user_id_xxx',
         writeable_token: '',
       });
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
@@ -598,7 +614,10 @@ describe('Trello Authorization', () => {
       const trelloRevokeScope = nock('https://api.trello.com')
         .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
         .reply(200, {});
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .send({ token: botToken })
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
       expect(newTrelloUserRecord.writeable_token).toEqual('');
@@ -641,7 +660,10 @@ describe('Trello Authorization', () => {
       const trelloRevokeScope = nock('https://api.trello.com')
         .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
         .reply(200, {});
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
       const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id_xxx');
       expect(!!trelloWebhook).toEqual(false);
@@ -672,7 +694,10 @@ describe('Trello Authorization', () => {
       const trelloRevokeScope = nock('https://api.trello.com')
         .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
         .reply(401, {});
-      const res = await request(server).post('/trello/bot-revoke').send({ token: botToken });
+      const res = await request(server)
+        .post('/trello/bot-revoke')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
+        .send({ token: botToken });
       expect(res.status).toEqual(200);
       const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
       expect(newTrelloUserRecord.writeable_token).toEqual('');
