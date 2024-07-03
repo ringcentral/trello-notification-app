@@ -30,19 +30,36 @@ describe('Bot Setup', () => {
     });
     const res = await request(server).get(`/bot-setup?code=${token}`);
     expect(res.status).toEqual(200);
+    expect(res.headers['content-security-policy']).toContain(`frame-ancestors 'self'`);
   });
 
-
   describe('Info', () => {
-    it('should get 403 without token', async () => {
+    it('should get 403 without referer', async () => {
       const res = await request(server).get('/bot-info');
+      expect(res.status).toEqual(403);
+      expect(res.text).toEqual('No Referer');
+    });
+
+    it('should get 403 with invalid referer', async () => {
+      const res = await request(server)
+        .get('/bot-info')
+        .set('Referer', 'http://test.com');
+      expect(res.status).toEqual(403);
+      expect(res.text).toEqual('Invalid Referer');
+    });
+
+    it('should get 403 without token', async () => {
+      const res = await request(server)
+        .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
     it('should get 401 with invalid token', async () => {
       const res = await request(server)
         .get('/bot-info')
-        .set('x-access-token', '123');
+        .set('x-access-token', '123')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -54,6 +71,7 @@ describe('Bot Setup', () => {
       }, '-10s');
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(401);
     });
@@ -66,6 +84,7 @@ describe('Bot Setup', () => {
       }, '24h');
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
@@ -83,6 +102,7 @@ describe('Bot Setup', () => {
       }, '24h');
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
@@ -102,6 +122,7 @@ describe('Bot Setup', () => {
       }, '24h');
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
@@ -126,6 +147,7 @@ describe('Bot Setup', () => {
       }, '24h');
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
@@ -163,6 +185,7 @@ describe('Bot Setup', () => {
         ]);
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(true);
@@ -211,6 +234,7 @@ describe('Bot Setup', () => {
         ]);
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(true);
@@ -243,6 +267,7 @@ describe('Bot Setup', () => {
         .reply(401, {});
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(false);
@@ -272,6 +297,7 @@ describe('Bot Setup', () => {
         .reply(500, {});
       const res = await request(server)
         .get('/bot-info')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(500);
       trelloBoardScope.done();
@@ -302,14 +328,16 @@ describe('Bot Setup', () => {
     });
 
     it('should get 403 without token', async () => {
-      const res = await request(server).post('/bot-subscription');
+      const res = await request(server)
+        .post('/bot-subscription')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
     it('should get 403 without filters', async () => {
       const res = await request(server).post('/bot-subscription').send({
         token: 'xxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
       expect(res.status).toEqual(403);
     });
 
@@ -317,7 +345,7 @@ describe('Bot Setup', () => {
       const res = await request(server).post('/bot-subscription').send({
         token: 'xxx',
         filters: ['test'],
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
@@ -326,7 +354,7 @@ describe('Bot Setup', () => {
         token: 'xxx',
         filters: ['test'],
         boardId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -335,7 +363,7 @@ describe('Bot Setup', () => {
         token: 'xxx',
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -349,7 +377,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -363,7 +391,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         boardId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
@@ -377,7 +405,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -396,7 +424,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
     });
@@ -415,7 +443,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
     });
@@ -440,7 +468,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test'],
         subscriptionId: 'test',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -482,7 +510,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         boardId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
@@ -541,7 +569,7 @@ describe('Bot Setup', () => {
         filters: ['test', 'test1'],
         boardId,
         disableButtons: true,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
@@ -618,7 +646,7 @@ describe('Bot Setup', () => {
         filters: ['test', 'test1'],
         subscriptionId,
         disableButtons: false,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
@@ -695,7 +723,7 @@ describe('Bot Setup', () => {
         filters: ['test', 'test1'],
         subscriptionId,
         disableButtons: true,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(1);
@@ -738,7 +766,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         subscriptionId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -779,7 +807,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         subscriptionId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -811,7 +839,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         boardId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       const newTrelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(newTrelloUserRecord.writeable_token).toEqual('');
@@ -858,7 +886,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         subscriptionId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       const newTrelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(newTrelloUserRecord.writeable_token).toEqual('');
@@ -893,7 +921,7 @@ describe('Bot Setup', () => {
         token,
         filters: ['test', 'test1'],
         boardId,
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(500);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -903,13 +931,14 @@ describe('Bot Setup', () => {
 
   describe('Get Subscription', () => {
     it('should get 403 without token', async () => {
-      const res = await request(server).get('/bot-subscription');
+      const res = await request(server).get('/bot-subscription').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
     it('should get 403 without subscription id', async () => {
       const res = await request(server)
         .get('/bot-subscription')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', '123');
       expect(res.status).toEqual(403);
     });
@@ -917,6 +946,7 @@ describe('Bot Setup', () => {
     it('should get 401 with invalid token', async () => {
       const res = await request(server)
         .get('/bot-subscription?id=xxx')
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', '123');
       expect(res.status).toEqual(401);
     });
@@ -928,6 +958,7 @@ describe('Bot Setup', () => {
         gId: '111',
       }, '-10s');
       const res = await request(server).get(`/bot-subscription?id=xxx`)
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
         .set('x-access-token', token);
       expect(res.status).toEqual(401);
     });
@@ -939,7 +970,8 @@ describe('Bot Setup', () => {
         gId: '111',
       }, '24h');
       const res = await request(server).get(`/bot-subscription?id=xxx`)
-        .set('x-access-token', token);
+        .set('x-access-token', token)
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -954,7 +986,8 @@ describe('Bot Setup', () => {
         gId: '111',
       }, '24h');
       const res = await request(server).get(`/bot-subscription?id=xxx`)
-        .set('x-access-token', token);
+        .set('x-access-token', token)
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
     });
@@ -987,7 +1020,8 @@ describe('Bot Setup', () => {
         gId: '111',
       }, '24h');
       const res = await request(server).get(`/bot-subscription?id=${subscriptionId}`)
-        .set('x-access-token', token);
+        .set('x-access-token', token)
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloWebhookRecord.destroy();
@@ -1021,7 +1055,8 @@ describe('Bot Setup', () => {
         gId: '111',
       }, '24h');
       const res = await request(server).get(`/bot-subscription?id=${subscriptionId}`)
-        .set('x-access-token', token);
+        .set('x-access-token', token)
+        .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       expect(res.body.id).toEqual(subscriptionId);
       expect(res.body.config.filters).toEqual('test,test1');
@@ -1053,14 +1088,14 @@ describe('Bot Setup', () => {
 
 
     it('should get 403 without token', async () => {
-      const res = await request(server).delete('/bot-subscription');
+      const res = await request(server).delete('/bot-subscription').set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
     it('should get 403 without subscription id', async () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: 'xxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(403);
     });
 
@@ -1068,7 +1103,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: 'xxx',
         id: 'xxxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -1081,7 +1116,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
     });
 
@@ -1098,7 +1133,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
     });
@@ -1117,7 +1152,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
     });
@@ -1141,7 +1176,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(401);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -1166,7 +1201,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -1206,7 +1241,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: 'xxxx',
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(404);
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
@@ -1258,7 +1293,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: subscriptionId,
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
@@ -1311,7 +1346,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: subscriptionId,
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
@@ -1364,7 +1399,7 @@ describe('Bot Setup', () => {
       const res = await request(server).delete('/bot-subscription').send({
         token: token,
         id: subscriptionId,
-      });;
+      }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       const newRcUserRecord = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);

@@ -5,6 +5,7 @@ const { RCWebhook } = require('../models/rc-webhook');
 const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
+const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
 
 async function newWebhook(req, res) {
   const rcWebhookUri = req.query.webhook;
@@ -16,6 +17,7 @@ async function newWebhook(req, res) {
     res.send('Webhook uri is required.');
     return;
   }
+  res.set('Content-Security-Policy', `frame-ancestors 'self' ${IFRAME_HOST_DOMAINS};`);
   res.render('new', {
     assetsPath: process.env.ASSETS_PATH,
     data: {
