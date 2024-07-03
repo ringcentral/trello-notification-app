@@ -6,6 +6,7 @@ const { TrelloWebhook } = require('../models/trello-webhook');
 const { decodeToken, generateToken } = require('../lib/jwt');
 const { Trello } = require('../lib/Trello');
 const { getHashValue } = require('../lib/getHashValue');
+const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
 
 async function botSetup(req, res) {
   const code = req.query.code;
@@ -35,6 +36,7 @@ async function botSetup(req, res) {
     // escape the value to prevent XSS
     trackAccountId = encodeURIComponent(req.query.trackAccountId);
   }
+  res.set('Content-Security-Policy', `frame-ancestors 'self' ${IFRAME_HOST_DOMAINS};`);
   res.render('bot-setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {

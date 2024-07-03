@@ -11,6 +11,7 @@ const botSetupRoute = require('./routes/bot-setup');
 
 const { botHandler } = require('./bot/handler');
 const { botConfig } = require('./bot/config');
+const { refererChecker } = require('./lib/refererChecker');
 
 const app = express();
 app.use(morgan(function (tokens, req, res) {
@@ -36,6 +37,7 @@ app.use(morgan(function (tokens, req, res) {
     tokens['response-time'](req, res), 'ms'
   ].join(' ');
 }));
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -44,17 +46,17 @@ app.set('view engine', 'pug');
 
 // RingCentral notification app setup page
 app.get('/webhooks/new', webhooksRoute.newWebhook);
-app.get('/webhooks/info', webhooksRoute.webhookInfo);
+app.get('/webhooks/info', refererChecker, webhooksRoute.webhookInfo);
 // Create or Update Trello webhook
-app.post('/webhooks', webhooksRoute.createWebhook);
+app.post('/webhooks', refererChecker, webhooksRoute.createWebhook);
 
 // authorize trello with only read permission
 app.get('/trello/authorize', authorizationRoute.authorize);
 // authorize trello with read and write permission
 app.get('/trello/full-authorize', authorizationRoute.fullAuthorize);
 app.get('/trello/oauth-callback', authorizationRoute.oauthCallback);
-app.post('/trello/token', authorizationRoute.saveToken);
-app.post('/trello/revoke', authorizationRoute.revokeToken);
+app.post('/trello/token', refererChecker, authorizationRoute.saveToken);
+app.post('/trello/revoke', refererChecker, authorizationRoute.revokeToken);
 
 // trello incoming webhook
 app.post('/trello-notify/:id', notificationRoute.notification);
@@ -65,15 +67,15 @@ app.post('/interactive-messages', notificationRoute.interactiveMessage);
 
 // bots:
 app.get('/bot-setup', botSetupRoute.setup);
-app.get('/bot-info', botSetupRoute.info);
-app.get('/bot-subscription', botSetupRoute.getSubscription);
-app.post('/bot-subscription', botSetupRoute.saveSubscription);
-app.delete('/bot-subscription', botSetupRoute.removeSubscription);
+app.get('/bot-info', refererChecker, botSetupRoute.info);
+app.get('/bot-subscription', refererChecker, botSetupRoute.getSubscription);
+app.post('/bot-subscription', refererChecker, botSetupRoute.saveSubscription);
+app.delete('/bot-subscription', refererChecker, botSetupRoute.removeSubscription);
 app.get('/bot-auth-setup', authorizationRoute.botAuthSetup);
-app.post('/trello/bot-revoke', authorizationRoute.botRevokeToken);
+app.post('/trello/bot-revoke', refererChecker, authorizationRoute.botRevokeToken);
 extendBotApp(app, [], botHandler, botConfig);
 app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
-app.post('/trello/bot-oauth-callback', authorizationRoute.botSaveToken);
+app.post('/trello/bot-oauth-callback', refererChecker, authorizationRoute.botSaveToken);
 
 app.use(function (err, req, res, next) {
   console.error(err && err.message);

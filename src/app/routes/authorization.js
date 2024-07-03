@@ -8,6 +8,7 @@ const botActions = require('../bot/actions');
 const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 const { TrelloWebhook } = require('../models/trello-webhook');
+const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
 
 // authorize Trello with only read permission
 async function authorize(req, res) {
@@ -62,6 +63,7 @@ async function botAuthSetup(req, res) {
     // escape the value to prevent XSS
     trackAccountId = encodeURIComponent(req.query.trackAccountId);
   }
+  res.set('Content-Security-Policy', `frame-ancestors 'self' ${IFRAME_HOST_DOMAINS};`);
   res.render('auth-setup', {
     assetsPath: process.env.ASSETS_PATH,
     data: {
