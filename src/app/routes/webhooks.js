@@ -6,6 +6,7 @@ const { TrelloWebhook } = require('../models/trello-webhook');
 const { TrelloUser } = require('../models/trello-user');
 const { getRCWebhookId } = require('../lib/getRCWebhookId');
 const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
+const { errorLogger } = require('../lib/logger');
 
 async function newWebhook(req, res) {
   const rcWebhookUri = req.query.webhook;
@@ -89,7 +90,7 @@ async function webhookInfo(req, res) {
       res.send('Unauthorized.');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
   }
@@ -191,7 +192,7 @@ async function createWebhook(req, res) {
       res.send('Unauthorized');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal server error');
     return;

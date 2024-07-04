@@ -8,7 +8,7 @@ const { getHashValue } = require('../lib/getHashValue');
 const { generateToken } = require('../lib/jwt');
 const { DIALOG_ICON_URL } = require('../lib/constants');
 const { Analytics } = require('../lib/analytics');
-
+const { errorLogger } = require('../lib/logger');
 const botActions = require('../bot/actions');
 
 const {
@@ -144,7 +144,7 @@ async function notificationInteractiveMessagesHandler(req, res) {
         return;
       }
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
     return;
@@ -362,14 +362,14 @@ async function botInteractiveMessagesHandler(req, res) {
       await trelloUser.save();
       res.status(200);
       res.json(getAuthDialog(botId, body));
-      analytics.trackUserAction('cardSubmitted', body.user.extId, {
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
         action: body.data.action,
         result: 'authorizeRequired',
         chatId: body.conversation.id,
       });
       return;
     }
-    console.error(e  && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
   }

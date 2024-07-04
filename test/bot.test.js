@@ -253,10 +253,97 @@ describe('Bot', () => {
     rcGroupScope.done();
   });
 
-  it('should send response 500 when fetch group error', async () => {
+  it('should send response 500 when fetch group 503', async () => {
     const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
       .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
-      .reply(503, {});
+      .reply(503, {
+        message: 'Service Unavailable'
+      }, {
+        rcrequestid: 'xxxxxx'
+      });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) help`,
+        "creatorId": "170848004",
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(500);
+    expect(res.body.message).toEqual('Internal server error');
+    rcGroupScope.done();
+  });
+
+  it('should send response 500 when fetch group 502', async () => {
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .reply(503, {
+        message: 'Service Unavailable'
+      });
+    const res = await request(server).post('/bot/webhook').send({
+      "uuid": "5794186355105264737",
+      "event": "/restapi/v1.0/glip/posts",
+      "timestamp": "2022-02-11T09:49:55.091Z",
+      "subscriptionId": "0a7fb1f2-9e7c-456f-8078-148d1e7c3638",
+      "ownerId": botId,
+      "body": {
+        "id": "5852045316",
+        "groupId": groupId,
+        "type": "TextMessage",
+        "text": `![:Person](${botId}) help`,
+        "creatorId": "170848004",
+        "addedPersonIds": null,
+        "creationTime": "2022-02-11T09:49:54.614Z",
+        "lastModifiedTime": "2022-02-11T09:49:54.614Z",
+        "attachments": null,
+        "activity": null,
+        "title": null,
+        "iconUri": null,
+        "iconEmoji": null,
+        "mentions": [
+          {
+            "id": botId,
+            "type": "Person",
+            "name": "Trello Bot"
+          }
+        ],
+        "eventType": "PostAdded"
+      }
+    });
+    expect(res.status).toEqual(500);
+    expect(res.body.message).toEqual('Internal server error');
+    rcGroupScope.done();
+  });
+
+  it('should send response 500 when fetch group no reply', async () => {
+    const rcGroupScope = nock(process.env.RINGCENTRAL_SERVER)
+      .get(uri => uri.includes(`/restapi/v1.0/glip/groups/${groupId}`))
+      .replyWithError({
+        message: 'something awful happened',
+        code: 'AWFUL_ERROR',
+      });
     const res = await request(server).post('/bot/webhook').send({
       "uuid": "5794186355105264737",
       "event": "/restapi/v1.0/glip/posts",

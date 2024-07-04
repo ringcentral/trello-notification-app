@@ -1,6 +1,7 @@
 const Bot = require('ringcentral-chatbot-core/dist/models/Bot').default;
 const botActions = require('./actions');
 const { Analytics } = require('../lib/analytics');
+const { errorLogger } = require('../lib/logger');
 
 async function botHandler({
   type, // could be 'BotAdded', 'BotRemoved', 'Message4Bot', 'BotGroupLeft', 'BotJoinGroup', 'Maintain', 'SetupDatabase'
@@ -124,7 +125,7 @@ async function botHandler({
       );
     }
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
   }
 }
 

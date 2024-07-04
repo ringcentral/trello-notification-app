@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { errorLogger } = require('./logger');
 
 function obj2uri(obj) {
   if (!obj) {
@@ -126,7 +127,7 @@ class Trello {
     try {
       await axios.delete(uri);
     } catch (e) {
-      console.error(e && e.message);
+      errorLogger(e);
     }
   }
 
@@ -140,7 +141,7 @@ class Trello {
     try {
       await axios.delete(uri);
     } catch (e) {
-      console.error(e && e.message);
+      errorLogger(e);
     }
   }
 
