@@ -362,7 +362,7 @@ async function botInteractiveMessagesHandler(req, res) {
       await trelloUser.save();
       res.status(200);
       res.json(getAuthDialog(botId, body));
-      analytics.trackUserAction('cardSubmitted', body.user.extId, {
+      await analytics.trackUserAction('cardSubmitted', body.user.extId, {
         action: body.data.action,
         result: 'authorizeRequired',
         chatId: body.conversation.id,
