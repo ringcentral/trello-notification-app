@@ -7,6 +7,7 @@ const { decodeToken, generateToken } = require('../lib/jwt');
 const { Trello } = require('../lib/Trello');
 const { getHashValue } = require('../lib/getHashValue');
 const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
+const { errorLogger } = require('../lib/logger');
 
 async function botSetup(req, res) {
   const code = req.query.code;
@@ -119,7 +120,7 @@ async function info(req, res) {
       res.json(botInfo);
       return;
     }
-    console.log(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal server');
   }
@@ -247,7 +248,7 @@ async function saveSubscription(req, res) {
       res.send('Trello authorization required');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.json('Internal server error');
   }
@@ -287,7 +288,7 @@ async function getSubscription(req, res) {
       config: trelloWebhook.config || {},
     });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.json('Internal server error');
   }
@@ -361,7 +362,7 @@ async function removeSubscription(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.json('Internal server error');
   }

@@ -9,6 +9,7 @@ const { TrelloUser } = require('../models/trello-user');
 const { RcUser } = require('../models/rc-user');
 const { TrelloWebhook } = require('../models/trello-webhook');
 const { IFRAME_HOST_DOMAINS } = require('../lib/constants');
+const { errorLogger } = require('../lib/logger');
 
 // authorize Trello with only read permission
 async function authorize(req, res) {
@@ -170,7 +171,7 @@ async function botSaveToken(req, res) {
       res.send('Token invalid.');
       return;
     }
-    console.error(e  && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
     return;
@@ -222,7 +223,7 @@ async function saveToken(req, res) {
       res.send('Token invalid.');
       return;
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error.');
   }
@@ -260,7 +261,7 @@ async function revokeToken(req, res) {
       authorized: false,
     });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('internal error');
   }
@@ -315,7 +316,7 @@ async function botRevokeToken(req, res) {
     res.status(200);
     res.json({ result: 'ok' });
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('internal error');
   }

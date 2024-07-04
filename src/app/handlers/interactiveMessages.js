@@ -8,7 +8,7 @@ const { getHashValue } = require('../lib/getHashValue');
 const { generateToken } = require('../lib/jwt');
 const { DIALOG_ICON_URL } = require('../lib/constants');
 const { Analytics } = require('../lib/analytics');
-
+const { errorLogger } = require('../lib/logger');
 const botActions = require('../bot/actions');
 
 const {
@@ -144,7 +144,7 @@ async function notificationInteractiveMessagesHandler(req, res) {
         return;
       }
     }
-    console.error(e && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
     return;
@@ -369,7 +369,7 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
-    console.error(e  && e.message);
+    errorLogger(e);
     res.status(500);
     res.send('Internal error');
   }

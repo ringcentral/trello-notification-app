@@ -21,6 +21,7 @@ const {
 const {
   sendAdaptiveCardMessage,
 } = require('../lib/messageHelper');
+const { errorLogger } = require('../lib/logger');
 
 async function updateBoardLabels(trello, trelloWebhook) {
   const labels = await trello.getLabels(trelloWebhook.config.boardId);
@@ -119,7 +120,7 @@ async function notification(req, res) {
             userId: bot.id,
             accountId: bot.token && bot.token.creator_account_id,
           });
-          analytics.trackBotAction('cardPosted', {
+          await analytics.trackBotAction('cardPosted', {
             chatId: trelloWebhook.conversation_id,
           });
         } else {
@@ -134,7 +135,7 @@ async function notification(req, res) {
       }
     }
   } catch (e) {
-    console.error(e && e.message);
+    errorLogger(e);
     if (
       e.response &&
       (e.response.status === 403 || e.response.status === 404) &&

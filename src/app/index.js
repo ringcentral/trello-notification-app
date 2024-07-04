@@ -12,6 +12,7 @@ const botSetupRoute = require('./routes/bot-setup');
 const { botHandler } = require('./bot/handler');
 const { botConfig } = require('./bot/config');
 const { refererChecker } = require('./lib/refererChecker');
+const { errorLogger } = require('./lib/logger');
 
 const app = express();
 app.use(morgan(function (tokens, req, res) {
@@ -78,7 +79,7 @@ app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallb
 app.post('/trello/bot-oauth-callback', refererChecker, authorizationRoute.botSaveToken);
 
 app.use(function (err, req, res, next) {
-  console.error(err && err.message);
+  errorLogger(err);
   if (res.headersSent) {
     return next(err);
   }
