@@ -109,6 +109,8 @@ async function handleUnauthorize({
   });
   await trello.revokeToken();
   trelloUser.writeable_token = '';
+  trelloUser.username = '';
+  trelloUser.fullName = '';
   await trelloUser.save();
   await bot.sendMessage(group.id, {
     text: `Hi ![:Person](${user.id}), you have unauthorized Trello successfully.`,

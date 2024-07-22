@@ -93,7 +93,7 @@ async function info(req, res) {
       if (trelloUser) {
         botInfo.trelloAuthorized = !!trelloUser.writeable_token;
         botInfo.trelloUser = {
-          fullName: trelloUser.fullName,
+          fullName: '',
         };
         if (trelloUser.writeable_token) {
           const trello = new Trello({
@@ -102,6 +102,8 @@ async function info(req, res) {
             token: trelloUser.writeable_token,
           });
           botInfo.boards = await trello.getBoards();
+          const trelloUserInfo = await trello.getUserInfo();
+          botInfo.trelloUser.fullName = trelloUserInfo.fullName;
         }
       }
     }
@@ -114,6 +116,8 @@ async function info(req, res) {
       trelloUser
     ) {
       trelloUser.writeable_token = '';
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
       botInfo.trelloAuthorized = false;
       res.status(200);
@@ -243,6 +247,8 @@ async function saveSubscription(req, res) {
       trelloUser
     ) {
       trelloUser.writeable_token = '';
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
       res.status(401);
       res.send('Trello authorization required');

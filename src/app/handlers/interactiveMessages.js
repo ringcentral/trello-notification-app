@@ -68,14 +68,14 @@ async function notificationInteractiveMessagesHandler(req, res) {
     }
     if (trelloUser) {
       trelloUser.writeable_token = body.data.token;
-      trelloUser.username = trelloUserInfo.username;
-      trelloUser.fullName = trelloUserInfo.fullName;
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
     } else {
       trelloUser = await TrelloUser.create({
         id: trelloUserInfo.id,
-        username: trelloUserInfo.username,
-        fullName: trelloUserInfo.fullName,
+        username: '',
+        fullName: '',
         writeable_token: token,
       });
     }
@@ -129,6 +129,8 @@ async function notificationInteractiveMessagesHandler(req, res) {
     if (e.response) {
       if (e.response.status === 401) {
         trelloUser.writeable_token = '';
+        trelloUser.username = '';
+        trelloUser.fullName = '';
         await trelloUser.save();
         await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
         res.status(200);
@@ -275,6 +277,8 @@ async function botInteractiveMessagesHandler(req, res) {
         trello.setToken(trelloUser.writeable_token);
         await trello.revokeToken();
         trelloUser.writeable_token = '';
+        trelloUser.username = '';
+        trelloUser.fullName = '';
         await trelloUser.save();
         if (rcUser.bot_subscriptions) {
           await TrelloWebhook.destroy({
@@ -359,6 +363,8 @@ async function botInteractiveMessagesHandler(req, res) {
       e.response.config.url.indexOf('api.trello.com') > -1
     ) {
       trelloUser.writeable_token = '';
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
       res.status(200);
       res.json(getAuthDialog(botId, body));

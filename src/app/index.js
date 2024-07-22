@@ -8,6 +8,7 @@ const authorizationRoute = require('./routes/authorization');
 const webhooksRoute = require('./routes/webhooks');
 const notificationRoute = require('./routes/notification');
 const botSetupRoute = require('./routes/bot-setup');
+const maintainRoute = require('./routes/maintain');
 
 const { botHandler } = require('./bot/handler');
 const { botConfig } = require('./bot/config');
@@ -77,6 +78,7 @@ app.post('/trello/bot-revoke', refererChecker, authorizationRoute.botRevokeToken
 extendBotApp(app, [], botHandler, botConfig);
 app.get('/trello/bot-oauth-callback/:botToken', authorizationRoute.botOauthCallback);
 app.post('/trello/bot-oauth-callback', refererChecker, authorizationRoute.botSaveToken);
+app.get('/maintain/remove-user-name', maintainRoute.removeUserName);
 
 app.use(function (err, req, res, next) {
   errorLogger(err);

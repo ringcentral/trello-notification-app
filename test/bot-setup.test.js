@@ -183,6 +183,11 @@ describe('Bot Setup', () => {
             "id": "5b689b3228998cf3f01c629e",
           },
         ]);
+      const trelloUserScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/members/me?`))
+        .reply(200, {
+          fullName: 'test_user',
+        });
       const res = await request(server)
         .get('/bot-info')
         .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
@@ -190,7 +195,9 @@ describe('Bot Setup', () => {
       expect(res.status).toEqual(200);
       expect(res.body.trelloAuthorized).toEqual(true);
       expect(res.body.boards.length).toEqual(2);
+      expect(res.body.trelloUser.fullName).toEqual('test_user');
       trelloBoardScope.done();
+      trelloUserScope.done();
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
     });
@@ -232,6 +239,11 @@ describe('Bot Setup', () => {
             "id": "5b689b3228998cf3f01c629e",
           },
         ]);
+      const trelloUserScope = nock('https://api.trello.com')
+        .get(uri => uri.includes(`/1/members/me?`))
+        .reply(200, {
+          fullName: 'test_user',
+        });
       const res = await request(server)
         .get('/bot-info')
         .set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER)
@@ -242,6 +254,7 @@ describe('Bot Setup', () => {
       expect(res.body.subscriptions.length).toEqual(1);
       expect(res.body.subscriptions[0].id).toEqual('test_2');
       trelloBoardScope.done();
+      trelloUserScope.done();
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
     });
@@ -276,7 +289,7 @@ describe('Bot Setup', () => {
       await trelloUserRecord.destroy();
     });
 
-    it('should get 500 when require trello 500', async () => {
+    it('should get 500 when request trello 500', async () => {
       const rcUserId = 'test_rc_user_id_123';
       const trelloUserId = 'trello-user-123';
       const trelloUserRecord = await TrelloUser.create({
@@ -890,10 +903,10 @@ describe('Bot Setup', () => {
       expect(res.status).toEqual(401);
       const newTrelloUserRecord = await TrelloUser.findByPk(trelloUserId);
       expect(newTrelloUserRecord.writeable_token).toEqual('');
+      trelloLabelsScope.done();
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
       await trelloWebhookRecord.destroy();
-      trelloLabelsScope.done();
     });
 
     it('should return 500 when fetch trello labels 500 at create subscription', async () => {
@@ -1405,9 +1418,9 @@ describe('Bot Setup', () => {
       expect(newRcUserRecord.bot_subscriptions.length).toEqual(0);
       const newTrelloWebhookRecord = await TrelloWebhook.findByPk(subscriptionId);
       expect(!!newTrelloWebhookRecord).toEqual(false);
+      trelloDeleteWebhooksScope.done();
       await rcUserRecord.destroy();
       await trelloUserRecord.destroy();
-      trelloDeleteWebhooksScope.done();
     });
   });
 });

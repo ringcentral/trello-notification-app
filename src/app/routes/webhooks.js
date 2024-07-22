@@ -84,6 +84,8 @@ async function webhookInfo(req, res) {
     if (e.response && e.response.status === 401) {
       if (trelloUser) {
         trelloUser.token = '';
+        trelloUser.username = '';
+        trelloUser.fullName = '';
         await trelloUser.save();
       }
       res.status(401);
@@ -187,6 +189,8 @@ async function createWebhook(req, res) {
   } catch (e) {
     if (e.response && e.response.status === 401) {
       trelloUser.token = '';
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
       res.status(401);
       res.send('Unauthorized');
