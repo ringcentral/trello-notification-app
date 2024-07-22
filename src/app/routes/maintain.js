@@ -24,11 +24,15 @@ async function removeUserName(req, res) {
       lastKey = '';
     }
     for (const trelloUser of trelloUsers) {
-      if (!!trelloUser.username || !!trelloUser.fullName) {
-        await TrelloUser.update({
-          username: '',
-          fullName: '',
-        }, { where: { id: trelloUser.id } });
+      if (
+        trelloUser.username ||
+        trelloUser.fullName ||
+        trelloUser.writeable_token ||
+        trelloUser.token
+      ) {
+        trelloUser.username = '';
+        trelloUser.fullName = '';
+        await trelloUser.save();
       }
     }
     res.status(200);

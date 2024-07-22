@@ -249,14 +249,14 @@ async function revokeToken(req, res) {
   const userId = decodedToken.id;
   try {
     const trelloUser = await TrelloUser.findByPk(userId);
-    if (trelloUser && trelloUser.token) {
+    if (trelloUser && trelloUser.getToken()) {
       const trello = new Trello({
         appKey: process.env.TRELLO_APP_KEY,
         redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
-        token: trelloUser.token,
+        token: trelloUser.getToken(),
       });
       await trello.revokeToken();
-      trelloUser.token = '';
+      trelloUser.removeToken();
       trelloUser.username = '';
       trelloUser.fullName = '';
       await trelloUser.save();
@@ -297,7 +297,7 @@ async function botRevokeToken(req, res) {
       return;
     }
     trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
-    if (!trelloUser || !trelloUser.writeable_token) {
+    if (!trelloUser || !trelloUser.getWriteableToken()) {
       res.status(200);
       res.json({ result: 'ok' });
       return;
@@ -306,9 +306,9 @@ async function botRevokeToken(req, res) {
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
     });
-    trello.setToken(trelloUser.writeable_token);
+    trello.setToken(trelloUser.getWriteableToken());
     await trello.revokeToken();
-    trelloUser.writeable_token = '';
+    trelloUser.removeWriteableToken();
     trelloUser.username = '';
     trelloUser.fullName = '';
     await trelloUser.save();

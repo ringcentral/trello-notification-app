@@ -41,15 +41,15 @@ describe('Maintain', () => {
     const user1 = await TrelloUser.findByPk('111');
     expect(user1.username).toEqual('');
     expect(user1.fullName).toEqual('');
-    expect(user1.writeable_token).toEqual('test111');
+    expect(user1.getWriteableToken()).toEqual('test111');
     const user2 = await TrelloUser.findByPk('222');
     expect(user2.username).toEqual('');
     expect(user2.fullName).toEqual('');
-    expect(user2.writeable_token).toEqual('test222');
+    expect(user2.getWriteableToken()).toEqual('test222');
     const user3 = await TrelloUser.findByPk('333');
     expect(user3.username).toEqual('');
     expect(user3.fullName).toEqual('');
-    expect(user3.writeable_token).toEqual('test333');
+    expect(user3.getWriteableToken()).toEqual('test333');
     delete process.env.MAINTAIN_TOKEN;
     await TrelloUser.destroy({ where: { id: '111' } });
     await TrelloUser.destroy({ where: { id: '222' } });

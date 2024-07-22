@@ -91,15 +91,15 @@ async function info(req, res) {
     if (rcUser.trello_user_id) {
       trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
       if (trelloUser) {
-        botInfo.trelloAuthorized = !!trelloUser.writeable_token;
+        botInfo.trelloAuthorized = !!trelloUser.getWriteableToken();
         botInfo.trelloUser = {
           fullName: '',
         };
-        if (trelloUser.writeable_token) {
+        if (trelloUser.getWriteableToken()) {
           const trello = new Trello({
             appKey: process.env.TRELLO_APP_KEY,
             redirectUrl: '',
-            token: trelloUser.writeable_token,
+            token: trelloUser.getWriteableToken(),
           });
           botInfo.boards = await trello.getBoards();
           const trelloUserInfo = await trello.getUserInfo();
@@ -115,7 +115,7 @@ async function info(req, res) {
       e.response.status === 401 &&
       trelloUser
     ) {
-      trelloUser.writeable_token = '';
+      trelloUser.removeWriteableToken();
       trelloUser.username = '';
       trelloUser.fullName = '';
       await trelloUser.save();
@@ -177,7 +177,7 @@ async function saveSubscription(req, res) {
       return;
     }
     trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
-    if (!trelloUser || !trelloUser.writeable_token) {
+    if (!trelloUser || !trelloUser.getWriteableToken()) {
       res.status(401);
       res.send('Trello authorization required');
       return;
@@ -185,7 +185,7 @@ async function saveSubscription(req, res) {
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: '',
-      token: trelloUser.writeable_token,
+      token: trelloUser.getWriteableToken(),
     });
     let trelloWebhook;
     if (subscriptionId) {
@@ -246,7 +246,7 @@ async function saveSubscription(req, res) {
       e.response.status === 401 &&
       trelloUser
     ) {
-      trelloUser.writeable_token = '';
+      trelloUser.removeWriteableToken();
       trelloUser.username = '';
       trelloUser.fullName = '';
       await trelloUser.save();
@@ -334,7 +334,7 @@ async function removeSubscription(req, res) {
       return;
     }
     trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
-    if (!trelloUser || !trelloUser.writeable_token) {
+    if (!trelloUser || !trelloUser.getWriteableToken()) {
       res.status(401);
       res.send('Trello authorization required');
       return;
@@ -349,7 +349,7 @@ async function removeSubscription(req, res) {
       const trello = new Trello({
         appKey: process.env.TRELLO_APP_KEY,
         redirectUrl: '',
-        token: trelloUser.writeable_token,
+        token: trelloUser.getWriteableToken(),
       });
       await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
     }
