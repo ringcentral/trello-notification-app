@@ -125,12 +125,14 @@ async function botSaveToken(req, res) {
     let trelloUser = await TrelloUser.findByPk(trelloUserInfo.id);
     if (trelloUser) {
       trelloUser.writeable_token = trelloToken;
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
     } else {
       trelloUser = await TrelloUser.create({
         id: trelloUserInfo.id,
-        username: trelloUserInfo.username,
-        fullName: trelloUserInfo.fullName,
+        username: '',
+        fullName: '',
         writeable_token: trelloToken,
       });
     }
@@ -202,12 +204,14 @@ async function saveToken(req, res) {
     let trelloUser = await TrelloUser.findByPk(userInfo.id);
     if (trelloUser) {
       trelloUser.token = token;
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
     } else {
       trelloUser = await TrelloUser.create({
         id: userInfo.id,
-        username: userInfo.username,
-        fullName: userInfo.fullName,
+        username: '',
+        fullName: '',
         token,
       });
     }
@@ -253,6 +257,8 @@ async function revokeToken(req, res) {
       });
       await trello.revokeToken();
       trelloUser.token = '';
+      trelloUser.username = '';
+      trelloUser.fullName = '';
       await trelloUser.save();
     }
     res.status(200);
@@ -303,6 +309,8 @@ async function botRevokeToken(req, res) {
     trello.setToken(trelloUser.writeable_token);
     await trello.revokeToken();
     trelloUser.writeable_token = '';
+    trelloUser.username = '';
+    trelloUser.fullName = '';
     await trelloUser.save();
     if (rcUser.bot_subscriptions && rcUser.bot_subscriptions.length > 0) {
       await TrelloWebhook.destroy({

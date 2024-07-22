@@ -8,10 +8,10 @@ exports.TrelloUser = sequelize.define('trello-users', {
     primaryKey: true,
   },
   username: {
-    type: Sequelize.STRING
+    type: Sequelize.STRING // no need, will be cleaned up in DB
   },
   fullName: {
-    type: Sequelize.STRING
+    type: Sequelize.STRING // no need, will be cleaned up in DB
   },
   token: {
     type: Sequelize.STRING
