@@ -429,7 +429,7 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(authCardRequestBody.fallbackText).toContain('unauthorized Trello successfully');
     trelloUserRecord = await TrelloUser.findByPk(trelloUserRecord.id);
-    expect(!!trelloUserRecord.writeable_token).toEqual(false);
+    expect(!!trelloUserRecord.getWriteableToken()).toEqual(false);
     rcAuthCardPutScope.done();
     trelloRevokeScope.done();
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
@@ -494,7 +494,7 @@ describe('Bot Notification', () => {
     expect(res.status).toEqual(200)
     expect(authCardRequestBody.fallbackText).toContain('unauthorized Trello successfully');
     trelloUserRecord = await TrelloUser.findByPk(trelloUserRecord.id);
-    expect(!!trelloUserRecord.writeable_token).toEqual(false);
+    expect(!!trelloUserRecord.getWriteableToken()).toEqual(false);
     rcUserRecord = await RcUser.findByPk(rcUserRecord.id);
     expect(!!rcUserRecord.bot_subscriptions).toEqual(false);
     const trelloWebhook = await TrelloWebhook.findByPk('test_subscription_id');
