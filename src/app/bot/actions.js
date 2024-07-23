@@ -70,7 +70,7 @@ async function handleAuthorize({ bot, group, user }) {
   if (rcUser) {
     trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
   }
-  if (trelloUser && trelloUser.writeable_token) {
+  if (trelloUser && trelloUser.getWriteableToken()) {
     await bot.sendMessage(group.id, {
       text: `Hi ![:Person](${user.id}), you have authorized Trello.`,
     });
@@ -89,7 +89,7 @@ async function handleUnauthorize({
   if (rcUser) {
     trelloUser = await TrelloUser.findByPk(rcUser.trello_user_id);
   }
-  if (!trelloUser || !trelloUser.writeable_token) {
+  if (!trelloUser || !trelloUser.getWriteableToken()) {
     await bot.sendMessage(group.id, {
       text: `Hi ![:Person](${user.id}), you have not authorized Trello yet.`,
     });
@@ -105,10 +105,10 @@ async function handleUnauthorize({
   const trello = new Trello({
     appKey: process.env.TRELLO_APP_KEY,
     redirectUrl: '',
-    token: trelloUser.writeable_token,
+    token: trelloUser.getWriteableToken(),
   });
   await trello.revokeToken();
-  trelloUser.writeable_token = '';
+  trelloUser.removeWriteableToken();
   trelloUser.username = '';
   trelloUser.fullName = '';
   await trelloUser.save();

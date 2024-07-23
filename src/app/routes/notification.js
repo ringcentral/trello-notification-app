@@ -44,7 +44,7 @@ async function onRcWebhookRemoved(trello, trelloWebhook, trelloUser) {
   if (!trelloUser) {
     trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
   }
-  trello.setToken(trelloUser.token);
+  trello.setToken(trelloUser.getToken());
   await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
   await trelloWebhook.destroy();
   const rcWebhookId = getRCWebhookId(trelloWebhook.rc_webhook_id);
@@ -55,7 +55,7 @@ async function onBotRemoved(trello, trelloWebhook, trelloUser) {
   if (!trelloUser) {
     trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
   }
-  trello.setToken(trelloUser.writeable_token);
+  trello.setToken(trelloUser.getWriteableToken());
   await trello.deleteWebhook({ id: trelloWebhook.trello_webhook_id });
 }
 
@@ -79,9 +79,9 @@ async function notification(req, res) {
     if (shouldUpdateBoardLabels(req.body.action.type)) {
       trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
       if (isBotNotification) {
-        trello.setToken(trelloUser.writeable_token);
+        trello.setToken(trelloUser.getWriteableToken());
       } else {
-        trello.setToken(trelloUser.token);
+        trello.setToken(trelloUser.getToken());
       }
       await updateBoardLabels(trello, trelloWebhook);
     }
@@ -93,9 +93,9 @@ async function notification(req, res) {
           trelloUser = await TrelloUser.findByPk(trelloWebhook.trello_user_id);
         }
         if (isBotNotification) {
-          trello.setToken(trelloUser.writeable_token);
+          trello.setToken(trelloUser.getWriteableToken());
         } else {
-          trello.setToken(trelloUser.token);
+          trello.setToken(trelloUser.getToken());
         }
         card = await trello.getCard(req.body.action.data.card.id);
         if (!trelloWebhook.config.labels) {

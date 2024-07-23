@@ -52,7 +52,7 @@ async function webhookInfo(req, res) {
   let trelloUser;
   try {
     trelloUser = await TrelloUser.findByPk(userId);
-    if (!trelloUser || !trelloUser.token) {
+    if (!trelloUser || !trelloUser.getToken()) {
       res.status(401);
       res.send('Unauthorized');
       return;
@@ -68,7 +68,7 @@ async function webhookInfo(req, res) {
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
       redirectUrl: `${process.env.APP_SERVER}/trello/oauth-callback`,
-      token: trelloUser.token,
+      token: trelloUser.getToken(),
     });
     const boards = await trello.getBoards();
     const userInfo = await trello.getUserInfo();
@@ -83,7 +83,7 @@ async function webhookInfo(req, res) {
   } catch (e) {
     if (e.response && e.response.status === 401) {
       if (trelloUser) {
-        trelloUser.token = '';
+        trelloUser.removeToken();
         trelloUser.username = '';
         trelloUser.fullName = '';
         await trelloUser.save();
@@ -121,7 +121,7 @@ async function createWebhook(req, res) {
   let trelloUser;
   try {
     trelloUser = await TrelloUser.findByPk(userId);
-    if (!trelloUser || !trelloUser.token) {
+    if (!trelloUser || !trelloUser.getToken()) {
       res.status(401);
       res.send('Session expired');
       return
@@ -137,7 +137,7 @@ async function createWebhook(req, res) {
   try {
     const trello = new Trello({
       appKey: process.env.TRELLO_APP_KEY,
-      token: trelloUser.token,
+      token: trelloUser.getToken(),
     });
     const labels = await trello.getLabels(boardId);
     rcWebhookRecord = await RCWebhook.findByPk(rcWebhookId);
@@ -188,7 +188,7 @@ async function createWebhook(req, res) {
     });
   } catch (e) {
     if (e.response && e.response.status === 401) {
-      trelloUser.token = '';
+      trelloUser.removeToken();
       trelloUser.username = '';
       trelloUser.fullName = '';
       await trelloUser.save();

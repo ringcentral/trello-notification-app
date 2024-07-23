@@ -97,7 +97,9 @@ describe('Trello Authorization', () => {
     expect(res.status).toEqual(200);
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
-    expect(trelloUser.token).toEqual('xxxx');
+    expect(trelloUser.token).toEqual('');
+    expect(!!trelloUser.encrypted_token).toEqual(true);
+    expect(trelloUser.getToken()).toEqual('xxxx');
     await TrelloUser.destroy({ where: { id: trelloUser.id }});
     trelloUserScope.done();
   });
@@ -119,7 +121,9 @@ describe('Trello Authorization', () => {
     expect(res.status).toEqual(200);
     expect(JSON.parse(res.text).authorize).toEqual(true);
     const trelloUser = await TrelloUser.findByPk(trelloUserId);
-    expect(trelloUser.token).toEqual('new_token');
+    expect(trelloUser.token).toEqual('');
+    expect(!!trelloUser.encrypted_token).toEqual(true);
+    expect(trelloUser.getToken()).toEqual('new_token');
     await TrelloUser.destroy({ where: { id: trelloUser.id }});
     trelloUserScope.done();
   });
@@ -156,14 +160,16 @@ describe('Trello Authorization', () => {
       id: trelloUserId,
     });
     const trelloRevokeScope = nock('https://api.trello.com')
-      .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.token}?`))
+      .delete(uri => uri.includes(`/1/tokens/xxx?`))
       .reply(200, {});
     const res = await request(server).post('/trello/revoke').send({
       token,
     }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-    expect(!!trelloUserRecord.token).toEqual(false);
+    expect(trelloUserRecord.token).toEqual('');
+    expect(trelloUserRecord.encrypted_token).toEqual('');
+    expect(!!trelloUserRecord.getToken()).toEqual(false);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloRevokeScope.done();
   });
@@ -178,14 +184,16 @@ describe('Trello Authorization', () => {
       id: trelloUserId,
     });
     const trelloRevokeScope = nock('https://api.trello.com')
-      .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.token}?`))
+      .delete(uri => uri.includes(`/1/tokens/xxx?`))
       .reply(404, {});
     const res = await request(server).post('/trello/revoke').send({
       token,
     }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
     expect(res.status).toEqual(200);
     trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-    expect(!!trelloUserRecord.token).toEqual(false);
+    expect(trelloUserRecord.token).toEqual('');
+    expect(trelloUserRecord.encrypted_token).toEqual('');
+    expect(!!trelloUserRecord.getToken()).toEqual(false);
     await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
     trelloRevokeScope.done();
   });
@@ -334,7 +342,8 @@ describe('Trello Authorization', () => {
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
-      expect(trelloUser.writeable_token).toEqual('xxx');
+      expect(trelloUser.writeable_token).toEqual('');
+      expect(trelloUser.getWriteableToken()).toEqual('xxx');
       await RcUser.destroy({ where: { id: rcUser.id } });
       await TrelloUser.destroy({ where: { id: trelloUser.id }});
       await Bot.destroy({ where: { id: bot.id }});
@@ -390,7 +399,8 @@ describe('Trello Authorization', () => {
       expect(res.status).toEqual(200);
       expect(requestBody.fallbackText).toContain('Connected with Trello successfully');
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-      expect(trelloUserRecord.writeable_token).toEqual('xxx');
+      expect(trelloUserRecord.writeable_token).toEqual('');
+      expect(trelloUserRecord.getWriteableToken()).toEqual('xxx');
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
       await Bot.destroy({ where: { id: bot.id }});
@@ -434,7 +444,8 @@ describe('Trello Authorization', () => {
       }).set('Referer', process.env.RINGCENTRAL_CHATBOT_SERVER);
       expect(res.status).toEqual(200);
       trelloUserRecord = await TrelloUser.findByPk(trelloUserId);
-      expect(trelloUserRecord.writeable_token).toEqual('xxx');
+      expect(trelloUserRecord.writeable_token).toEqual('');
+      expect(trelloUserRecord.getWriteableToken()).toEqual('xxx');
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id }});
       await Bot.destroy({ where: { id: bot.id }});
@@ -497,7 +508,8 @@ describe('Trello Authorization', () => {
       const rcUser = await RcUser.findByPk(`rcext-${rcUserId}`);
       expect(rcUser.trello_user_id).toEqual(trelloUserId);
       const trelloUser = await TrelloUser.findByPk(trelloUserId);
-      expect(trelloUser.writeable_token).toEqual('xxx');
+      expect(trelloUser.writeable_token).toEqual('');
+      expect(trelloUser.getWriteableToken()).toEqual('xxx');
       await RcUser.destroy({ where: { id: rcUser.id } });
       await TrelloUser.destroy({ where: { id: trelloUser.id }});
       await Bot.destroy({ where: { id: bot.id }});
@@ -612,7 +624,7 @@ describe('Trello Authorization', () => {
         writeable_token: 'xxxxx',
       });
       const trelloRevokeScope = nock('https://api.trello.com')
-        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .delete(uri => uri.includes(`/1/tokens/xxxxx?`))
         .reply(200, {});
       const res = await request(server)
         .post('/trello/bot-revoke')
@@ -621,6 +633,8 @@ describe('Trello Authorization', () => {
       expect(res.status).toEqual(200);
       const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
       expect(newTrelloUserRecord.writeable_token).toEqual('');
+      expect(newTrelloUserRecord.encrypted_writeable_token).toEqual('');
+      expect(newTrelloUserRecord.getWriteableToken()).toEqual('');
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
       trelloRevokeScope.done();
@@ -658,7 +672,7 @@ describe('Trello Authorization', () => {
         },
       });
       const trelloRevokeScope = nock('https://api.trello.com')
-        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .delete(uri => uri.includes(`/1/tokens/xxxxx?`))
         .reply(200, {});
       const res = await request(server)
         .post('/trello/bot-revoke')
@@ -671,6 +685,8 @@ describe('Trello Authorization', () => {
       expect(newRcUserRecord.bot_subscriptions).toEqual(null);
       const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
       expect(newTrelloUserRecord.writeable_token).toEqual('');
+      expect(newTrelloUserRecord.encrypted_writeable_token).toEqual('');
+      expect(newTrelloUserRecord.getWriteableToken()).toEqual('');
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
       trelloRevokeScope.done();
@@ -692,7 +708,7 @@ describe('Trello Authorization', () => {
         writeable_token: 'xxxxx',
       });
       const trelloRevokeScope = nock('https://api.trello.com')
-        .delete(uri => uri.includes(`/1/tokens/${trelloUserRecord.writeable_token}?`))
+        .delete(uri => uri.includes(`/1/tokens/xxxxx?`))
         .reply(401, {});
       const res = await request(server)
         .post('/trello/bot-revoke')
@@ -701,6 +717,8 @@ describe('Trello Authorization', () => {
       expect(res.status).toEqual(200);
       const newTrelloUserRecord = await TrelloUser.findByPk('test_trello_user_id_xxx');
       expect(newTrelloUserRecord.writeable_token).toEqual('');
+      expect(newTrelloUserRecord.encrypted_writeable_token).toEqual('');
+      expect(newTrelloUserRecord.getWriteableToken()).toEqual('');
       await RcUser.destroy({ where: { id: rcUserRecord.id } });
       await TrelloUser.destroy({ where: { id: trelloUserRecord.id } });
       trelloRevokeScope.done();

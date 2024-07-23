@@ -96,13 +96,13 @@ async function notificationInteractiveMessagesHandler(req, res) {
     res.send('ok');
     return;
   }
-  if (!trelloUser || !trelloUser.writeable_token) {
+  if (!trelloUser || !trelloUser.getWriteableToken()) {
     await sendAuthorizeRequestCard(trelloWebhook.rc_webhook_id, webhookId);
     res.status(200);
     res.send('ok');
     return;
   }
-  trello.setToken(trelloUser.writeable_token);
+  trello.setToken(trelloUser.getWriteableToken());
   try {
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
@@ -128,7 +128,7 @@ async function notificationInteractiveMessagesHandler(req, res) {
   } catch (e) {
     if (e.response) {
       if (e.response.status === 401) {
-        trelloUser.writeable_token = '';
+        trelloUser.removeWriteableToken();
         trelloUser.username = '';
         trelloUser.fullName = '';
         await trelloUser.save();
@@ -267,16 +267,16 @@ async function botInteractiveMessagesHandler(req, res) {
       redirectUrl: '',
     });
     if (action === 'unauthorize') {
-      if (!trelloUser || !trelloUser.writeable_token) {
+      if (!trelloUser || !trelloUser.getWriteableToken()) {
         botActions.setMessageCard(
           bot,
           cardId,
           `Hi **${body.user.firstName} ${body.user.lastName}**, You have not authorized Trello yet.`
         );
       } else {
-        trello.setToken(trelloUser.writeable_token);
+        trello.setToken(trelloUser.getWriteableToken());
         await trello.revokeToken();
-        trelloUser.writeable_token = '';
+        trelloUser.removeWriteableToken();
         trelloUser.username = '';
         trelloUser.fullName = '';
         await trelloUser.save();
@@ -304,7 +304,7 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
-    if (!rcUser || !trelloUser || !trelloUser.writeable_token) {
+    if (!rcUser || !trelloUser || !trelloUser.getWriteableToken()) {
       res.status(200);
       res.json(getAuthDialog(botId, body));
       await analytics.trackUserAction('cardSubmitted', body.user.extId, {
@@ -314,7 +314,7 @@ async function botInteractiveMessagesHandler(req, res) {
       });
       return;
     }
-    trello.setToken(trelloUser.writeable_token);
+    trello.setToken(trelloUser.getWriteableToken());
     if (action === 'joinCard') {
       const members = await trello.getCardMembers(body.data.cardId);
       if (members.find(member => member.id === trelloUser.id)) {
@@ -362,7 +362,7 @@ async function botInteractiveMessagesHandler(req, res) {
       trello &&
       e.response.config.url.indexOf('api.trello.com') > -1
     ) {
-      trelloUser.writeable_token = '';
+      trelloUser.removeWriteableToken();
       trelloUser.username = '';
       trelloUser.fullName = '';
       await trelloUser.save();
