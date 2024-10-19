@@ -65,7 +65,7 @@
     "body-parser": "^1.20.2",
     "dotenv": "6.2.0",
     "dynamo-sequelize": "^3.1.0",
-    "express": "^4.19.2",
+    "express": "^4.21.1",
     "jsonwebtoken": "^9.0.0",
     "mixpanel": "^0.18.0",
     "morgan": "^1.10.0",
