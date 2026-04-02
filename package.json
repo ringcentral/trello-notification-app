@@ -36,7 +36,7 @@
     "@babel/plugin-transform-runtime": "^7.24.3",
     "@babel/preset-env": "^7.24.3",
     "@babel/preset-react": "^7.24.1",
-    "@aws-sdk/client-dynamodb": "^3.490.0",
+    "@aws-sdk/client-dynamodb": "^3.1022.0",
     "@ringcentral/juno": "^1.12.5",
     "babel-loader": "^8.1.0",
     "dynamodb-local": "~0.0.34",
