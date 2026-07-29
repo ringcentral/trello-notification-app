@@ -231,6 +231,7 @@
                 "type": "AdaptiveCard",
                 "body": [
                   {
+                    "$when": "${hasSelectedLabels}",
                     "type": "ColumnSet",
                     "id": "selectedLabels",
                     "columns": [
