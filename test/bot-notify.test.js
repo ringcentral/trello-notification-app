@@ -121,6 +121,9 @@ describe('Bot Notify', () => {
     expect(actionContainer1.isVisible).toEqual(undefined);
     const actionContainer2 = findItemInAdaptiveCard(requestBody, 'actionContainer2');
     expect(actionContainer2.isVisible).toEqual(undefined);
+    expect(findItemInAdaptiveCard(requestBody, 'selectedLabels')).toEqual(null);
+    expect(JSON.stringify(requestBody)).not.toContain('${colorImage}');
+    expect(JSON.stringify(requestBody)).not.toContain('${name}');
     rcCardScope.done();
     trelloCardScope.done();
   });

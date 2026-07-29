@@ -333,9 +333,10 @@ function getAdaptiveCardFromTrelloMessage({
       messageType: botId ? 'Bot' : 'Notification',
       cardId: trelloMessage.action.data.card.id,
       defaultAddLabelValue: unselectedLabels[0] && unselectedLabels[0].id || '',
-      unselectedLabels: unselectedLabels.length > 0 ? unselectedLabels : [{ title: 'no item', id: 'placeholder' }],
+      unselectedLabels: unselectedLabels.length > 0 ? unselectedLabels : [{ name: 'no item', id: 'placeholder' }],
       defaultRemoveLabelValue: trelloCard.labels[0] && trelloCard.labels[0].id || '',
-      selectedLabels: selectedLabels.length > 0 ? selectedLabels : [{ title: 'no item', id: 'placeholder' }],
+      hasSelectedLabels: selectedLabels.length > 0,
+      selectedLabels: selectedLabels.length > 0 ? selectedLabels : [{ name: 'no item', id: 'placeholder' }],
     };
     card = getAdaptiveCardFromTemplate(cardTemplate, params);
     if (unselectedLabels.length === 0) {
@@ -345,8 +346,6 @@ function getAdaptiveCardFromTrelloMessage({
     if (selectedLabels.length === 0) {
       const removeLabelForm = findItemInAdaptiveCard(card, 'removeLabelForm');
       removeLabelForm.isVisible = false;
-      const selectedLabels = findItemInAdaptiveCard(card, 'selectedLabels');
-      selectedLabels.isVisible = false;
     }
     if (contentText.length > 0) {
       const contentArea = findItemInAdaptiveCard(card, 'contentArea');
