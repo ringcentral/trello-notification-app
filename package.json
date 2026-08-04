@@ -73,7 +73,7 @@
     "pug": "^3.0.3",
     "qs": "^6.15.2",
     "ringcentral-chatbot-core": "^1.6.1",
-    "sequelize": "^6.29.0",
+    "sequelize": "^6.37.8",
     "serverless-http": "^2.6.0"
   }
 }
